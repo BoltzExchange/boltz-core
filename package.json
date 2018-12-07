@@ -20,7 +20,12 @@
     "url": "git+https://github.com/BoltzExchange/boltz-core.git"
   },
   "dependencies": {
-    "bitcoinjs-lib": "^4.0.2"
+    "@michael1011/bitcoin-ops": "^1.4.3",
+    "bip65": "^1.0.3",
+    "bip66": "^1.1.5",
+    "bitcoinjs-lib": "^4.0.2",
+    "bn.js": "^4.11.8",
+    "varuint-bitcoin": "^1.1.0"
   },
   "devDependencies": {
     "@types/bitcoinjs-lib": "^4.0.0",

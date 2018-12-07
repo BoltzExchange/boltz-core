@@ -1,5 +1,6 @@
-class Boltz {
+import { constructClaimTransaction } from './swap/Claim';
+import { constructRefundTransaction } from './swap/Refund';
+import { detectSwap } from './swap/SwapDetector';
+import * as SwapUtils from './swap/SwapUtils';
 
-}
-
-export default Boltz;
+export { constructClaimTransaction, constructRefundTransaction, detectSwap, SwapUtils };
