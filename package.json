@@ -5,7 +5,8 @@
   "main": "dist/Boltz.js",
   "scripts": {
     "compile": "cross-os precompile && tsc",
-    "lint": "tslint --project tsconfig.json && tslint --config tslint-alt.json 'test/**/*.ts'"
+    "lint": "tslint --project tsconfig.json && tslint --config tslint-alt.json 'test/**/*.ts'",
+    "test": "mocha test/unit/*.spec.ts test/unit/swap/*.spec.ts"
   },
   "cross-os": {
     "precompile": {
@@ -29,7 +30,12 @@
   },
   "devDependencies": {
     "@types/bitcoinjs-lib": "^4.0.0",
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.5",
+    "chai": "^4.2.0",
     "cross-os": "^1.3.0",
+    "mocha": "^5.2.0",
+    "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
     "tslint-config-airbnb": "^5.11.1",
     "tslint-no-circular-imports": "^0.6.1",
