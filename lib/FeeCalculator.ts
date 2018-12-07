@@ -1,4 +1,4 @@
-import { OutputType } from '../consts/Enums';
+import { OutputType } from './consts/Enums';
 
 export type Input = {
   type: OutputType,

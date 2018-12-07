@@ -11,7 +11,7 @@ import * as varuint from 'varuint-bitcoin';
 import { getHexBuffer, getHexString } from '../Utils';
 import { ScriptElement } from '../consts/Types';
 import { OutputType } from '../consts/Enums';
-import { Output } from './FeeCalculator';
+import { Output } from '../FeeCalculator';
 
 const zeroHexBuffer = getHexBuffer('00');
 

@@ -8,7 +8,7 @@ import * as bip65 from 'bip65';
 import * as varuint from 'varuint-bitcoin';
 import { Transaction, crypto, script, ECPair } from 'bitcoinjs-lib';
 import { encodeSignature, scriptBuffersToScript, getOutputScriptType } from './SwapUtils';
-import { estimateFee } from './FeeCalculator';
+import { estimateFee } from '../FeeCalculator';
 import { OutputType } from '../consts/Enums';
 import { TransactionOutput } from '../consts/Types';
 
