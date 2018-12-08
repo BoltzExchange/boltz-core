@@ -3,7 +3,7 @@
  */
 
 import { script, crypto } from 'bitcoinjs-lib';
-import ops from '@michael1011/bitcoin-ops';
+import ops from '@boltz/bitcoin-ops';
 
 /**
  * Get a P2WPKH output script

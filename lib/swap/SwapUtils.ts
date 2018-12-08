@@ -6,7 +6,7 @@
 import { script } from 'bitcoinjs-lib';
 import Bn from 'bn.js';
 import bip66 from 'bip66';
-import ops from '@michael1011/bitcoin-ops';
+import ops from '@boltz/bitcoin-ops';
 import * as varuint from 'varuint-bitcoin';
 import { getHexBuffer, getHexString } from '../Utils';
 import { ScriptElement } from '../consts/Types';
