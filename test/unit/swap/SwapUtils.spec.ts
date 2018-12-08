@@ -1,7 +1,7 @@
 // tslint:disable:max-line-length
 import { expect } from 'chai';
 import { Transaction, crypto, ECPair, address, script } from 'bitcoinjs-lib';
-import ops from '@michael1011/bitcoin-ops';
+import ops from '@boltz/bitcoin-ops';
 import { getHexString, getHexBuffer } from '../../../lib/Utils';
 import { encodeSignature, toPushdataScript, scriptBuffersToScript, getOutputScriptType } from '../../../lib/swap/SwapUtils';
 import Networks from '../../../lib/consts/Networks';

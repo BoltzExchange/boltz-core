@@ -4,7 +4,7 @@
 
 import { BIP32 } from 'bip32';
 import { ECPair } from 'bitcoinjs-lib';
-import ops from '@michael1011/bitcoin-ops';
+import ops from '@boltz/bitcoin-ops';
 import { TransactionOutput } from '../consts/Types';
 import { getHexBuffer } from '../Utils';
 import { constructClaimTransaction } from './Claim';

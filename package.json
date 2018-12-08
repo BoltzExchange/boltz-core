@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Core library of Boltz",
   "main": "dist/Boltz.js",
   "scripts": {
@@ -27,7 +27,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@michael1011/bitcoin-ops": "^1.4.3",
+    "@boltz/bitcoin-ops": "^2.0.0",
     "bip65": "^1.0.3",
     "bip66": "^1.1.5",
     "bitcoinjs-lib": "^4.0.2",

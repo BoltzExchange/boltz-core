@@ -3,7 +3,7 @@
  */
 
 import { BIP32 } from 'bip32';
-import ops from '@michael1011/bitcoin-ops';
+import ops from '@boltz/bitcoin-ops';
 import * as bip65 from 'bip65';
 import * as varuint from 'varuint-bitcoin';
 import { Transaction, crypto, script, ECPair } from 'bitcoinjs-lib';
