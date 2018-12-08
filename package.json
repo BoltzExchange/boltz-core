@@ -20,6 +20,12 @@
     "type": "git",
     "url": "git+https://github.com/BoltzExchange/boltz-core.git"
   },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@michael1011/bitcoin-ops": "^1.4.3",
     "bip65": "^1.0.3",
