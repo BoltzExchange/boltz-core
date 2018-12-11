@@ -4,13 +4,11 @@
 
 import { BIP32 } from 'bip32';
 import { ECPair } from 'bitcoinjs-lib';
-import ops from '@boltz/bitcoin-ops';
 import { TransactionOutput } from '../consts/Types';
 import { getHexBuffer } from '../Utils';
 import { constructClaimTransaction } from './Claim';
 
-const hexBase = 16;
-const dummyPreimage = getHexBuffer(ops.OP_FALSE.toString(hexBase));
+const dummyPreimage = getHexBuffer('0x00');
 
 /**
  * Refund a swap
