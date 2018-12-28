@@ -52,7 +52,7 @@ export const constructClaimTransaction = (claimDetails: ClaimDetails, utxo: Tran
   // Estimate the fee for the transaction
   const fee = estimateFee(feePerByte, [{ type: utxo.type, swapDetails: { preimage, redeemScript } }], [getOutputScriptType(destinationScript)!]);
 
-  // Send the swap value minues the estimated fee to the destination address
+  // Send the swap value minus the estimated fee to the destination address
   tx.addOutput(destinationScript, utxo.value - fee);
 
   switch (utxo.type) {

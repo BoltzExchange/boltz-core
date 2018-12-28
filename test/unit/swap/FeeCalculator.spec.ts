@@ -63,7 +63,7 @@ describe('FeeCalculator', () => {
           },
         ],
       },
-      result: 427,
+      result: 569,
     };
 
     const result = estimateFee(testData.args.satsPerVbyte, testData.args.inputs, testData.args.outputs);
