@@ -19,11 +19,12 @@ const dummyPreimage = getHexBuffer('0x00');
  * @param utxo the swap UTXO to claim
  * @param destinationScript the output script to which the funds should be sent
  * @param feePerByte how many satoshis per vbyte should be paid as fee
+ * @param isRbf whether the transaction should signal full Replace-by-Fee
  *
  * @returns refund transaction
  */
 export const constructRefundTransaction = (refundKeys: ECPair | BIP32, redeemScript: Buffer, timeoutBlockHeight: number, utxo: TransactionOutput,
-  destinationScript: Buffer, feePerByte = 1) => {
+  destinationScript: Buffer, feePerByte = 1, isRbf = false) => {
 
   return constructClaimTransaction(
     {
@@ -34,6 +35,7 @@ export const constructRefundTransaction = (refundKeys: ECPair | BIP32, redeemScr
     utxo,
     destinationScript,
     feePerByte,
+    isRbf,
     timeoutBlockHeight,
   );
 };

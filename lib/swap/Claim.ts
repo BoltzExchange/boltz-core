@@ -19,7 +19,6 @@ export type ClaimDetails = {
 };
 
 // TODO: claiming with multiple UTXOs
-// TODO: support for RBF
 /**
  * Claim a swap
  *
@@ -27,12 +26,13 @@ export type ClaimDetails = {
  * @param utxo amount of satoshis per vbyte that should be paid as fee
  * @param destinationScript the output script to which the funds should be sent
  * @param feePerByte how many satoshis per vbyte should be paid as fee
+ * @param isRbf whether the transaction should signal full Replace-by-Fee
  * @param timeoutBlockHeight locktime of the transaction; only needed if used used for a refund
  *
  * @returns claim transaction
  */
 export const constructClaimTransaction = (claimDetails: ClaimDetails, utxo: TransactionOutput,
-  destinationScript: Buffer, feePerByte = 1, timeoutBlockHeight?: number): Transaction => {
+  destinationScript: Buffer, feePerByte = 1, isRbf = false, timeoutBlockHeight?: number): Transaction => {
 
   const { preimage, keys, redeemScript } = claimDetails;
 
@@ -47,7 +47,9 @@ export const constructClaimTransaction = (claimDetails: ClaimDetails, utxo: Tran
   }
 
   // Add the swap as input to the transaction
-  tx.addInput(utxo.txHash, utxo.vout, 0);
+  //
+  // RBF reference: https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki#summary
+  tx.addInput(utxo.txHash, utxo.vout, isRbf ? 0xfffffffd : 0xffffffff);
 
   // Estimate the fee for the transaction
   const fee = estimateFee(feePerByte, [{ type: utxo.type, swapDetails: { preimage, redeemScript } }], [getOutputScriptType(destinationScript)!]);
