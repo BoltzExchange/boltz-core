@@ -4,6 +4,7 @@ import { OutputType } from '../../../lib/consts/Enums';
 import { estimateFee } from '../../../lib/FeeCalculator';
 import { getHexBuffer } from '../../../lib/Utils';
 
+// TODO: refund fee estimation
 describe('FeeCalculator', () => {
   it('should estimate the fee for PKH inputs and outputs correctly', () => {
     const allTypesArray = [
