@@ -1,4 +1,5 @@
-import { Out } from 'bitcoinjs-lib';
+import { BIP32 } from 'bip32';
+import { Out, ECPair } from 'bitcoinjs-lib';
 import { OutputType } from './Enums';
 
 export type Error = {
@@ -13,3 +14,12 @@ export type TransactionOutput = {
   vout: number;
   type: OutputType;
 } & Out;
+
+export type RefundDetails = TransactionOutput & {
+  keys: ECPair | BIP32;
+  redeemScript: Buffer;
+};
+
+export type ClaimDetails = RefundDetails & {
+  preimage: Buffer;
+};
