@@ -6,7 +6,6 @@ import { OutputType } from '../../../lib/consts/Enums';
 import { RefundDetails } from '../../../lib/consts/Types';
 import { constructRefundTransaction } from '../../../lib/swap/Refund';
 
-// TODO: use valid values
 describe('Refund', () => {
   const utxo = {
     txHash: getHexBuffer('285d227e2823c679c224b4d562a9b5b5b7b927badd483df9f4225c6fc761d754'),

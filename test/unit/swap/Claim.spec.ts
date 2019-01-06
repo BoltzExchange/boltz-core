@@ -6,7 +6,6 @@ import { OutputType } from '../../../lib/consts/Enums';
 import { ClaimDetails } from '../../../lib/consts/Types';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 
-// TODO: use valid values
 describe('Claim', () => {
   const utxo = {
     txHash: getHexBuffer('285d227e2823c679c224b4d562a9b5b5b7b927badd483df9f4225c6fc761d754'),
