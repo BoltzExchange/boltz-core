@@ -2,7 +2,6 @@
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
 
-// TODO: add missing typings
 import { script } from 'bitcoinjs-lib';
 import Bn from 'bn.js';
 import bip66 from 'bip66';
