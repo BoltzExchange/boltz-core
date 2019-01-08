@@ -1,3 +1,12 @@
+## [0.0.5](https://github.com/BoltzExchange/boltz-core/compare/v0.0.4...v0.0.5) (2019-01-08)
+
+
+### Bug Fixes
+
+* disallow maximal sequence for refund transactions ([#9](https://github.com/BoltzExchange/boltz-core/issues/9)) ([abed72c](https://github.com/BoltzExchange/boltz-core/commit/abed72c))
+
+
+
 ## [0.0.4](https://github.com/BoltzExchange/boltz-core/compare/v0.0.3...v0.0.4) (2019-01-04)
 
 
