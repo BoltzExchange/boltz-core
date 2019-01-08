@@ -22,8 +22,8 @@ import { encodeSignature, scriptBuffersToScript, getOutputScriptType } from './S
  *
  * @returns claim transaction
  */
-export const constructClaimTransaction = (utxos: ClaimDetails[], destinationScript: Buffer,
-  feePerByte: number, isRbf: boolean, timeoutBlockHeight?: number) => {
+export const constructClaimTransaction = (utxos: ClaimDetails[], destinationScript: Buffer, feePerByte: number,
+  isRbf: boolean, timeoutBlockHeight?: number) => {
 
   const tx = new Transaction();
 
