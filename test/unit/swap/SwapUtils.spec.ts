@@ -1,12 +1,12 @@
 // tslint:disable:max-line-length
 import { expect } from 'chai';
-import { Transaction, crypto, ECPair, script } from 'bitcoinjs-lib';
 import ops from '@boltz/bitcoin-ops';
-import { getHexString, getHexBuffer } from '../../../lib/Utils';
-import { encodeSignature, toPushdataScript, scriptBuffersToScript, getOutputScriptType } from '../../../lib/swap/SwapUtils';
+import { Transaction, crypto, ECPair, script } from 'bitcoinjs-lib';
 import Networks from '../../../lib/consts/Networks';
 import * as scripts from '../../../lib/swap/Scripts';
 import { OutputType } from '../../../lib/consts/Enums';
+import { getHexString, getHexBuffer } from '../../../lib/Utils';
+import { encodeSignature, toPushdataScript, scriptBuffersToScript, getOutputScriptType } from '../../../lib/swap/SwapUtils';
 
 describe('SwapUtils', () => {
   const publicKeyHash = '0000000000000000000000000000000000000000';
@@ -82,7 +82,7 @@ describe('SwapUtils', () => {
     expect(getHexString(result)).to.be.equal(testData.result);
   });
 
-  it('should get the correct Output of output scripts', () => {
+  it('should get the correct output type of output scripts', () => {
     const keys = ECPair.makeRandom({ network: Networks.bitcoinRegtest });
     const publicKeyHash = crypto.hash160(keys.publicKey);
 

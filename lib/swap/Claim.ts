@@ -56,7 +56,7 @@ export const constructClaimTransaction = (utxos: ClaimDetails[], destinationScri
 
   utxos.forEach((utxo, index) => {
     switch (utxo.type) {
-      // Construct the signed input scripts for P2SH inputs
+      // Construct and sign the input scripts for P2SH inputs
       case OutputType.Legacy:
         const sigHash = tx.hashForSignature(index, utxo.redeemScript, Transaction.SIGHASH_ALL);
         const signature = utxo.keys.sign(sigHash);
@@ -84,7 +84,7 @@ export const constructClaimTransaction = (utxos: ClaimDetails[], destinationScri
         break;
     }
 
-    // Construct the signed witness for (nested) SegWit inputs
+    // Construct and sign the witness for (nested) SegWit inputs
     if (utxo.type !== OutputType.Legacy) {
       const sigHash = tx.hashForWitnessV0(index, utxo.redeemScript, utxo.value, Transaction.SIGHASH_ALL);
       const signature = script.signature.encode(utxo.keys.sign(sigHash), Transaction.SIGHASH_ALL);
