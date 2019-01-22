@@ -1,13 +1,13 @@
 import Networks from './consts/Networks';
-import { OutputType } from './consts/Enums';
-import { ScriptElement, TransactionOutput } from './consts/Types';
 import * as Scripts from './swap/Scripts';
-import { pkRefundSwap, pkHashRefundSwap } from './swap/Swap';
-import { detectSwap } from './swap/SwapDetector';
+import { OutputType } from './consts/Enums';
 import { estimateFee } from './FeeCalculator';
+import * as SwapUtils from './swap/SwapUtils';
+import { swapScript } from './swap/SwapScript';
+import { detectSwap } from './swap/SwapDetector';
 import { constructClaimTransaction } from './swap/Claim';
 import { constructRefundTransaction } from './swap/Refund';
-import * as SwapUtils from './swap/SwapUtils';
+import { ScriptElement, TransactionOutput } from './consts/Types';
 
 export {
   Networks,
@@ -17,8 +17,7 @@ export {
 
   Scripts,
 
-  pkRefundSwap,
-  pkHashRefundSwap,
+  swapScript,
 
   detectSwap,
   estimateFee,
