@@ -1,7 +1,7 @@
 import Networks from './consts/Networks';
 import * as Scripts from './swap/Scripts';
 import { OutputType } from './consts/Enums';
-import { estimateFee } from './FeeCalculator';
+import { estimateFee, estimateSize } from './FeeCalculator';
 import * as SwapUtils from './swap/SwapUtils';
 import { swapScript } from './swap/SwapScript';
 import { detectSwap } from './swap/SwapDetector';
@@ -21,6 +21,7 @@ export {
 
   detectSwap,
   estimateFee,
+  estimateSize,
 
   constructClaimTransaction,
   constructRefundTransaction,
