@@ -1,25 +1,33 @@
 version: 2
 jobs:
   build:
-    docker:
-      - image: circleci/node:lts
+    machine:
+      enabled: true
+      image: circleci/classic:edge
+  
     steps:
       - checkout:
+
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
+
       - run:
-          name: install
+          name: Install dependencies
           command: npm install
+
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - ./node_modules
+
       - run:
-          name: compile
+          name: Compile
           command: npm run compile
+
       - run:
-          name: lint
+          name: Lint
           command: npm run lint
+
       - run:
-          name: test
+          name: Test
           command: npm run test
