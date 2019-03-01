@@ -1,3 +1,12 @@
+## [0.0.6](https://github.com/BoltzExchange/boltz-core/compare/v0.0.5...v0.0.6) (2019-03-01)
+
+
+### Bug Fixes
+
+* network values for Litecoin regtest ([#20](https://github.com/BoltzExchange/boltz-core/issues/20)) ([d0a2400](https://github.com/BoltzExchange/boltz-core/commit/d0a2400))
+
+
+
 ## [0.0.5](https://github.com/BoltzExchange/boltz-core/compare/v0.0.4...v0.0.5) (2019-01-08)
 
 
