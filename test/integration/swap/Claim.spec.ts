@@ -1,23 +1,18 @@
-import { btcd, claimDetails } from './Swap.spec';
-import { UtxoManager } from './utils/UtxoManager';
 import { ClaimDetails } from '../../../lib/consts/Types';
+import { bitcoinClient, claimDetails, destinationOutput } from './Swap.spec';
 import { constructClaimTransaction } from '../../../lib/Boltz';
 
 describe('Claim', () => {
   const claimSwap = async (claimDetails: ClaimDetails) => {
     const claimTransaction = constructClaimTransaction(
       [claimDetails],
-      UtxoManager.outputScript,
+      destinationOutput,
       1,
       true,
     );
 
-    await btcd.sendRawTransaction(claimTransaction.toHex());
+    await bitcoinClient.sendRawTransaction(claimTransaction.toHex());
   };
-
-  before(async () => {
-    await btcd.connect();
-  });
 
   it('should claim a P2WSH swap', async () => {
     await claimSwap(claimDetails[0]);
@@ -34,17 +29,15 @@ describe('Claim', () => {
   it('should claim multiple swaps in one transaction', async () => {
     const claimTransaction = constructClaimTransaction(
       claimDetails.slice(3, 6),
-      UtxoManager.outputScript,
+      destinationOutput,
       1,
       false,
     );
 
-    await btcd.sendRawTransaction(claimTransaction.toHex());
+    await bitcoinClient.sendRawTransaction(claimTransaction.toHex());
   });
 
   after(async () => {
-    await btcd.generate(1);
-
-    btcd.disconnect();
+    await bitcoinClient.generate(1);
   });
 });

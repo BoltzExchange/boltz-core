@@ -1,6 +1,5 @@
-import { btcd, refundDetails } from './Swap.spec';
-import { UtxoManager } from './utils/UtxoManager';
 import { RefundDetails } from '../../../lib/consts/Types';
+import { bitcoinClient, refundDetails, destinationOutput } from './Swap.spec';
 import { constructRefundTransaction } from '../../../lib/Boltz';
 
 describe('Refund', () => {
@@ -9,22 +8,20 @@ describe('Refund', () => {
   const refundSwap = async (refundDetails: RefundDetails) => {
     const refundTransaction = constructRefundTransaction(
       [refundDetails],
-      UtxoManager.outputScript,
+      destinationOutput,
       bestBlockHeight,
       1,
     );
 
-    await btcd.sendRawTransaction(refundTransaction.toHex());
+    await bitcoinClient.sendRawTransaction(refundTransaction.toHex());
   };
 
   before(async () => {
-    await btcd.connect();
-
-    const { height } = await btcd.getBestBlock();
+    const { blocks } = await bitcoinClient.getBlockchainInfo();
 
     // Although it is possible that the height of the best block is not the height at which
     // the HTLC times out one can assume that the best block is already after the timeout
-    bestBlockHeight = height;
+    bestBlockHeight = blocks;
   });
 
   it('should refund a P2WSH swap', async () => {
@@ -42,17 +39,15 @@ describe('Refund', () => {
   it('should refund multiple swaps in one transaction', async () => {
     const refundTransaction = constructRefundTransaction(
       refundDetails.slice(3, 6),
-      UtxoManager.outputScript,
+      destinationOutput,
       bestBlockHeight,
       1,
     );
 
-    await btcd.sendRawTransaction(refundTransaction.toHex());
+    await bitcoinClient.sendRawTransaction(refundTransaction.toHex());
   });
 
   after(async () => {
-    await btcd.generate(1);
-
-    btcd.disconnect();
+    await bitcoinClient.generate(1);
   });
 });
