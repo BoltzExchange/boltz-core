@@ -65,8 +65,8 @@ const Networks = {
   litecoinRegtest: {
     messagePrefix: litecoinPrefix,
     bip32: testnetBip32,
-    bech32: 'tltc',
-    scriptHash: 0xc4,
+    bech32: 'rltc',
+    scriptHash: 0x3a,
     pubKeyHash: 0x6f,
     wif: 0xef,
   },
