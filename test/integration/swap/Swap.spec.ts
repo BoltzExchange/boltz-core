@@ -1,47 +1,55 @@
 import { expect } from 'chai';
-import { ECPair, crypto } from 'bitcoinjs-lib';
-import BtcdClient from './utils/BtcdClient';
-import { UtxoManager } from './utils/UtxoManager';
+import { ECPair, crypto, address, Transaction } from 'bitcoinjs-lib';
+import ChainClient from '../utils/ChainClient';
 import { getHexBuffer } from '../../../lib/Utils';
-import { Networks, swapScript, OutputType } from '../../../lib/Boltz';
 import { RefundDetails, ClaimDetails } from '../../../lib/consts/Types';
-import { p2wshOutput, p2shP2wshOutput, p2shOutput } from '../../../lib/swap/Scripts';
+import { Networks, swapScript, OutputType, detectSwap } from '../../../lib/Boltz';
+import { p2wshOutput, p2shP2wshOutput, p2shOutput, p2wpkhOutput } from '../../../lib/swap/Scripts';
 
-export const claimKeys = ECPair.makeRandom({ network: Networks.bitcoinSimnet });
-export const refundKeys = ECPair.makeRandom({ network: Networks.bitcoinSimnet });
-
-export const btcd = new BtcdClient();
+export const bitcoinClient = new ChainClient({
+  host: '127.0.0.1',
+  port: 18443,
+  rpcuser: 'kek',
+  rpcpass: 'kek',
+});
 
 export const claimDetails: ClaimDetails[] = [];
 export const refundDetails: RefundDetails[] = [];
 
+export const destinationOutput = p2wpkhOutput(
+  crypto.hash160(
+    ECPair.makeRandom({ network: Networks.bitcoinRegtest }).publicKey,
+  ),
+);
+
 describe('Swaps', () => {
-  const utxoManager = new UtxoManager(btcd);
+  const claimKeys = ECPair.makeRandom({ network: Networks.bitcoinRegtest });
+  const refundKeys = ECPair.makeRandom({ network: Networks.bitcoinRegtest });
 
   const preimage = getHexBuffer('b5b2dbb1f0663878ecbc20323b58b92c');
+  const preimageHash = crypto.sha256(preimage);
 
   const sendFundsToSwap = async (outputFunction: (scriptHex: Buffer) => Buffer, outputType: OutputType) => {
-    const { height } = await btcd.getBestBlock();
-    const timeoutBlockHeight = height + 1;
+    const { blocks } = await bitcoinClient.getBlockchainInfo();
+    const timeoutBlockHeight = blocks + 1;
 
-    const redeemScript = swapScript(crypto.sha256(preimage), claimKeys.publicKey, refundKeys.publicKey, timeoutBlockHeight);
-    const outputScript = outputFunction(redeemScript);
+    const redeemScript = swapScript(preimageHash, claimKeys.publicKey, refundKeys.publicKey, timeoutBlockHeight);
+    const swapAddress = address.fromOutputScript(outputFunction(redeemScript), Networks.bitcoinRegtest);
 
-    const transaction = utxoManager.constructTransaction(outputScript, 100000);
-    await btcd.sendRawTransaction(transaction.toHex());
+    const transactionId = await bitcoinClient.sendToAddress(swapAddress, 10000);
+    const transaction = Transaction.fromHex(await bitcoinClient.getRawTransaction(transactionId) as string);
 
-    const swapVout = 0;
-    const transactionOutput = transaction.outs[swapVout];
+    const { vout, value, script } = detectSwap(redeemScript, transaction)!;
 
     return {
       redeemScript,
       timeoutBlockHeight,
       swapOutput: {
-        txHash: transaction.getHash(),
-        vout: swapVout,
+        vout,
+        value,
+        script,
         type: outputType,
-        script: transactionOutput.script,
-        value: transactionOutput.value,
+        txHash: transaction.getHash(),
       },
     };
   };
@@ -55,8 +63,7 @@ describe('Swaps', () => {
   };
 
   before(async () => {
-    await btcd.connect();
-    await utxoManager.init();
+    await bitcoinClient.init();
   });
 
   it('should send funds to swaps', async () => {
@@ -83,13 +90,9 @@ describe('Swaps', () => {
       });
     }
 
-    await btcd.generate(1);
+    await bitcoinClient.generate(1);
 
     expect(claimDetails.length).to.be.equal(6);
     expect(refundDetails.length).to.be.equal(6);
-  });
-
-  after(() => {
-    btcd.disconnect();
   });
 });
