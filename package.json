@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Core library of Boltz",
   "main": "dist/Boltz.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "test:int": "mocha test/integration/swap/*.spec.ts",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "preversion": "npm run lint && npm run compile && npm run test",
-    "version": "npm run changelog && git add CHANGELOG.md",
+    "version": "npm run changelog",
     "prepublishOnly": "npm run compile"
   },
   "cross-os": {
