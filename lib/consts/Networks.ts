@@ -25,14 +25,7 @@ const Networks = {
     pubKeyHash: 0x3f,
     wif: 0x64,
   },
-  bitcoinRegtest: {
-    messagePrefix: bitcoinPrefix,
-    bip32: testnetBip32,
-    bech32: 'bcrt',
-    scriptHash: 0xc4,
-    pubKeyHash: 0x6f,
-    wif: 0xef,
-  },
+  bitcoinRegtest: networks.regtest,
 
   // Litecoin networks
   litecoinMainnet: {
