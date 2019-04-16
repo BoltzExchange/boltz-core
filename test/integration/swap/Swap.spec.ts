@@ -18,7 +18,7 @@ export const refundDetails: RefundDetails[] = [];
 
 export const destinationOutput = p2wpkhOutput(
   crypto.hash160(
-    ECPair.makeRandom({ network: Networks.bitcoinRegtest }).publicKey,
+    ECPair.makeRandom({ network: Networks.bitcoinRegtest }).publicKey!,
   ),
 );
 
@@ -33,7 +33,7 @@ describe('Swaps', () => {
     const { blocks } = await bitcoinClient.getBlockchainInfo();
     const timeoutBlockHeight = blocks + 1;
 
-    const redeemScript = swapScript(preimageHash, claimKeys.publicKey, refundKeys.publicKey, timeoutBlockHeight);
+    const redeemScript = swapScript(preimageHash, claimKeys.publicKey!, refundKeys.publicKey!, timeoutBlockHeight);
     const swapAddress = address.fromOutputScript(outputFunction(redeemScript), Networks.bitcoinRegtest);
 
     const transactionId = await bitcoinClient.sendToAddress(swapAddress, 10000);

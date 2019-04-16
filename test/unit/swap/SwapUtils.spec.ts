@@ -84,7 +84,7 @@ describe('SwapUtils', () => {
 
   it('should get the correct output type of output scripts', () => {
     const keys = ECPair.makeRandom({ network: Networks.bitcoinRegtest });
-    const publicKeyHash = crypto.hash160(keys.publicKey);
+    const publicKeyHash = crypto.hash160(keys.publicKey!);
 
     // PKH outputs
     expect(getOutputScriptType(scripts.p2wpkhOutput(publicKeyHash))).to.be.deep.equal({ type: OutputType.Bech32, isSh: false });
