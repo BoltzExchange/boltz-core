@@ -1,3 +1,12 @@
+## [0.0.7](https://github.com/BoltzExchange/boltz-core/compare/v0.0.6...v0.0.7) (2019-04-16)
+
+
+### Bug Fixes
+
+* use Bitcoin regtest network values from bitcoinjs-lib ([7d2afd6](https://github.com/BoltzExchange/boltz-core/commit/7d2afd6))
+
+
+
 ## [0.0.6](https://github.com/BoltzExchange/boltz-core/compare/v0.0.5...v0.0.6) (2019-03-01)
 
 
