@@ -35,9 +35,9 @@ describe('SwapDetector', () => {
 
     // Since we don't want to claim or refund the swap we can use random arguments
     redeemScript = swapScript(
-      crypto.sha256(keys.publicKey),
-      keys.publicKey,
-      keys.publicKey,
+      crypto.sha256(keys.publicKey!),
+      keys.publicKey!,
+      keys.publicKey!,
       1,
     );
 

@@ -2,7 +2,7 @@
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
 
-import { Transaction, Out } from 'bitcoinjs-lib';
+import { Transaction, TxOutput } from 'bitcoinjs-lib';
 import { p2shOutput, p2shP2wshOutput, p2wshOutput } from './Scripts';
 import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
@@ -17,15 +17,16 @@ export const detectSwap = (redeemScript: Buffer, transaction: Transaction) => {
     p2wshOutput(redeemScript),
   ].map(value => getHexString(value));
 
-  let returnValue: { type: OutputType, vout: number } & Out | undefined;
+  let returnValue: { type: OutputType, vout: number } & TxOutput | undefined;
 
   transaction.outs.forEach((out, vout) => {
-    const index = scripts.indexOf(getHexString(out.script));
+    const output = out as TxOutput;
+    const index = scripts.indexOf(getHexString(output.script));
 
     const swapOutput = {
       vout,
-      script: out.script,
-      value: out.value,
+      script: output.script,
+      value: output.value,
     };
 
     switch (index) {

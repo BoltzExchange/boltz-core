@@ -111,7 +111,7 @@ export const toPushdataScript = (elements: ScriptElement[]): Buffer => {
 export const getOutputScriptType = (outputScript: Buffer): Output | undefined => {
   const rawScript = script.decompile(outputScript);
 
-  if (rawScript.length > 1) {
+  if (rawScript && rawScript.length > 1) {
     switch (rawScript[0]) {
       case ops.OP_0:
         // If the second entry of the script array has the length of 20 it is a

@@ -1,5 +1,5 @@
-import { BIP32 } from 'bip32';
-import { Out, ECPair } from 'bitcoinjs-lib';
+import { BIP32Interface } from 'bip32';
+import { TxOutput, ECPair } from 'bitcoinjs-lib';
 import { OutputType } from './Enums';
 
 export type Error = {
@@ -13,10 +13,10 @@ export type TransactionOutput = {
   txHash: Buffer;
   vout: number;
   type: OutputType;
-} & Out;
+} & TxOutput;
 
 export type RefundDetails = TransactionOutput & {
-  keys: ECPair | BIP32;
+  keys: ECPair.ECPairInterface | BIP32Interface;
   redeemScript: Buffer;
 };
 
