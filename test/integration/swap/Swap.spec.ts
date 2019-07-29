@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { ECPair, crypto, address, Transaction } from 'bitcoinjs-lib';
 import ChainClient from '../utils/ChainClient';
 import { getHexBuffer } from '../../../lib/Utils';
@@ -62,11 +61,11 @@ describe('Swaps', () => {
     ];
   };
 
-  before(async () => {
+  beforeAll(async () => {
     await bitcoinClient.init();
   });
 
-  it('should send funds to swaps', async () => {
+  test('should send funds to swaps', async () => {
     for (let i = 0; i < 2; i += 1) {
       const claimOutputs = await createOutputs();
 
@@ -92,7 +91,7 @@ describe('Swaps', () => {
 
     await bitcoinClient.generate(1);
 
-    expect(claimDetails.length).to.be.equal(6);
-    expect(refundDetails.length).to.be.equal(6);
+    expect(claimDetails.length).toEqual(6);
+    expect(refundDetails.length).toEqual(6);
   });
 });

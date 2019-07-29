@@ -1,6 +1,6 @@
 import { RefundDetails } from '../../../lib/consts/Types';
-import { bitcoinClient, refundDetails, destinationOutput } from './Swap.spec';
 import { constructRefundTransaction } from '../../../lib/Boltz';
+import { bitcoinClient, refundDetails, destinationOutput } from './Swap.spec';
 
 describe('Refund', () => {
   let bestBlockHeight: number;
@@ -16,7 +16,7 @@ describe('Refund', () => {
     await bitcoinClient.sendRawTransaction(refundTransaction.toHex());
   };
 
-  before(async () => {
+  beforeAll(async () => {
     const { blocks } = await bitcoinClient.getBlockchainInfo();
 
     // Although it is possible that the height of the best block is not the height at which
@@ -24,19 +24,19 @@ describe('Refund', () => {
     bestBlockHeight = blocks;
   });
 
-  it('should refund a P2WSH swap', async () => {
+  test('should refund a P2WSH swap', async () => {
     await refundSwap(refundDetails[0]);
   });
 
-  it('should refund a P2SH swap', async () => {
+  test('should refund a P2SH swap', async () => {
     await refundSwap(refundDetails[1]);
   });
 
-  it('should refund a P2SH nested P2WSH swap', async () => {
+  test('should refund a P2SH nested P2WSH swap', async () => {
     await refundSwap(refundDetails[2]);
   });
 
-  it('should refund multiple swaps in one transaction', async () => {
+  test('should refund multiple swaps in one transaction', async () => {
     const refundTransaction = constructRefundTransaction(
       refundDetails.slice(3, 6),
       destinationOutput,
@@ -47,7 +47,7 @@ describe('Refund', () => {
     await bitcoinClient.sendRawTransaction(refundTransaction.toHex());
   });
 
-  after(async () => {
+  afterAll(async () => {
     await bitcoinClient.generate(1);
   });
 });

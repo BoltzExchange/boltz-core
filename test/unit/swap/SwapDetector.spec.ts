@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { Transaction, ECPair, crypto } from 'bitcoinjs-lib';
 import { OutputType } from '../../../lib/consts/Enums';
 import { swapScript } from '../../../lib/swap/SwapScript';
@@ -22,15 +21,15 @@ describe('SwapDetector', () => {
   const verifyDetectSwap = (index: number) => {
     const output = detectSwap(redeemScript, transactions[index]);
 
-    expect(output).to.not.be.undefined;
+    expect(output).not.toBeUndefined();
 
-    expect(output!.vout).to.be.equal(0);
-    expect(output!.value).to.be.equal(1);
-    expect(output!.type).to.be.equal(index);
-    expect(output!.script).to.be.deep.equal(scripts[index]);
+    expect(output!.vout).toEqual(0);
+    expect(output!.value).toEqual(1);
+    expect(output!.type).toEqual(index);
+    expect(output!.script).toEqual(scripts[index]);
   };
 
-  before(() => {
+  beforeAll(() => {
     const keys = ECPair.makeRandom();
 
     // Since we don't want to claim or refund the swap we can use random arguments
@@ -54,15 +53,15 @@ describe('SwapDetector', () => {
     }
   });
 
-  it('should detect P2WSH swaps', () => {
+  test('should detect P2WSH swaps', () => {
     verifyDetectSwap(0);
   });
 
-  it('should detect P2SH swaps', () => {
+  test('should detect P2SH swaps', () => {
     verifyDetectSwap(1);
   });
 
-  it('should detect P2SH nested P2WSH swaps', () => {
+  test('should detect P2SH nested P2WSH swaps', () => {
     verifyDetectSwap(2);
   });
 });

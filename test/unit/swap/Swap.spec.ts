@@ -1,5 +1,4 @@
 // tslint:disable:max-line-length
-import { expect } from 'chai';
 import { swapScript } from '../../../lib/swap/SwapScript';
 import { getHexString, getHexBuffer } from '../../../lib/Utils';
 
@@ -11,7 +10,7 @@ describe('Swaps', () => {
 
   const timeoutBlockHeight = 515924;
 
-  it('should get a swap script', () => {
+  test('should get a swap script', () => {
     const testData = {
       args: {
         preimageHash,
@@ -29,6 +28,6 @@ describe('Swaps', () => {
       testData.args.timeoutBlockHeight,
     );
 
-    expect(getHexString(result)).to.be.equal(testData.result);
+    expect(getHexString(result)).toEqual(testData.result);
   });
 });
