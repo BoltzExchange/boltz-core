@@ -1,5 +1,4 @@
 // tslint:disable:max-line-length
-import { expect } from 'chai';
 import ops from '@boltz/bitcoin-ops';
 import { Transaction, crypto, ECPair, script } from 'bitcoinjs-lib';
 import Networks from '../../../lib/consts/Networks';
@@ -11,7 +10,7 @@ import { encodeSignature, toPushdataScript, scriptBuffersToScript, getOutputScri
 describe('SwapUtils', () => {
   const publicKeyHash = '0000000000000000000000000000000000000000';
 
-  it('should encode signature', () => {
+  test('should encode signature', () => {
     const testData = [
       {
         args: {
@@ -47,11 +46,11 @@ describe('SwapUtils', () => {
       const { flag, signature } = data.args;
 
       const result = encodeSignature(flag, getHexBuffer(signature));
-      expect(getHexString(result)).to.be.equal(data.result);
+      expect(getHexString(result)).toEqual(data.result);
     });
   });
 
-  it('should get formed script', () => {
+  test('should get formed script', () => {
     const testData = {
       args: {
         elements: [
@@ -63,10 +62,10 @@ describe('SwapUtils', () => {
     };
 
     const result = scriptBuffersToScript(testData.args.elements);
-    expect(getHexString(result)).to.be.equal(testData.result);
+    expect(getHexString(result)).toEqual(testData.result);
   });
 
-  it('should get formed pushdata script', () => {
+  test('should get formed pushdata script', () => {
     const testData = {
       args: {
         elements: [
@@ -79,26 +78,26 @@ describe('SwapUtils', () => {
     };
 
     const result = toPushdataScript(testData.args.elements);
-    expect(getHexString(result)).to.be.equal(testData.result);
+    expect(getHexString(result)).toEqual(testData.result);
   });
 
-  it('should get the correct output type of output scripts', () => {
+  test('should get the correct output type of output scripts', () => {
     const keys = ECPair.makeRandom({ network: Networks.bitcoinRegtest });
     const publicKeyHash = crypto.hash160(keys.publicKey!);
 
     // PKH outputs
-    expect(getOutputScriptType(scripts.p2wpkhOutput(publicKeyHash))).to.be.deep.equal({ type: OutputType.Bech32, isSh: false });
-    expect(getOutputScriptType(scripts.p2pkhOutput(publicKeyHash))).to.be.deep.equal({ type: OutputType.Legacy, isSh: false });
+    expect(getOutputScriptType(scripts.p2wpkhOutput(publicKeyHash))).toEqual({ type: OutputType.Bech32, isSh: false });
+    expect(getOutputScriptType(scripts.p2pkhOutput(publicKeyHash))).toEqual({ type: OutputType.Legacy, isSh: false });
 
     // SH outputs
-    expect(getOutputScriptType(scripts.p2wshOutput(publicKeyHash))).to.be.deep.equal({ type: OutputType.Bech32, isSh: true });
-    expect(getOutputScriptType(scripts.p2shOutput(publicKeyHash))).to.be.deep.equal({ type: OutputType.Legacy, isSh: true });
+    expect(getOutputScriptType(scripts.p2wshOutput(publicKeyHash))).toEqual({ type: OutputType.Bech32, isSh: true });
+    expect(getOutputScriptType(scripts.p2shOutput(publicKeyHash))).toEqual({ type: OutputType.Legacy, isSh: true });
 
     // Compatibility output
-    expect(getOutputScriptType(scripts.p2shP2wpkhOutput(publicKeyHash).outputScript)).to.be.deep.equal({ type: OutputType.Legacy, isSh: true });
-    expect(getOutputScriptType(scripts.p2shP2wshOutput(publicKeyHash))).to.be.deep.equal({ type: OutputType.Legacy, isSh: true });
+    expect(getOutputScriptType(scripts.p2shP2wpkhOutput(publicKeyHash).outputScript)).toEqual({ type: OutputType.Legacy, isSh: true });
+    expect(getOutputScriptType(scripts.p2shP2wshOutput(publicKeyHash))).toEqual({ type: OutputType.Legacy, isSh: true });
 
     // It should return "undefined" if the output script is an unknown one
-    expect(getOutputScriptType(script.compile([ops.OP_INVALIDOPCODE]))).to.be.undefined;
+    expect(getOutputScriptType(script.compile([ops.OP_INVALIDOPCODE]))).toBeUndefined();
   });
 });

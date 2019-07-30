@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { getHexString, getHexBuffer } from '../../../lib/Utils';
 import * as scripts from '../../../lib/swap/Scripts';
 
@@ -6,7 +5,7 @@ describe('Scripts', () => {
   const publicKeyHash = '0000000000000000000000000000000000000000';
   const redeemScript = '00';
 
-  it('should get P2WPKH output script', () => {
+  test('should get P2WPKH output script', () => {
     const testData = {
       args: {
         hash: publicKeyHash,
@@ -15,10 +14,10 @@ describe('Scripts', () => {
     };
 
     const result = scripts.p2wpkhOutput(getHexBuffer(testData.args.hash));
-    expect(getHexString(result)).to.be.equal(testData.result);
+    expect(getHexString(result)).toEqual(testData.result);
   });
 
-  it('should get P2WSH output script', () => {
+  test('should get P2WSH output script', () => {
     const testData = {
       args: {
         scriptHex: redeemScript,
@@ -27,10 +26,10 @@ describe('Scripts', () => {
     };
 
     const result = scripts.p2wshOutput(getHexBuffer(testData.args.scriptHex));
-    expect(getHexString(result)).to.be.equal(testData.result);
+    expect(getHexString(result)).toEqual(testData.result);
   });
 
-  it('should get P2PKH output script', () => {
+  test('should get P2PKH output script', () => {
     const testData = {
       args: {
         hash: publicKeyHash,
@@ -39,10 +38,10 @@ describe('Scripts', () => {
     };
 
     const result = scripts.p2pkhOutput(getHexBuffer(testData.args.hash));
-    expect(getHexString(result)).to.be.equal(testData.result);
+    expect(getHexString(result)).toEqual(testData.result);
   });
 
-  it('should get P2SH output script', () => {
+  test('should get P2SH output script', () => {
     const testData = {
       args: {
         scriptHex: redeemScript,
@@ -51,10 +50,10 @@ describe('Scripts', () => {
     };
 
     const result = scripts.p2shOutput(getHexBuffer(testData.args.scriptHex));
-    expect(getHexString(result)).to.be.equal(testData.result);
+    expect(getHexString(result)).toEqual(testData.result);
   });
 
-  it('should get P2SH nested P2WPKH output script', () => {
+  test('should get P2SH nested P2WPKH output script', () => {
     const testData = {
       args: {
         hash: publicKeyHash,
@@ -67,10 +66,10 @@ describe('Scripts', () => {
 
     const result = scripts.p2shP2wpkhOutput(getHexBuffer(testData.args.hash));
 
-    expect(result).to.be.deep.equal(testData.result);
+    expect(result).toEqual(testData.result);
   });
 
-  it('should get P2SH nested P2WSH output script', () => {
+  test('should get P2SH nested P2WSH output script', () => {
     const testData =  {
       args: {
         scriptHex: redeemScript,
@@ -79,6 +78,6 @@ describe('Scripts', () => {
     };
 
     const result = scripts.p2shP2wshOutput(getHexBuffer(testData.args.scriptHex));
-    expect(getHexString(result)).to.be.equal(testData.result);
+    expect(getHexString(result)).toEqual(testData.result);
   });
 });
