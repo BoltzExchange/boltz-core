@@ -2,9 +2,9 @@
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
 
-import { script, crypto } from 'bitcoinjs-lib';
-import ops from '@boltz/bitcoin-ops';
 import * as bip65 from 'bip65';
+import ops from '@boltz/bitcoin-ops';
+import { script, crypto } from 'bitcoinjs-lib';
 import { toPushdataScript } from './SwapUtils';
 
 const encodeCltv = (timeoutBlockHeight: number) => {

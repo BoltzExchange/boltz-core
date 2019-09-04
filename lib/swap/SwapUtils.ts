@@ -2,15 +2,15 @@
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
 
-import { script } from 'bitcoinjs-lib';
 import Bn from 'bn.js';
 import bip66 from 'bip66';
 import ops from '@boltz/bitcoin-ops';
+import { script } from 'bitcoinjs-lib';
 import * as varuint from 'varuint-bitcoin';
-import { getHexBuffer, getHexString } from '../Utils';
-import { ScriptElement } from '../consts/Types';
 import { OutputType } from '../consts/Enums';
+import { ScriptElement } from '../consts/Types';
 import { Output } from '../FeeCalculator';
+import { getHexBuffer, getHexString } from '../Utils';
 
 const zeroHexBuffer = getHexBuffer('00');
 

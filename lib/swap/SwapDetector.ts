@@ -3,9 +3,9 @@
  */
 
 import { Transaction, TxOutput } from 'bitcoinjs-lib';
-import { p2shOutput, p2shP2wshOutput, p2wshOutput } from './Scripts';
 import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
+import { p2shOutput, p2shP2wshOutput, p2wshOutput } from './Scripts';
 
 /**
  * Detects a swap output with the matching redeem script in a transaction

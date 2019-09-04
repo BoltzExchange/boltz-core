@@ -1,5 +1,6 @@
 import { Transaction } from 'bitcoinjs-lib';
 import RpcClient from './RpcClient';
+import { OutputType } from '../../../lib/Boltz';
 
 type ChainConfig = {
   host: string;
@@ -85,6 +86,7 @@ interface ChainClient {
 
 class ChainClient {
   private client: RpcClient;
+  private miningAddress!: string;
 
   private static readonly decimals = 100000000;
 
@@ -93,6 +95,7 @@ class ChainClient {
   }
 
   public init = async () => {
+    this.miningAddress = await this.getNewAddress();
     const { blocks } = await this.getBlockchainInfo();
 
     // If there are less than 101 blocks no coinbase outputs are spendable
@@ -135,6 +138,21 @@ class ChainClient {
     return 2;
   }
 
+  public getNewAddress = (type = OutputType.Bech32) => {
+    const outputType = (() => {
+      switch (type) {
+        case OutputType.Bech32:
+          return 'bech32';
+        case OutputType.Compatibility:
+          return 'p2sh-segwit';
+        default:
+          return 'legacy';
+      }
+    })();
+
+    return this.client.request<string>('getnewaddress', ['', outputType]);
+  }
+
   /**
    * @param amount in satoshis
    */
@@ -142,8 +160,8 @@ class ChainClient {
     return this.client.request<string>('sendtoaddress', [address, amount / ChainClient.decimals]);
   }
 
-  public generate = (blocks: number) => {
-    return this.client.request<string[]>('generate', [blocks]);
+  public generate = async (blocks: number) => {
+    return this.client.request<string[]>('generatetoaddress', [blocks, this.miningAddress]);
   }
 }
 

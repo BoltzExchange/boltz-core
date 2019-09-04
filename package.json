@@ -5,12 +5,13 @@
   "main": "dist/Boltz.js",
   "scripts": {
     "compile": "tsc",
+    "compile:watch": "tsc --watch",
     "lint": "tslint --project tsconfig.json && tslint --config tslint-alt.json 'test/**/*.ts'",
-    "pretest": "docker run -v `pwd`/docker:/config -d --name boltz-bitcoin -p 18443:18443 boltz/bitcoin-core --conf=/config/bitcoin.conf",
-    "posttest": "docker kill boltz-bitcoin && docker rm boltz-bitcoin",
+    "docker:start": "docker run -v `pwd`/docker:/config -d --name boltz-bitcoin -p 18443:18443 boltz/bitcoin-core:0.18.1 --conf=/config/bitcoin.conf",
+    "docker:stop": "docker stop boltz-bitcoin && docker rm boltz-bitcoin",
     "test": "npm run test:unit && npm run test:int",
-    "test:unit": "jest test/unit/*.spec.ts test/unit/swap/*.spec.ts",
-    "test:int": "jest test/integration/swap/*.spec.ts",
+    "test:unit": "jest test/unit",
+    "test:int": "jest test/integration",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "preversion": "npm run lint && npm run compile && npm run test",
     "version": "npm run changelog",
@@ -31,22 +32,23 @@
     "@boltz/bitcoin-ops": "^2.0.0",
     "bip65": "^1.0.3",
     "bip66": "^1.1.5",
-    "bitcoinjs-lib": "^5.1.2",
+    "bitcoinjs-lib": "^5.1.6",
     "bn.js": "^5.0.0",
-    "varuint-bitcoin": "^1.1.0"
+    "varuint-bitcoin": "^1.1.2"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.15",
+    "@types/jest": "^24.0.18",
+    "@types/node": "^12.7.10",
     "@types/uuid": "^3.4.5",
-    "@types/ws": "^6.0.1",
+    "@types/ws": "^6.0.3",
     "conventional-changelog-cli": "^2.0.23",
-    "jest": "^24.8.0",
-    "ts-jest": "^24.0.2",
-    "tslint": "^5.18.0",
-    "tslint-config-airbnb": "^5.11.1",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.1.0",
+    "tslint": "^5.20.0",
+    "tslint-config-airbnb": "^5.11.2",
     "tslint-no-circular-imports": "^0.7.0",
-    "typescript": "^3.5.3",
-    "uuid": "^3.3.2",
-    "ws": "^7.1.1"
+    "typescript": "^3.6.3",
+    "uuid": "^3.3.3",
+    "ws": "^7.1.2"
   }
 }
