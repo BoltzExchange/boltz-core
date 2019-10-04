@@ -7,7 +7,7 @@ export type Error = {
   code: string;
 };
 
-export type ScriptElement = Buffer | number;
+export type ScriptElement = Buffer | number | string;
 
 export type TransactionOutput = {
   txHash: Buffer;

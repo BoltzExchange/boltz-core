@@ -2,10 +2,18 @@ language: node_js
 
 node_js:
   - "lts/*"
+  - "node"
+
+os:
+  - linux
+  - windows
 
 cache:
   directories:
     - "node_modules"
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" != 'windows' ]]; then npm run docker:start; fi
 
 install:
   - npm install
@@ -13,4 +21,6 @@ install:
 script:
   - npm run compile
   - npm run lint
-  - npm run test
+  - npm run test:unit
+  - if [[ "$TRAVIS_OS_NAME" != 'windows' ]]; then npm run test:int; fi
+

@@ -2,8 +2,8 @@
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
 
-import { script, crypto } from 'bitcoinjs-lib';
 import ops from '@boltz/bitcoin-ops';
+import { script, crypto } from 'bitcoinjs-lib';
 
 /**
  * Get a P2WPKH output script
