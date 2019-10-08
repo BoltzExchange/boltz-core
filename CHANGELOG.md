@@ -1,3 +1,12 @@
+## [0.0.8](https://github.com/BoltzExchange/boltz-core/compare/v0.0.7...v0.0.8) (2019-10-08)
+
+
+### Features
+
+* add Dogecoin network values ([#29](https://github.com/BoltzExchange/boltz-core/issues/29)) ([60e0fbe](https://github.com/BoltzExchange/boltz-core/commit/60e0fbe))
+
+
+
 ## [0.0.7](https://github.com/BoltzExchange/boltz-core/compare/v0.0.6...v0.0.7) (2019-04-16)
 
 
