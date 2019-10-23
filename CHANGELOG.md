@@ -1,3 +1,12 @@
+## [0.0.9](https://github.com/BoltzExchange/boltz-core/compare/v0.0.8...v0.0.9) (2019-10-23)
+
+
+### Features
+
+* add method to detect preimage from claim transaction ([9ae111c](https://github.com/BoltzExchange/boltz-core/commit/9ae111c))
+
+
+
 ## [0.0.8](https://github.com/BoltzExchange/boltz-core/compare/v0.0.7...v0.0.8) (2019-10-08)
 
 
