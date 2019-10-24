@@ -1,22 +1,13 @@
 import { Transaction, ECPair, crypto } from 'bitcoinjs-lib';
-import { OutputType } from '../../../lib/consts/Enums';
+import { getScriptHashFunction } from './Utils';
 import { swapScript } from '../../../lib/swap/SwapScript';
 import { detectSwap } from '../../../lib/swap/SwapDetector';
-import { p2wshOutput, p2shOutput, p2shP2wshOutput } from '../../../lib/swap/Scripts';
 
 describe('SwapDetector', () => {
   let redeemScript: Buffer;
 
   const scripts: Buffer[] = [];
   const transactions: Transaction[] = [];
-
-  const getScriptHashFunction = (type: OutputType) => {
-    switch (type) {
-      case OutputType.Bech32: return p2wshOutput;
-      case OutputType.Legacy: return p2shOutput;
-      case OutputType.Compatibility: return p2shP2wshOutput;
-    }
-  };
 
   const verifyDetectSwap = (index: number) => {
     const output = detectSwap(redeemScript, transactions[index]);
