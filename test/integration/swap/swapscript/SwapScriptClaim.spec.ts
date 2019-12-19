@@ -1,19 +1,8 @@
-import { ClaimDetails } from '../../../lib/consts/Types';
-import { constructClaimTransaction } from '../../../lib/Boltz';
-import { bitcoinClient, claimDetails, destinationOutput } from './Swap.spec';
+import { claimDetails } from './SwapScript.spec';
+import { constructClaimTransaction } from '../../../../lib/Boltz';
+import { bitcoinClient, destinationOutput, claimSwap } from '../Utils';
 
-describe('Claim', () => {
-  const claimSwap = async (claimDetails: ClaimDetails) => {
-    const claimTransaction = constructClaimTransaction(
-      [claimDetails],
-      destinationOutput,
-      1,
-      true,
-    );
-
-    await bitcoinClient.sendRawTransaction(claimTransaction.toHex());
-  };
-
+describe('SwapScript claim', () => {
   test('should claim a P2WSH swap', async () => {
     await claimSwap(claimDetails[0]);
   });

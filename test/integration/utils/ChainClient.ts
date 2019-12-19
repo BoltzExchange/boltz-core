@@ -116,8 +116,8 @@ class ChainClient {
     return this.client.request<Block>('getblock', [hash]);
   }
 
-  public sendRawTransaction = (rawTransaction: string, allowHighFees = true) => {
-    return this.client.request<string>('sendrawtransaction', [rawTransaction, allowHighFees]);
+  public sendRawTransaction = (rawTransaction: string) => {
+    return this.client.request<string>('sendrawtransaction', [rawTransaction]);
   }
 
   /**

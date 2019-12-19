@@ -1,8 +1,8 @@
 // tslint:disable:max-line-length
-import { swapScript } from '../../../lib/swap/SwapScript';
+import swapScript from '../../../lib/swap/SwapScript';
 import { getHexString, getHexBuffer } from '../../../lib/Utils';
 
-describe('Swaps', () => {
+describe('SwapScript', () => {
   const preimageHash = getHexBuffer('53ada8e6de01c26ff43040887ba7b22bddce19f8658fd1ba00716ed79d15cd5e');
   const destinationPublicKey = getHexBuffer('03f8109578aae1e5cfc497e466cf6ae6625497cd31886e87b2f4f54f3f0f46b539');
 

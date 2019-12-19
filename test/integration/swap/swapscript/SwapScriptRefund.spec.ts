@@ -1,8 +1,9 @@
-import { RefundDetails } from '../../../lib/consts/Types';
-import { constructRefundTransaction } from '../../../lib/Boltz';
-import { bitcoinClient, refundDetails, destinationOutput } from './Swap.spec';
+import { refundDetails } from './SwapScript.spec';
+import { destinationOutput, bitcoinClient } from '../Utils';
+import { RefundDetails } from '../../../../lib/consts/Types';
+import { constructRefundTransaction } from '../../../../lib/Boltz';
 
-describe('Refund', () => {
+describe('SwapScript refund', () => {
   let bestBlockHeight: number;
 
   const refundSwap = async (refundDetails: RefundDetails) => {

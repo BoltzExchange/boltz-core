@@ -19,12 +19,14 @@ import { encodeSignature, scriptBuffersToScript, getOutputScriptType } from './S
  * @param feePerByte how many satoshis per vbyte should be paid as fee
  * @param isRbf whether the transaction should signal full Replace-by-Fee
  * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
- *
- * @returns claim transaction
  */
-export const constructClaimTransaction = (utxos: ClaimDetails[], destinationScript: Buffer, feePerByte: number,
-  isRbf: boolean, timeoutBlockHeight?: number) => {
-
+export const constructClaimTransaction = (
+  utxos: ClaimDetails[],
+  destinationScript: Buffer,
+  feePerByte: number,
+  isRbf = true,
+  timeoutBlockHeight?: number,
+) => {
   const tx = new Transaction();
 
   // Refund transactions are just like claim ones and therefore this method
