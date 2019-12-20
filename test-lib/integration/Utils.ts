@@ -1,8 +1,8 @@
 import { ECPair, crypto, address, Transaction } from 'bitcoinjs-lib';
-import ChainClient from '../utils/ChainClient';
-import { ClaimDetails, RefundDetails } from '../../../lib/consts/Types';
-import { Networks, OutputType, detectSwap, constructClaimTransaction, constructRefundTransaction } from '../../../lib/Boltz';
-import { p2wpkhOutput, p2shOutput, p2wshOutput, p2shP2wshOutput } from '../../../lib/swap/Scripts';
+import ChainClient from './utils/ChainClient';
+import { ClaimDetails, RefundDetails } from '../../lib/consts/Types';
+import { p2wpkhOutput, p2shOutput, p2wshOutput, p2shP2wshOutput } from '../../lib/swap/Scripts';
+import { Networks, OutputType, detectSwap, constructClaimTransaction, constructRefundTransaction } from '../../lib/Boltz';
 
 export const bitcoinClient = new ChainClient({
   host: '127.0.0.1',

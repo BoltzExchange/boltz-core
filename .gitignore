@@ -54,7 +54,7 @@ dist/
 # Yarn Integrity file
 .yarn-integrity
 
-#  Webstorm config
+# Webstorm config
 .idea/
 
 # typedoc
@@ -62,3 +62,10 @@ typedoc/
 
 # Visual Studio Code configuration
 .vscode
+
+# Truffle build folders
+build/
+
+# Truffle deployment secrets
+.truffle.mnemonic
+.infura.key

@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { constructClaimTransaction } from '../../../../lib/Boltz';
+import { constructClaimTransaction } from '../../../lib/Boltz';
 import { bitcoinClient, destinationOutput, claimSwap } from '../Utils';
 import { claimDetails, invalidPreimageLengthSwap } from './ReverseSwapScript.spec';
 

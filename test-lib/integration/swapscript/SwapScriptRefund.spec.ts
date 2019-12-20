@@ -1,7 +1,7 @@
 import { refundDetails } from './SwapScript.spec';
 import { destinationOutput, bitcoinClient } from '../Utils';
-import { RefundDetails } from '../../../../lib/consts/Types';
-import { constructRefundTransaction } from '../../../../lib/Boltz';
+import { RefundDetails } from '../../../lib/consts/Types';
+import { constructRefundTransaction } from '../../../lib/Boltz';
 
 describe('SwapScript refund', () => {
   let bestBlockHeight: number;
