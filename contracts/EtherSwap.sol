@@ -42,6 +42,7 @@ contract EtherSwap {
     }
 
     function claim(bytes32 _preimageHash, bytes calldata _preimage) external onlyPendingSwaps(_preimageHash) {
+        require(_preimage.length == 32, "the preimage has to the have a length of 32 bytes");
         require(_preimageHash == sha256(_preimage), "the preimage does not correspond the provided hash");
 
         swaps[_preimageHash].pending = false;

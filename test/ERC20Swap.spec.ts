@@ -108,6 +108,15 @@ contract('ERC20Swap', async (accounts) => {
     }
   });
 
+  it('should not claim swaps with preimages that have an invalid length', async () => {
+    try {
+      await instance.claim(preimageHash, bufferToBytes(randomBytes(64)));
+      throw { reason: 'should not claim swaps with preimages that have an invalid length' };
+    } catch (error) {
+      expect(error.reason).to.be.equal('the preimage has to the have a length of 32 bytes');
+    }
+  });
+
   it('should claim swaps', async () => {
     // Test claiming with an incorrect preimage
     try {
