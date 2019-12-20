@@ -4,6 +4,7 @@
 
 import Bn from 'bn.js';
 import bip66 from 'bip66';
+import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
 import { script } from 'bitcoinjs-lib';
 import * as varuint from 'varuint-bitcoin';
@@ -139,4 +140,13 @@ export const getOutputScriptType = (outputScript: Buffer): Output | undefined =>
   }
 
   return;
+};
+
+/**
+ * Encode a block height into a formed pushdata script
+ */
+export const encodeCltv = (timeoutBlockHeight: number) => {
+  return script.number.encode(
+    bip65.encode({ blocks: timeoutBlockHeight }),
+  );
 };

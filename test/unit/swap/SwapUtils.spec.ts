@@ -5,12 +5,18 @@ import Networks from '../../../lib/consts/Networks';
 import * as scripts from '../../../lib/swap/Scripts';
 import { OutputType } from '../../../lib/consts/Enums';
 import { getHexString, getHexBuffer } from '../../../lib/Utils';
-import { encodeSignature, toPushdataScript, scriptBuffersToScript, getOutputScriptType } from '../../../lib/swap/SwapUtils';
+import {
+  encodeCltv,
+  encodeSignature,
+  toPushdataScript,
+  getOutputScriptType,
+  scriptBuffersToScript,
+} from '../../../lib/swap/SwapUtils';
 
 describe('SwapUtils', () => {
   const publicKeyHash = '0000000000000000000000000000000000000000';
 
-  test('should encode signature', () => {
+  test('should encode signatures', () => {
     const testData = [
       {
         args: {
@@ -50,7 +56,7 @@ describe('SwapUtils', () => {
     });
   });
 
-  test('should get formed script', () => {
+  test('should get formed scripts', () => {
     const testData = {
       args: {
         elements: [
@@ -65,7 +71,7 @@ describe('SwapUtils', () => {
     expect(getHexString(result)).toEqual(testData.result);
   });
 
-  test('should get formed pushdata script', () => {
+  test('should get formed pushdata scripts', () => {
     const testData = {
       args: {
         elements: [
@@ -99,5 +105,9 @@ describe('SwapUtils', () => {
 
     // It should return "undefined" if the output script is an unknown one
     expect(getOutputScriptType(script.compile([ops.OP_INVALIDOPCODE]))).toBeUndefined();
+  });
+
+  test('should encode CLTVs', () => {
+    expect(encodeCltv(608861)).toEqual(getHexBuffer('5d4a09'));
   });
 });

@@ -15,10 +15,15 @@ const dummyPreimage = getHexBuffer('0x00');
  * @param destinationScript the output script to which the funds should be sent
  * @param timeoutBlockHeight locktime of the transaction
  * @param feePerByte how many satoshis per vbyte should be paid as fee
- *
- * @returns refund transaction
+ * @param isRbf whether the transaction should signal full Replace-by-Fee
  */
-export const constructRefundTransaction = (utxos: RefundDetails[], destinationScript: Buffer, timeoutBlockHeight: number, feePerByte: number) => {
+export const constructRefundTransaction = (
+  utxos: RefundDetails[],
+  destinationScript: Buffer,
+  timeoutBlockHeight: number,
+  feePerByte: number,
+  isRbf = true,
+) => {
   const claimUtxos: ClaimDetails[] = [];
 
   utxos.forEach((utxo) => {
@@ -32,7 +37,7 @@ export const constructRefundTransaction = (utxos: RefundDetails[], destinationSc
     claimUtxos,
     destinationScript,
     feePerByte,
-    true,
+    isRbf,
     timeoutBlockHeight,
   );
 };
