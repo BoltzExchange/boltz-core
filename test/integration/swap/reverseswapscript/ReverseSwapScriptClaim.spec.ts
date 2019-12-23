@@ -1,16 +1,39 @@
+import { randomBytes } from 'crypto';
 import { constructClaimTransaction } from '../../../../lib/Boltz';
 import { bitcoinClient, destinationOutput, claimSwap } from '../Utils';
 import { claimDetails, invalidPreimageLengthSwap } from './ReverseSwapScript.spec';
 
 describe('ReverseSwapScript claim', () => {
-  test('should not claim reverse swap if the preimage has an invalid length', async () => {
+  test('should not claim reverse swaps if the preimage has an invalid length', async () => {
+    let actualError: any;
+
     try {
       await claimSwap(invalidPreimageLengthSwap);
     } catch (error) {
       // If the preimage has in invalid length the refund key is loaded and the signature is verified against it
-      expect(error.code).toEqual(-26);
-      expect(error.message).toEqual('non-mandatory-script-verify-flag (Locktime requirement not satisfied) (code 64)');
+      actualError = error;
     }
+
+    expect(actualError.code).toEqual(-26);
+    expect(actualError.message).toEqual('non-mandatory-script-verify-flag (Locktime requirement not satisfied) (code 64)');
+  });
+
+  test('should not claim reverse swaps if the preimage has a valid length but an invalid hash', async () => {
+    let actualError: any;
+
+    try {
+      const toClaim = {
+        ...invalidPreimageLengthSwap,
+      };
+      toClaim.preimage = randomBytes(32);
+
+      await claimSwap(toClaim);
+    } catch (error) {
+      actualError = error;
+    }
+
+    expect(actualError.code).toEqual(-26);
+    expect(actualError.message).toEqual('non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation) (code 64)');
   });
 
   test('should claim a P2WSH reverse swap', async () => {
