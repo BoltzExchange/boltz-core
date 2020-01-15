@@ -41,7 +41,7 @@ contract('EtherSwap', async (accounts) => {
     expect(result.logs[0].args.__length__).to.be.equal(1);
     expect(result.logs[0].args._preimageHash).to.be.equal(preimageHashString);
 
-    const swapInfo = await instance.getSwapInfo(preimageHash);
+    const swapInfo = await instance.swaps(preimageHash);
 
     expect(swapInfo[0].toString()).to.be.deep.equal(swapAmount.toString());
     expect(swapInfo[1]).to.be.equal(claimAddress);
@@ -116,7 +116,7 @@ contract('EtherSwap', async (accounts) => {
     expect(result.logs[0].args.__length__).to.be.equal(1);
     expect(result.logs[0].args._preimageHash).to.be.equal(preimageHashString);
 
-    const swapInfo = await instance.getSwapInfo(preimageHash);
+    const swapInfo = await instance.swaps(preimageHash);
 
     expect(swapInfo[0].toString()).to.be.deep.equal(swapAmount.toString());
     expect(swapInfo[1]).to.be.equal(claimAddress);
@@ -176,7 +176,7 @@ contract('EtherSwap', async (accounts) => {
     expect(result.logs[0].args.__length__).to.be.equal(1);
     expect(result.logs[0].args._preimageHash).to.be.equal(refundPreimageHashString);
 
-    const swapInfo = await instance.getSwapInfo(preimageHash);
+    const swapInfo = await instance.swaps(preimageHash);
 
     expect(swapInfo[0].toString()).to.be.deep.equal(swapAmount.toString());
     expect(swapInfo[1]).to.be.equal(claimAddress);

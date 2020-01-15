@@ -27,7 +27,7 @@
 require('ts-node/register');
 
 const fs = require('fs');
-const HDWalletProvider = require('truffle-hdwallet-provider');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 const paths = {
   infuraKey: '.infura.key',

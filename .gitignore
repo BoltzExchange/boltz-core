@@ -65,7 +65,11 @@ typedoc/
 
 # Truffle build folders
 build/
+types/
 
 # Truffle deployment secrets
 .truffle.mnemonic
 .infura.key
+
+# MythX output folder
+bin/ 

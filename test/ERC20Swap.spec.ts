@@ -58,7 +58,7 @@ contract('ERC20Swap', async (accounts) => {
     expect(result.logs[0].args.__length__).to.be.equal(1);
     expect(result.logs[0].args._preimageHash).to.be.equal(preimageHashString);
 
-    const swapInfo = await instance.getSwapInfo(preimageHash);
+    const swapInfo = await instance.swaps(preimageHash);
 
     expect(swapInfo[0].toNumber()).to.be.equal(swapAmount);
     expect(swapInfo[1]).to.be.equal(token.address);
@@ -137,7 +137,7 @@ contract('ERC20Swap', async (accounts) => {
     expect(result.logs[0].args.__length__).to.be.equal(1);
     expect(result.logs[0].args._preimageHash).to.be.equal(preimageHashString);
 
-    const swapInfo = await instance.getSwapInfo(preimageHash);
+    const swapInfo = await instance.swaps(preimageHash);
 
     expect(swapInfo[0].toNumber()).to.be.eq(swapAmount);
     expect(swapInfo[1]).to.be.equal(token.address);
@@ -186,7 +186,7 @@ contract('ERC20Swap', async (accounts) => {
     expect(result.logs[0].args.__length__).to.be.equal(1);
     expect(result.logs[0].args._preimageHash).to.be.equal(refundPreimageHashString);
 
-    const swapInfo = await instance.getSwapInfo(preimageHash);
+    const swapInfo = await instance.swaps(preimageHash);
 
     expect(swapInfo[0].toNumber()).to.be.eq(swapAmount);
     expect(swapInfo[1]).to.be.equal(token.address);

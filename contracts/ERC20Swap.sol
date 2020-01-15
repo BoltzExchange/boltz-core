@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0 <0.6.0;
+pragma solidity ^0.5.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -16,7 +16,7 @@ contract ERC20Swap {
         bool pending;
     }
 
-    mapping (bytes32 => Swap) private swaps;
+    mapping (bytes32 => Swap) public swaps;
 
     event Claim(bytes32 _preimageHash);
     event Creation(bytes32 _preimageHash);
@@ -79,17 +79,5 @@ contract ERC20Swap {
 
         // Emit an event for the refund
         emit Refund(_preimageHash);
-    }
-
-    function getSwapInfo(bytes32 _preimageHash) external view returns (
-        uint256 amount,
-        address erc20Token,
-        address claimAddress,
-        address refundAddress,
-        uint256 timelock,
-        bool pending
-    ) {
-        Swap memory swap = swaps[_preimageHash];
-        return (swap.amount, swap.erc20Token, swap.claimAddress, swap.refundAddress, swap.timelock, swap.pending);
     }
 }
