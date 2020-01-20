@@ -9,6 +9,7 @@ module.exports = function(deployer, network) {
   deployer.deploy(EtherSwap);
 
   if (network !== 'mainnet') {
-    deployer.deploy(TestERC20, new BN(10).pow(new BN(18)));
+    const decimals = new BN(10).pow(new BN(18));
+    deployer.deploy(TestERC20, new BN(1000).mul(decimals));
   }
 };
