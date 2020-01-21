@@ -1,6 +1,6 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.16;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20Swap {
     struct Swap {
@@ -33,7 +33,7 @@ contract ERC20Swap {
         require(swaps[_preimageHash].amount == 0, "a swap with this preimage hash exists already");
 
         // Transfer the requested amount of ERC20 tokens to this contract
-        ERC20 tokenContract = ERC20(_erc20Token);
+        IERC20 tokenContract = IERC20(_erc20Token);
 
         require(tokenContract.allowance(msg.sender, address(this)) >= _amount, "requested amount exceeds allowance");
         require(tokenContract.transferFrom(msg.sender, address(this), _amount), "could not transfer ERC20 tokens");
@@ -60,7 +60,7 @@ contract ERC20Swap {
         Swap memory swap = swaps[_preimageHash];
 
         // Transfer the ERC20 tokens to the recipient
-        ERC20 tokenContract = ERC20(swap.erc20Token);
+        IERC20 tokenContract = IERC20(swap.erc20Token);
         require(tokenContract.transfer(swap.claimAddress, swap.amount), "could not transfer ERC20 tokens");
 
         // Emit an event for the successful claim
@@ -74,7 +74,7 @@ contract ERC20Swap {
         Swap memory swap = swaps[_preimageHash];
 
         // Transfer the ERC20 tokens back to the initial sender
-        ERC20 tokenContract = ERC20(swap.erc20Token);
+        IERC20 tokenContract = IERC20(swap.erc20Token);
         require(tokenContract.transfer(swap.refundAddress, swap.amount), "could not transfer ERC20 tokens");
 
         // Emit an event for the refund
