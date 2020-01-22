@@ -1,3 +1,12 @@
+## [0.1.1](https://github.com/BoltzExchange/boltz-core/compare/v0.1.0...v0.1.1) (2020-01-22)
+
+
+### Bug Fixes
+
+* NPM library install ([a6ec910](https://github.com/BoltzExchange/boltz-core/commit/a6ec910cad9af6f8e78e182720894c24f41550a3))
+
+
+
 # [0.1.0](https://github.com/BoltzExchange/boltz-core/compare/v0.0.10...v0.1.0) (2020-01-22)
 
 
