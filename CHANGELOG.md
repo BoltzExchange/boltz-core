@@ -1,3 +1,19 @@
+# [0.1.0](https://github.com/BoltzExchange/boltz-core/compare/v0.0.10...v0.1.0) (2020-01-22)
+
+
+### Bug Fixes
+
+* export ERC20 ABI ([e3d5941](https://github.com/BoltzExchange/boltz-core/commit/e3d59411f56a10a819131fe621b98ec38d1dae75))
+* update dependencies ([1e2de0f](https://github.com/BoltzExchange/boltz-core/commit/1e2de0f2bc3d50e84566786dfcb53d444f5f4166))
+
+
+### Features
+
+* add Ether and ERC20 swap contracts ([146f86e](https://github.com/BoltzExchange/boltz-core/commit/146f86eec989e36e558700107f481c12bcf43782))
+* enforce length of preimage ([d0b46df](https://github.com/BoltzExchange/boltz-core/commit/d0b46df76c2f4660d882f3128d05ee8d26732d53))
+
+
+
 ## [0.0.9](https://github.com/BoltzExchange/boltz-core/compare/v0.0.8...v0.0.9) (2019-10-23)
 
 
