@@ -1,8 +1,8 @@
 import { ECPair, crypto } from 'bitcoinjs-lib';
-import { getHexBuffer } from '../../../../lib/Utils';
+import { getHexBuffer } from '../../../lib/Utils';
+import { Networks, swapScript } from '../../../lib/Boltz';
 import { bitcoinClient, createSwapDetails } from '../Utils';
-import { Networks, swapScript } from '../../../../lib/Boltz';
-import { RefundDetails, ClaimDetails } from '../../../../lib/consts/Types';
+import { RefundDetails, ClaimDetails } from '../../../lib/consts/Types';
 
 export let claimDetails: ClaimDetails[] = [];
 export let refundDetails: RefundDetails[] = [];

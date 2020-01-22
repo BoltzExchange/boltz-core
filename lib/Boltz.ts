@@ -7,6 +7,7 @@ import { detectSwap } from './swap/SwapDetector';
 import reverseSwapScript from './swap/ReverseSwapScript';
 import { constructClaimTransaction } from './swap/Claim';
 import { detectPreimage } from './swap/PreimageDetector';
+import * as ContractABIs from './ethereum/ABIs';
 import { constructRefundTransaction } from './swap/Refund';
 import { estimateFee, estimateSize } from './FeeCalculator';
 import { ScriptElement, TransactionOutput } from './consts/Types';
@@ -32,4 +33,6 @@ export {
   constructRefundTransaction,
 
   SwapUtils,
+
+  ContractABIs,
 };

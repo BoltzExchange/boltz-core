@@ -1,5 +1,5 @@
 import { refundDetails } from './ReverseSwapScript.spec';
-import { constructRefundTransaction } from '../../../../lib/Boltz';
+import { constructRefundTransaction } from '../../../lib/Boltz';
 import { destinationOutput, bitcoinClient, refundSwap } from '../Utils';
 
 describe('ReverseSwapScript refund', () => {

@@ -1,8 +1,8 @@
 import { ECPair, crypto } from 'bitcoinjs-lib';
-import { getHexBuffer } from '../../../../lib/Utils';
-import { p2wshOutput } from '../../../../lib/swap/Scripts';
-import { ClaimDetails, RefundDetails } from '../../../../lib/consts/Types';
-import { Networks, reverseSwapScript, OutputType } from '../../../../lib/Boltz';
+import { getHexBuffer } from '../../../lib/Utils';
+import { p2wshOutput } from '../../../lib/swap/Scripts';
+import { ClaimDetails, RefundDetails } from '../../../lib/consts/Types';
+import { Networks, reverseSwapScript, OutputType } from '../../../lib/Boltz';
 import { bitcoinClient, createSwapDetails, sendFundsToReedemScript } from '../Utils';
 
 export let invalidPreimageLengthSwap: ClaimDetails;

@@ -19,8 +19,7 @@ export const detectSwap = (redeemScript: Buffer, transaction: Transaction) => {
 
   let returnValue: { type: OutputType, vout: number } & TxOutput | undefined;
 
-  transaction.outs.forEach((out, vout) => {
-    const output = out as TxOutput;
+  transaction.outs.forEach((output, vout) => {
     const index = scripts.indexOf(getHexString(output.script));
 
     const swapOutput = {

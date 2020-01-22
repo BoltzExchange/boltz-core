@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import { claimDetails } from './SwapScript.spec';
-import { constructClaimTransaction } from '../../../../lib/Boltz';
+import { constructClaimTransaction } from '../../../lib/Boltz';
 import { bitcoinClient, destinationOutput, claimSwap } from '../Utils';
 
 describe('SwapScript claim', () => {
