@@ -2,7 +2,7 @@ import BN from 'bn.js';
 import { randomBytes } from 'crypto';
 import { crypto } from 'bitcoinjs-lib';
 import { getHexString, bufferToBytes, getEthereumTimestamp } from '../lib/Utils';
-import { TestERC20Instance, ERC20SwapInstance } from '../types/truffle-contracts';
+import { TestErc20Instance, Erc20SwapInstance } from '../types/truffle-contracts';
 
 const TestERC20 = artifacts.require('TestERC20');
 const ERC20Swap = artifacts.require('ERC20Swap');
@@ -18,8 +18,8 @@ contract('ERC20Swap', async (accounts) => {
   const preimageHashString = `0x${getHexString(crypto.sha256(preimage))}`;
 
   // Contract instances
-  let token: TestERC20Instance;
-  let instance: ERC20SwapInstance;
+  let token: TestErc20Instance;
+  let instance: Erc20SwapInstance;
 
   before(async () => {
     // Deploy a test ERC20 contract and issue one token
@@ -109,12 +109,20 @@ contract('ERC20Swap', async (accounts) => {
   });
 
   it('should not claim swaps with preimages that have an invalid length', async () => {
-    try {
-      await instance.claim(preimageHash, bufferToBytes(randomBytes(64)));
-      throw { reason: 'should not claim swaps with preimages that have an invalid length' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('the preimage has to the have a length of 32 bytes');
-    }
+    const tryInvalidLength = async (length: number) => {
+      try {
+        await instance.claim(preimageHash, bufferToBytes(randomBytes(length)));
+        throw { reason: 'should not claim swaps with preimages that have an invalid length' };
+      } catch (error) {
+        expect(error.reason).to.be.equal('the preimage has to the have a length of 32 bytes');
+      }
+    };
+
+    await Promise.all([
+      tryInvalidLength(31),
+      tryInvalidLength(33),
+      tryInvalidLength(64),
+    ]);
   });
 
   it('should claim swaps', async () => {
