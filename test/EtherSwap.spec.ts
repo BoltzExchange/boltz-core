@@ -23,6 +23,26 @@ contract('EtherSwap', async (accounts) => {
     instance = await EtherSwap.new();
   });
 
+  it('should not accept Ether without function signature', async () => {
+    const amount = web3.utils.toWei(new BN(1), 'ether');
+
+    let successfulTransfer = false;
+
+    try {
+      await web3.eth.sendTransaction({
+        value: amount,
+        from: accounts[0],
+        to: instance.address,
+      });
+    } catch (error) {
+      successfulTransfer = true;
+    }
+
+    if (!successfulTransfer) {
+      throw { message: 'should not accept Ether' };
+    }
+  });
+
   it('should create new swaps', async () => {
     const result = await instance.create.sendTransaction(
       preimageHash,
@@ -84,12 +104,20 @@ contract('EtherSwap', async (accounts) => {
   });
 
   it('should not claim swaps with preimages that have an invalid length', async () => {
-    try {
-      await instance.claim(preimageHash, bufferToBytes(randomBytes(64)));
-      throw { reason: 'should not claim swaps with preimages that have an invalid length' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('the preimage has to the have a length of 32 bytes');
-    }
+    const tryInvalidLength = async (length: number) => {
+      try {
+        await instance.claim(preimageHash, bufferToBytes(randomBytes(length)));
+        throw { reason: 'should not claim swaps with preimages that have an invalid length' };
+      } catch (error) {
+        expect(error.reason).to.be.equal('the preimage has to the have a length of 32 bytes');
+      }
+    };
+
+    await Promise.all([
+      tryInvalidLength(31),
+      tryInvalidLength(33),
+      tryInvalidLength(64),
+    ]);
   });
 
   it('should claim swaps', async () => {
@@ -124,7 +152,7 @@ contract('EtherSwap', async (accounts) => {
     expect(swapInfo[3].toNumber()).to.be.equal(timelock);
     expect(swapInfo[4]).to.be.false;
 
-    // // Test failure scenarios
+    // Test failure scenarios
     const rawRevertPreimage = randomBytes(32);
     const revertPreimage = bufferToBytes(rawRevertPreimage);
     const revertPreimageHash = bufferToBytes(crypto.sha256(rawRevertPreimage));

@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.6.7;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -27,7 +27,6 @@ contract ERC20Swap {
         _;
     }
 
-    // TODO: does the length of the preiamge need to enforced if the data types "bytes32" is used?
     function create(bytes32 _preimageHash, uint256 _amount, address _erc20Token, address _claimAddress, uint256 _timelock) external {
         require(_amount > 0, "the amount must not be zero");
         require(swaps[_preimageHash].amount == 0, "a swap with this preimage hash exists already");
