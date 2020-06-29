@@ -15,7 +15,7 @@ describe('ReverseSwapScript claim', () => {
     }
 
     expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toEqual('non-mandatory-script-verify-flag (Locktime requirement not satisfied) (code 64)');
+    expect(actualError.message).toEqual('non-mandatory-script-verify-flag (Locktime requirement not satisfied)');
   });
 
   test('should not claim reverse swaps if the preimage has a valid length but an invalid hash', async () => {
@@ -33,7 +33,7 @@ describe('ReverseSwapScript claim', () => {
     }
 
     expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toEqual('non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation) (code 64)');
+    expect(actualError.message).toEqual('non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation)');
   });
 
   test('should claim a P2WSH reverse swap', async () => {
