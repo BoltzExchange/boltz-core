@@ -1,22 +1,7 @@
-import fs from 'fs';
-import path from 'path';
+import IERC20 from '../../build/contracts/IERC20.json';
+import EtherSwap from '../../build/contracts/EtherSwap.json';
+import ERC20Swap from '../../build/contracts/ERC20Swap.json';
 
-const contractsPath = `${path.resolve(__dirname, '..', '..')}/build/contracts`;
-
-const readAbiFile = (contractName: string) => {
-  return fs.readFileSync(`${contractsPath}/${contractName}.json`);
-};
-
-const loadAbi = (contractName: string) => {
-  return JSON.parse(readAbiFile(contractName).toString())['abi'];
-};
-
-const IERC20ABI = loadAbi('IERC20');
-const ERC20SwapABI = loadAbi('ERC20Swap');
-const EtherSwapABI = loadAbi('EtherSwap');
-
-export {
-  IERC20ABI,
-  ERC20SwapABI,
-  EtherSwapABI,
-};
+export const IERC20ABI = IERC20.abi;
+export const ERC20SwapABI = ERC20Swap.abi;
+export const EtherSwapABI = EtherSwap.abi;

@@ -1,4 +1,6 @@
-pragma solidity 0.6.7;
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+pragma solidity 0.6.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -18,8 +20,9 @@ contract ERC20Swap {
 
     mapping (bytes32 => Swap) public swaps;
 
-    event Claim(bytes32 _preimageHash);
     event Creation(bytes32 _preimageHash);
+
+    event Claim(bytes32 _preimageHash);
     event Refund(bytes32 _preimageHash);
 
     modifier onlyPendingSwaps(bytes32 _preimageHash) {
