@@ -1,8 +1,8 @@
 {
   "name": "boltz-core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Core library of Boltz",
-  "main": "dist/Boltz.js",
+  "main": "dist/lib/Boltz.js",
   "scripts": {
     "compile": "npm run compile:solidity && npm run compile:typescript",
     "compile:solidity": "truffle compile && typechain --target truffle './build/**/*.json' && npm run compile:solidity:web3",
