@@ -1,6 +1,12 @@
 {
   "include": [
-    "lib",
+    "lib"
+  ],
+  "files": [
+    "./buidler.config.ts",
+    "./node_modules/@nomiclabs/buidler-ethers/src/type-extensions.d.ts",
+    "./node_modules/@nomiclabs/buidler-waffle/src/type-extensions.d.ts",
+    "./node_modules/@nomiclabs/buidler-etherscan/src/type-extensions.d.ts"
   ],
   "compilerOptions": {
     "target": "ES2016", /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
@@ -35,6 +41,7 @@
     "types": [                                /* Type declaration files to be included in compilation. */
       "node",
       "jest",
+      "mocha"
     ],
     "resolveJsonModule": true,
     // "allowSyntheticDefaultImports": true,  /* Allow default imports from modules with no default export. This does not affect code emit, just typechecking. */
@@ -49,6 +56,6 @@
     /* Experimental Options */
     // "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
-    "skipLibCheck": true,
+    "skipLibCheck": true
   }
 }

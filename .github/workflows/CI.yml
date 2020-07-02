@@ -32,6 +32,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Lint Solidity
+        run: npm run lint:solidity
+
       - name: Unit tests
         run: npm run test:unit
 

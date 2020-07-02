@@ -1,73 +1,77 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.6.10;
+pragma solidity 0.6.11;
 
 contract EtherSwap {
+    uint8 constant public version = 1;
+
     struct Swap {
         uint256 amount;
 
         address payable claimAddress;
         address payable refundAddress;
 
-        uint256 timelock;
-
-        // True if the swap is pending; false if it was claimed or refunded
-        bool pending;
+        uint timelock;
     }
 
     mapping (bytes32 => Swap) public swaps;
 
-    event Creation(bytes32 _preimageHash);
+    event Lockup(bytes32 indexed preimageHash);
 
-    event Claim(bytes32 _preimageHash);
-    event Refund(bytes32 _preimageHash);
+    event Claim(bytes32 indexed preimageHash, bytes32 preimage);
+    event Refund(bytes32 indexed preimageHash);
 
-    modifier onlyPendingSwaps(bytes32 _preimageHash) {
-        require(swaps[_preimageHash].pending == true, "there is no pending swap with this preimage hash");
+    function checkSwapExists(bytes32 preimageHash) private view {
+        require(swaps[preimageHash].amount != 0, "EtherSwap: no swap with preimage hash");
+    }
+
+    modifier onlySwaps(bytes32 preimageHash) {
+        checkSwapExists(preimageHash);
         _;
     }
 
-    function create(bytes32 _preimageHash, address payable _claimAddress, uint256 _timelock) external payable {
-        require(msg.value > 0, "the amount must not be zero");
-        require(swaps[_preimageHash].amount == 0, "a swap with this preimage hash exists already");
+    function lock(bytes32 preimageHash, address payable claimAddress, uint timelock) external payable {
+        require(msg.value > 0, "EtherSwap: amount must not be zero");
+        require(swaps[preimageHash].amount == 0, "EtherSwap: swap with preimage hash exists already");
 
         // Add the created swap to the map
-        swaps[_preimageHash] = Swap({
+        swaps[preimageHash] = Swap({
             amount: msg.value,
-            claimAddress: _claimAddress,
+            claimAddress: claimAddress,
             refundAddress: msg.sender,
-            timelock: _timelock,
-            pending: true
+            timelock: timelock
         });
 
         // Emit an event for the swap creation
-        emit Creation(_preimageHash);
+        emit Lockup(preimageHash);
     }
 
-    function claim(bytes32 _preimageHash, bytes calldata _preimage) external onlyPendingSwaps(_preimageHash) {
-        require(_preimage.length == 32, "the preimage has to the have a length of 32 bytes");
-        require(_preimageHash == sha256(_preimage), "the preimage does not correspond the provided hash");
+    function claim(bytes32 preimage) external {
+        bytes32 preimageHash = sha256(abi.encodePacked(preimage));
+        checkSwapExists(preimageHash);
 
-        swaps[_preimageHash].pending = false;
-        Swap memory swap = swaps[_preimageHash];
+        // Load the swap from the map in the memory and delete it from the map
+        Swap memory swap = swaps[preimageHash];
+        delete swaps[preimageHash];
 
         // Transfer the Ether to the recipient
         swap.claimAddress.transfer(swap.amount);
 
         // Emit an event for the successful claim
-        emit Claim(_preimageHash);
+        emit Claim(preimageHash, preimage);
     }
 
-    function refund(bytes32 _preimageHash) external onlyPendingSwaps(_preimageHash) {
-        require(swaps[_preimageHash].timelock <= block.timestamp, "swap has not timed out yet");
+    function refund(bytes32 preimageHash) external onlySwaps(preimageHash) {
+        require(swaps[preimageHash].timelock <= block.number, "EtherSwap: swap has not timed out yet");
 
-        swaps[_preimageHash].pending = false;
-        Swap memory swap = swaps[_preimageHash];
+        // Load the swap from the map in the memory and delete it from the map
+        Swap memory swap = swaps[preimageHash];
+        delete swaps[preimageHash];
 
         // Transfer the Ether back to the initial sender
         swap.refundAddress.transfer(swap.amount);
 
         // Emit an event for the refund
-        emit Refund(_preimageHash);
+        emit Refund(preimageHash);
     }
 }
