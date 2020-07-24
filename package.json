@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "0.3.0-beta5",
+  "version": "0.3.0-beta6",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -52,10 +52,10 @@
     "@openzeppelin/contracts": "^3.1.0",
     "@typechain/ethers-v5": "0.0.3",
     "@types/bignumber.js": "^5.0.0",
-    "@types/chai": "^4.2.11",
-    "@types/jest": "^26.0.5",
+    "@types/chai": "^4.2.12",
+    "@types/jest": "^26.0.7",
     "@types/mocha": "^8.0.0",
-    "@types/node": "^14.0.24",
+    "@types/node": "^14.0.25",
     "@types/ws": "^7.2.6",
     "chai": "^4.2.0",
     "conventional-changelog-cli": "^2.0.34",

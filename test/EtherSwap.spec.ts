@@ -5,27 +5,28 @@ import { crypto } from 'bitcoinjs-lib';
 import { deployContract, MockProvider, solidity } from 'ethereum-waffle';
 import { EtherSwap } from '../typechain/EtherSwap';
 import EtherSwapArtifact from '../artifacts/EtherSwap.json';
-import { checkContractEvent, expectInvalidDataLength, expectRevert, verifySwapEmpty } from './Utils';
+import { checkContractEvent, checkLockupEvent, expectInvalidDataLength, expectRevert } from './Utils';
 
 chai.use(solidity);
 const { expect } = chai;
 
 describe('EtherSwap', async () => {
   const provider = new MockProvider();
-  const [wallet] = provider.getWallets();
+  const [senderWallet, claimWallet] = provider.getWallets();
 
   const preimage = randomBytes(32);
   const preimageHash = crypto.sha256(preimage);
-  const claimAddress = '0xAFcb428385cFEe89Be8DcBA21B534F28c303C863';
   const lockupAmount = constants.WeiPerEther;
+
+  let timelock: number;
 
   let etherSwap: EtherSwap;
 
-  const lockup = async (locktime: number) => {
+  const lockup = async () => {
     return etherSwap.lock(
       preimageHash,
-      claimAddress,
-      locktime,
+      claimWallet.address,
+      timelock,
       {
         value: lockupAmount,
       },
@@ -33,13 +34,13 @@ describe('EtherSwap', async () => {
   };
 
   before(async () => {
-    etherSwap = await deployContract(wallet, EtherSwapArtifact) as EtherSwap;
+    etherSwap = await deployContract(senderWallet, EtherSwapArtifact) as EtherSwap;
 
-    expect(etherSwap.address).to.properAddress;
+    expect(etherSwap.address).to.be.properAddress;
   });
 
   it('should not accept Ether without function signature', async () => {
-    await expectRevert(wallet.sendTransaction({
+    await expectRevert(senderWallet.sendTransaction({
       to: etherSwap.address,
       value: constants.WeiPerEther,
     }));
@@ -48,113 +49,136 @@ describe('EtherSwap', async () => {
   it('should not lockup 0 value transactions', async () => {
     await expectRevert(etherSwap.lock(
       preimageHash,
-      claimAddress,
+      claimWallet.address,
       await provider.getBlockNumber(),
     ), 'EtherSwap: amount must not be zero');
   });
 
   it('should lockup', async () => {
-    const locktime = await provider.getBlockNumber();
+    timelock = await provider.getBlockNumber();
 
-    const lockupTransaction = await lockup(locktime);
+    const lockupTransaction = await lockup();
     const receipt = await lockupTransaction.wait(1);
 
     // Check the balance of the contract
     expect(await provider.getBalance(etherSwap.address)).to.equal(lockupAmount);
 
     // Check the event emitted by the transaction
-    checkContractEvent(receipt.events![0], 'Lockup', preimageHash);
-
-    // Make sure that the swaps map was populated with the supplied data
-    const swap = await etherSwap.swaps(preimageHash);
-
-    expect(swap.amount).to.equal(lockupAmount);
-    expect(swap.claimAddress).to.equal(claimAddress);
-    expect(swap.refundAddress).to.equal(wallet.address);
-    expect(swap.timelock).to.equal(locktime);
+    checkLockupEvent(receipt.events![0], preimageHash, lockupAmount, claimWallet.address, timelock);
   });
 
-  it('should not lockup multiple times with the same preimage hash', async () => {
-    await expectRevert(lockup(await provider.getBlockNumber()), 'EtherSwap: swap with preimage hash exists already');
+  it('should not lockup multiple times with the same values', async () => {
+    await expectRevert(lockup(), 'EtherSwap: swap exists already');
   });
 
   it('should not claim with preimages that have a length unequal to 32', async () => {
     await expectInvalidDataLength(etherSwap.claim(
       randomBytes(31),
+      lockupAmount,
+      senderWallet.address,
+      timelock,
     ));
 
     await expectInvalidDataLength(etherSwap.claim(
       randomBytes(33),
+      lockupAmount,
+      senderWallet.address,
+      timelock,
     ));
   });
 
   it('should not claim with invalid preimages with the length of 32', async () => {
     await expectRevert(etherSwap.claim(
       randomBytes(32),
-    ), 'EtherSwap: no swap with preimage hash');
+      lockupAmount,
+      senderWallet.address,
+      timelock,
+    ), 'EtherSwap: swap does not exist');
   });
 
   it('should claim', async () => {
-    const claimTransaction = await etherSwap.claim(preimage);
+    const balanceBeforeClaim = await provider.getBalance(claimWallet.address);
+
+    const claimTransaction = await etherSwap.connect(claimWallet).claim(
+      preimage,
+      lockupAmount,
+      senderWallet.address,
+      timelock,
+    );
     const receipt = await claimTransaction.wait(1);
 
     // Check the balance of the contract
     expect(await provider.getBalance(etherSwap.address)).to.equal(0);
 
     // Check the balance of the claim address
-    expect(await provider.getBalance(claimAddress)).to.equal(lockupAmount);
+    expect(await provider.getBalance(claimWallet.address)).to.equal(
+      balanceBeforeClaim.add(lockupAmount).sub(claimTransaction.gasPrice.mul(receipt.cumulativeGasUsed)),
+    );
 
     // Check the event emitted by the transaction
     checkContractEvent(receipt.events![0], 'Claim', preimageHash, preimage);
-
-    // Make sure that the swap was removed from the map
-    verifySwapEmpty(await etherSwap.swaps(preimageHash));
   });
 
   it('should not claim the same swap twice', async () => {
-    await expectRevert(etherSwap.claim(preimage), 'EtherSwap: no swap with preimage hash');
+    await expectRevert(etherSwap.connect(claimWallet).claim(
+      preimage,
+      lockupAmount,
+      senderWallet.address,
+      timelock,
+    ), 'EtherSwap: swap does not exist');
   });
 
   it('should refund', async () => {
     // Lockup again to have a swap that can be refunded
     // A block is mined for the lockup transaction and therefore the refund is included in two blocks
-    const locktime = (await provider.getBlockNumber()) + 2;
-    await lockup(locktime);
+    timelock = (await provider.getBlockNumber()) + 2;
+    await lockup();
 
-    // Refund
-    const balanceBeforeRefund = await provider.getBalance(wallet.address);
+    const balanceBeforeRefund = await provider.getBalance(senderWallet.address);
 
-    const refundTransaction = await etherSwap.refund(preimageHash);
+    // Do the refund
+    const refundTransaction = await etherSwap.refund(
+      preimageHash,
+      lockupAmount,
+      claimWallet.address,
+      timelock,
+    );
     const receipt = await refundTransaction.wait(1);
 
     // Check the balance of the contract
     expect(await provider.getBalance(etherSwap.address)).to.equal(0);
 
     // Check the balance of the refund address
-    expect(await provider.getBalance(wallet.address)).to.equal(
-      // Subtract the Ether spent on gas
+    expect(await provider.getBalance(senderWallet.address)).to.equal(
       balanceBeforeRefund.add(lockupAmount).sub(refundTransaction.gasPrice.mul(receipt.cumulativeGasUsed)),
     );
 
     // Check the event emitted by the transaction
     checkContractEvent(receipt.events![0], 'Refund', preimageHash);
-
-    // Make sure that the swap was removed from the map
-    verifySwapEmpty(await etherSwap.swaps(preimageHash));
   });
 
   it('should not refund the same swap twice', async () => {
-    await expectRevert(etherSwap.refund(preimageHash), 'EtherSwap: no swap with preimage hash');
+    await expectRevert(etherSwap.refund(
+      preimageHash,
+      lockupAmount,
+      claimWallet.address,
+      timelock,
+    ), 'EtherSwap: swap does not exist');
   });
 
   it('should not refund swaps that have not timed out yet', async () => {
     // Lockup again to have a swap that can be refunded
     // A block is mined for the lockup transaction and therefore the refund is included in two blocks
     // which means that refunds should fail if the swap expires in three blocks
-    const locktime = (await provider.getBlockNumber()) + 3;
-    await lockup(locktime);
+    timelock = (await provider.getBlockNumber()) + 3;
+    await lockup();
 
     // Refund
-    await expectRevert(etherSwap.refund(preimageHash), 'EtherSwap: swap has not timed out yet');
+    await expectRevert(etherSwap.refund(
+      preimageHash,
+      lockupAmount,
+      claimWallet.address,
+      timelock,
+    ), 'EtherSwap: swap has not timed out yet');
   });
 });

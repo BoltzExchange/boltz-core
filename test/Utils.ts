@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { constants, Event } from 'ethers';
+import { BigNumber, constants, Event } from 'ethers';
 import { getHexString } from '../lib/Utils';
 
 export const decodeBytes = (input: string) => {
@@ -55,6 +55,28 @@ export const expectInvalidDataLength = async (promise: Promise<any>) => {
   }
 
   expect(thrown).to.be.true;
+};
+
+export const checkLockupEvent = (
+  event: Event,
+  preimageHash: Buffer,
+  amount: BigNumber,
+  claimAddress: string,
+  timelock: number,
+  tokenAddress?: string,
+) => {
+  expect(event.event).to.equal('Lockup');
+
+  expect(decodeBytes(event.topics[1])).to.equal(getHexString(preimageHash));
+
+  expect(decodeBytes(event.args!.preimageHash)).to.equal(getHexString(preimageHash));
+  expect(event.args!.amount).to.equal(amount);
+  expect(event.args!.claimAddress).to.equal(claimAddress);
+  expect(event.args!.timelock).to.equal(timelock);
+
+  if (tokenAddress) {
+    expect(event.args!.tokenAddress).to.equal(tokenAddress);
+  }
 };
 
 export const checkContractEvent = (event: Event, name: string, preimageHash: Buffer, preimage?: Buffer) => {
