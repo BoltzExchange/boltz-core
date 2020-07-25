@@ -1,7 +1,7 @@
 import chai from 'chai';
 import { randomBytes } from 'crypto';
 import { crypto } from 'bitcoinjs-lib';
-import { BigNumber, constants } from 'ethers';
+import { BigNumber, constants, utils } from 'ethers';
 import { deployContract, MockProvider, solidity } from 'ethereum-waffle';
 import { Erc20Swap } from '../typechain/Erc20Swap';
 import { Ierc20 as IERC20 } from '../typechain/Ierc20';
@@ -17,8 +17,8 @@ describe('ERC20Swap', async () => {
   const provider = new MockProvider();
   const [senderWallet, claimWallet] = provider.getWallets();
 
-  let preimage = randomBytes(32);
-  let preimageHash = crypto.sha256(preimage);
+  const preimage = randomBytes(32);
+  const preimageHash = crypto.sha256(preimage);
   const lockupAmount = BigNumber.from(10).pow(18);
 
   let timelock: number;
@@ -27,6 +27,20 @@ describe('ERC20Swap', async () => {
   let badToken: IERC20;
 
   let erc20Swap: Erc20Swap;
+
+  const querySwap = (tokenAddress: string) => {
+    return erc20Swap.swaps(utils.solidityKeccak256(
+      ['bytes32', 'uint', 'address', 'address', 'address', 'uint'],
+      [
+        preimageHash,
+        lockupAmount,
+        tokenAddress,
+        claimWallet.address,
+        senderWallet.address,
+        timelock,
+      ],
+    ));
+  };
 
   const lockup = async (tokenAddress: string) => {
     return erc20Swap.lock(
@@ -91,6 +105,9 @@ describe('ERC20Swap', async () => {
 
     // Check the event emitted by the transaction
     checkLockupEvent(receipt.events![2], preimageHash, lockupAmount, claimWallet.address, timelock, token.address);
+
+    // Verify the swap was added to the mapping
+    expect(await querySwap(token.address)).to.equal(true);
   });
 
   it('should not lockup multiple times with the same values', async () => {
@@ -146,6 +163,9 @@ describe('ERC20Swap', async () => {
 
     // Send the claimed ERC20 tokens back to the sender wallet
     await token.connect(claimWallet).transfer(senderWallet.address, lockupAmount);
+
+    // Verify the swap was removed to the mapping
+    expect(await querySwap(token.address)).to.equal(false);
   });
 
   it('should not claim the same swap twice', async () => {
@@ -185,6 +205,9 @@ describe('ERC20Swap', async () => {
 
     // Check the event emitted by the transaction
     checkContractEvent(receipt.events![1], 'Refund', preimageHash);
+
+    // Verify the swap was removed to the mapping
+    expect(await querySwap(token.address)).to.equal(false);
   });
 
   it('should not refund the same swap twice', async () => {
@@ -218,10 +241,6 @@ describe('ERC20Swap', async () => {
   });
 
   it('should handle bad ERC20 tokens', async () => {
-    // Generate a new preimage and hash because the last test case left a pending Swap in the state
-    preimage = randomBytes(32);
-    preimageHash = crypto.sha256(preimage);
-
     // Approve and lockup the bad token
     await badToken.approve(erc20Swap.address, lockupAmount.toString());
 

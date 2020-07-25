@@ -1,5 +1,5 @@
 import chai from 'chai';
-import { constants } from 'ethers';
+import { constants, utils } from 'ethers';
 import { randomBytes } from 'crypto';
 import { crypto } from 'bitcoinjs-lib';
 import { deployContract, MockProvider, solidity } from 'ethereum-waffle';
@@ -21,6 +21,19 @@ describe('EtherSwap', async () => {
   let timelock: number;
 
   let etherSwap: EtherSwap;
+
+  const querySwap = () => {
+    return etherSwap.swaps(utils.solidityKeccak256(
+      ['bytes32', 'uint', 'address', 'address', 'uint'],
+      [
+        preimageHash,
+        lockupAmount,
+        claimWallet.address,
+        senderWallet.address,
+        timelock,
+      ],
+    ));
+  };
 
   const lockup = async () => {
     return etherSwap.lock(
@@ -65,6 +78,9 @@ describe('EtherSwap', async () => {
 
     // Check the event emitted by the transaction
     checkLockupEvent(receipt.events![0], preimageHash, lockupAmount, claimWallet.address, timelock);
+
+    // Verify the swap was added to the mapping
+    expect(await querySwap()).to.equal(true);
   });
 
   it('should not lockup multiple times with the same values', async () => {
@@ -117,6 +133,9 @@ describe('EtherSwap', async () => {
 
     // Check the event emitted by the transaction
     checkContractEvent(receipt.events![0], 'Claim', preimageHash, preimage);
+
+    // Verify the swap was removed to the mapping
+    expect(await querySwap()).to.equal(false);
   });
 
   it('should not claim the same swap twice', async () => {
@@ -155,6 +174,9 @@ describe('EtherSwap', async () => {
 
     // Check the event emitted by the transaction
     checkContractEvent(receipt.events![0], 'Refund', preimageHash);
+
+    // Verify the swap was removed to the mapping
+    expect(await querySwap()).to.equal(false);
   });
 
   it('should not refund the same swap twice', async () => {
