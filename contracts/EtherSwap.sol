@@ -28,6 +28,13 @@ contract EtherSwap {
         ));
     }
 
+    function transferEtherToSender(
+        uint amount
+    ) private {
+        (bool success, ) = msg.sender.call.value(amount)("");
+        require(success, "EtherSwap: Ether transfer failed");
+    }
+
     function checkSwapExists(bytes32 hash) private view {
         require(swaps[hash] == true, "EtherSwap: swap does not exist");
     }
@@ -44,7 +51,6 @@ contract EtherSwap {
         );
 
         require(swaps[hash] == false, "EtherSwap: swap exists already");
-
         swaps[hash] = true;
 
         emit Lockup(preimageHash, msg.value, claimAddress, timelock);
@@ -68,9 +74,9 @@ contract EtherSwap {
         checkSwapExists(hash);
         delete swaps[hash];
 
-        msg.sender.transfer(amount);
-
         emit Claim(preimageHash, preimage);
+
+        transferEtherToSender(amount);
     }
 
     function refund(
@@ -92,8 +98,8 @@ contract EtherSwap {
         checkSwapExists(hash);
         delete swaps[hash];
 
-        msg.sender.transfer(amount);
-
         emit Refund(preimageHash);
+
+        transferEtherToSender(amount);
     }
 }

@@ -48,8 +48,10 @@ contract ERC20Swap {
         address tokenAddress,
         address claimAddress,
         uint timelock
-    ) external payable {
+    ) external {
         require(amount > 0, "ERC20Swap: amount must not be zero");
+
+        TransferHelper.safeTransferFrom(tokenAddress, msg.sender, address(this), amount);
 
         bytes32 hash = hashValues(
             preimageHash,
@@ -61,9 +63,6 @@ contract ERC20Swap {
         );
 
         require(swaps[hash] == false, "ERC20Swap: swap exists already");
-
-        TransferHelper.safeTransferFrom(tokenAddress, msg.sender, address(this), amount);
-
         swaps[hash] = true;
 
         emit Lockup(preimageHash, amount, tokenAddress, claimAddress, timelock);
@@ -89,9 +88,9 @@ contract ERC20Swap {
         checkSwapExists(hash);
         delete swaps[hash];
 
-        TransferHelper.safeTransfer(tokenAddress, msg.sender, amount);
-
         emit Claim(preimageHash, preimage);
+
+        TransferHelper.safeTransfer(tokenAddress, msg.sender, amount);
     }
 
     function refund(
@@ -115,8 +114,8 @@ contract ERC20Swap {
         checkSwapExists(hash);
         delete swaps[hash];
 
-        TransferHelper.safeTransfer(tokenAddress, msg.sender, amount);
-
         emit Refund(preimageHash);
+
+        TransferHelper.safeTransfer(tokenAddress, msg.sender, amount);
     }
 }

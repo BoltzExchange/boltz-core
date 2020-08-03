@@ -21,6 +21,8 @@ describe('ERC20Swap', async () => {
   const preimageHash = crypto.sha256(preimage);
   const lockupAmount = BigNumber.from(10).pow(18);
 
+  const tokenIssuance = lockupAmount.mul(2);
+
   let timelock: number;
 
   let token: IERC20;
@@ -53,9 +55,8 @@ describe('ERC20Swap', async () => {
   };
 
   before(async () => {
-    // The supply of the token is the lockup amount
-    token = await deployContract(senderWallet, TestERC20Artifact, [lockupAmount]) as IERC20;
-    badToken = await deployContract(senderWallet, BadERC20Artifact, [lockupAmount]) as IERC20;
+    token = await deployContract(senderWallet, TestERC20Artifact, [tokenIssuance]) as IERC20;
+    badToken = await deployContract(senderWallet, BadERC20Artifact, [tokenIssuance]) as IERC20;
 
     erc20Swap = await deployContract(senderWallet, ERC20SwapArtifact) as Erc20Swap;
 
@@ -98,7 +99,7 @@ describe('ERC20Swap', async () => {
     const receipt = await lockupTransaction.wait(1);
 
     // Check the token balance of the sender
-    expect(await token.balanceOf(senderWallet.address)).to.equal(0);
+    expect(await token.balanceOf(senderWallet.address)).to.equal(tokenIssuance.sub(lockupAmount));
 
     // Check the token balance of the contract
     expect(await token.balanceOf(erc20Swap.address)).to.equal(lockupAmount);
@@ -111,6 +112,10 @@ describe('ERC20Swap', async () => {
   });
 
   it('should not lockup multiple times with the same values', async () => {
+    // Set ERC20 token allowance
+    const approveTransaction = await token.approve(erc20Swap.address, lockupAmount);
+    await approveTransaction.wait(1);
+
     await expectRevert(lockup(token.address), 'ERC20Swap: swap exists already');
   });
 
@@ -159,7 +164,7 @@ describe('ERC20Swap', async () => {
     expect(await token.balanceOf(claimWallet.address)).to.equal(lockupAmount);
 
     // Check the event emitted by the transaction
-    checkContractEvent(receipt.events![1], 'Claim', preimageHash, preimage);
+    checkContractEvent(receipt.events![0], 'Claim', preimageHash, preimage);
 
     // Send the claimed ERC20 tokens back to the sender wallet
     await token.connect(claimWallet).transfer(senderWallet.address, lockupAmount);
@@ -201,10 +206,10 @@ describe('ERC20Swap', async () => {
     expect(await token.balanceOf(erc20Swap.address)).to.equal(0);
 
     // Check the balance of the refund address
-    expect(await token.balanceOf(senderWallet.address)).to.equal(lockupAmount);
+    expect(await token.balanceOf(senderWallet.address)).to.equal(tokenIssuance);
 
     // Check the event emitted by the transaction
-    checkContractEvent(receipt.events![1], 'Refund', preimageHash);
+    checkContractEvent(receipt.events![0], 'Refund', preimageHash);
 
     // Verify the swap was removed to the mapping
     expect(await querySwap(token.address)).to.equal(false);
@@ -249,7 +254,7 @@ describe('ERC20Swap', async () => {
 
     // Check the balances to make sure tokens were transferred to the contract
     expect(await badToken.balanceOf(erc20Swap.address)).to.equal(lockupAmount);
-    expect(await badToken.balanceOf(senderWallet.address)).to.equal(0);
+    expect(await badToken.balanceOf(senderWallet.address)).to.equal(tokenIssuance.sub(lockupAmount));
 
     // Claim the bad token
     const claimTransaction = await erc20Swap.connect(claimWallet).claim(
