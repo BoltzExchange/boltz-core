@@ -41,6 +41,10 @@ contract BadERC20 is IBadERC20 {
         emit Transfer(address(0), msg.sender, initialSupply);
     }
 
+    function decimals() public view returns (uint8) {
+        return _decimals;
+    }
+
     function balanceOf(address account) public view override returns (uint256) {
         return _balances[account];
     }
