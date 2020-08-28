@@ -39,7 +39,6 @@ const config: BuidlerConfig = {
     },
   },
   etherscan: {
-    url: 'https://api-rinkeby.etherscan.io/api',
     apiKey: etherscanKey,
   },
 };
