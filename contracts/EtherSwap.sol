@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.1;
 
 contract EtherSwap {
     uint8 constant public version = 1;
@@ -31,7 +31,7 @@ contract EtherSwap {
     function transferEtherToSender(
         uint amount
     ) private {
-        (bool success, ) = msg.sender.call.value(amount)("");
+        (bool success, ) = msg.sender.call{ value: amount }("");
         require(success, "EtherSwap: Ether transfer failed");
     }
 

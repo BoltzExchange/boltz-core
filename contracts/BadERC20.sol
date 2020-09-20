@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.1;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
@@ -32,7 +32,7 @@ contract BadERC20 is IBadERC20 {
     string private _symbol;
     uint8 private _decimals;
 
-    constructor(uint256 initialSupply) public {
+    constructor(uint256 initialSupply) {
         _name = "BadERC20";
         _symbol = "BAD";
         _decimals = 18;
