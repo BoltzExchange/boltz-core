@@ -1,3 +1,18 @@
+# [0.3.0](https://github.com/BoltzExchange/boltz-core/compare/v0.2.1...v0.3.0) (2020-09-20)
+
+
+### Bug Fixes
+
+* add decimals view function to BadERC20 ([3459e38](https://github.com/BoltzExchange/boltz-core/commit/3459e38c53576831ecfbe7e2b2ae5527410f8a57))
+* minor contract fixes ([01ebf99](https://github.com/BoltzExchange/boltz-core/commit/01ebf9916c85a787101e92eec376e4be8bce38c2))
+
+
+### Features
+
+* make contracts more efficient ([bd6b68e](https://github.com/BoltzExchange/boltz-core/commit/bd6b68ebeafcc7b254fe49753ec4cde2c3bbd12f))
+
+
+
 ## [0.1.1](https://github.com/BoltzExchange/boltz-core/compare/v0.1.0...v0.1.1) (2020-01-22)
 
 
