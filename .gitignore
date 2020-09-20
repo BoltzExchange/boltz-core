@@ -63,13 +63,15 @@ typedoc/
 # Visual Studio Code configuration
 .vscode
 
-# Truffle build folders
-build/
-types/
+# Buidler
+cache
+artifacts/
+typechain/
 
-# Truffle deployment secrets
-.truffle.mnemonic
+# Buidler deployment secrets
 .infura.key
+.etherscan.key
+.deployment.mnemonic
 
 # MythX output folder
 bin/ 

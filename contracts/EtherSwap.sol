@@ -1,73 +1,105 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.6.10;
+pragma solidity 0.6.12;
 
 contract EtherSwap {
-    struct Swap {
-        uint256 amount;
+    uint8 constant public version = 1;
 
-        address payable claimAddress;
-        address payable refundAddress;
+    mapping (bytes32 => bool) public swaps;
 
-        uint256 timelock;
+    event Lockup(bytes32 indexed preimageHash, uint amount, address claimAddress, uint timelock);
 
-        // True if the swap is pending; false if it was claimed or refunded
-        bool pending;
+    event Claim(bytes32 indexed preimageHash, bytes32 preimage);
+    event Refund(bytes32 indexed preimageHash);
+
+    function hashValues(
+        bytes32 preimageHash,
+        uint amount,
+        address claimAddress,
+        address refundAddress,
+        uint timelock
+    ) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            preimageHash,
+            amount,
+            claimAddress,
+            refundAddress,
+            timelock
+        ));
     }
 
-    mapping (bytes32 => Swap) public swaps;
-
-    event Creation(bytes32 _preimageHash);
-
-    event Claim(bytes32 _preimageHash);
-    event Refund(bytes32 _preimageHash);
-
-    modifier onlyPendingSwaps(bytes32 _preimageHash) {
-        require(swaps[_preimageHash].pending == true, "there is no pending swap with this preimage hash");
-        _;
+    function transferEtherToSender(
+        uint amount
+    ) private {
+        (bool success, ) = msg.sender.call.value(amount)("");
+        require(success, "EtherSwap: Ether transfer failed");
     }
 
-    function create(bytes32 _preimageHash, address payable _claimAddress, uint256 _timelock) external payable {
-        require(msg.value > 0, "the amount must not be zero");
-        require(swaps[_preimageHash].amount == 0, "a swap with this preimage hash exists already");
-
-        // Add the created swap to the map
-        swaps[_preimageHash] = Swap({
-            amount: msg.value,
-            claimAddress: _claimAddress,
-            refundAddress: msg.sender,
-            timelock: _timelock,
-            pending: true
-        });
-
-        // Emit an event for the swap creation
-        emit Creation(_preimageHash);
+    function checkSwapExists(bytes32 hash) private view {
+        require(swaps[hash] == true, "EtherSwap: swap does not exist");
     }
 
-    function claim(bytes32 _preimageHash, bytes calldata _preimage) external onlyPendingSwaps(_preimageHash) {
-        require(_preimage.length == 32, "the preimage has to the have a length of 32 bytes");
-        require(_preimageHash == sha256(_preimage), "the preimage does not correspond the provided hash");
+    function lock(bytes32 preimageHash, address claimAddress, uint timelock) external payable {
+        require(msg.value > 0, "EtherSwap: amount must not be zero");
 
-        swaps[_preimageHash].pending = false;
-        Swap memory swap = swaps[_preimageHash];
+        bytes32 hash = hashValues(
+            preimageHash,
+            msg.value,
+            claimAddress,
+            msg.sender,
+            timelock
+        );
 
-        // Transfer the Ether to the recipient
-        swap.claimAddress.transfer(swap.amount);
+        require(swaps[hash] == false, "EtherSwap: swap exists already");
+        swaps[hash] = true;
 
-        // Emit an event for the successful claim
-        emit Claim(_preimageHash);
+        emit Lockup(preimageHash, msg.value, claimAddress, timelock);
     }
 
-    function refund(bytes32 _preimageHash) external onlyPendingSwaps(_preimageHash) {
-        require(swaps[_preimageHash].timelock <= block.timestamp, "swap has not timed out yet");
+    function claim(
+        bytes32 preimage,
+        uint amount,
+        address refundAddress,
+        uint timelock
+    ) external {
+        bytes32 preimageHash = sha256(abi.encodePacked(preimage));
+        bytes32 hash = hashValues(
+            preimageHash,
+            amount,
+            msg.sender,
+            refundAddress,
+            timelock
+        );
 
-        swaps[_preimageHash].pending = false;
-        Swap memory swap = swaps[_preimageHash];
+        checkSwapExists(hash);
+        delete swaps[hash];
 
-        // Transfer the Ether back to the initial sender
-        swap.refundAddress.transfer(swap.amount);
+        emit Claim(preimageHash, preimage);
 
-        // Emit an event for the refund
-        emit Refund(_preimageHash);
+        transferEtherToSender(amount);
+    }
+
+    function refund(
+        bytes32 preimageHash,
+        uint amount,
+        address claimAddress,
+        uint timelock
+    ) external {
+        require(timelock <= block.number, "EtherSwap: swap has not timed out yet");
+
+        bytes32 hash = hashValues(
+            preimageHash,
+            amount,
+            claimAddress,
+            msg.sender,
+            timelock
+        );
+
+        checkSwapExists(hash);
+        delete swaps[hash];
+
+        emit Refund(preimageHash);
+
+        transferEtherToSender(amount);
     }
 }

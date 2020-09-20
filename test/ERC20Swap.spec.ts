@@ -1,226 +1,273 @@
-import BN from 'bn.js';
+import chai from 'chai';
 import { randomBytes } from 'crypto';
 import { crypto } from 'bitcoinjs-lib';
-import { getHexString, bufferToBytes, getEthereumTimestamp } from '../lib/Utils';
-import { TestErc20Instance, Erc20SwapInstance } from '../types/truffle-contracts';
+import { BigNumber, constants, utils } from 'ethers';
+import { deployContract, MockProvider, solidity } from 'ethereum-waffle';
+import { Erc20Swap } from '../typechain/Erc20Swap';
+import { Ierc20 as IERC20 } from '../typechain/Ierc20';
+import BadERC20Artifact from '../artifacts/BadERC20.json';
+import ERC20SwapArtifact from '../artifacts/ERC20Swap.json';
+import TestERC20Artifact from '../artifacts/TestERC20.json';
+import { checkContractEvent, checkLockupEvent, expectInvalidDataLength, expectRevert } from './Utils';
 
-const TestERC20 = artifacts.require('TestERC20');
-const ERC20Swap = artifacts.require('ERC20Swap');
+chai.use(solidity);
+const { expect } = chai;
 
-contract('ERC20Swap', async (accounts) => {
-  // Sample values
-  const swapAmount = 10;
-  const claimAddress = accounts[1];
-  const timelock = getEthereumTimestamp();
+describe('ERC20Swap', async () => {
+  const provider = new MockProvider();
+  const [senderWallet, claimWallet] = provider.getWallets();
 
   const preimage = randomBytes(32);
-  const preimageHash = bufferToBytes(crypto.sha256(preimage));
-  const preimageHashString = `0x${getHexString(crypto.sha256(preimage))}`;
+  const preimageHash = crypto.sha256(preimage);
+  const lockupAmount = BigNumber.from(10).pow(18);
 
-  // Contract instances
-  let token: TestErc20Instance;
-  let instance: Erc20SwapInstance;
+  const tokenIssuance = lockupAmount.mul(2);
+
+  let timelock: number;
+
+  let token: IERC20;
+  let badToken: IERC20;
+
+  let erc20Swap: Erc20Swap;
+
+  const querySwap = (tokenAddress: string) => {
+    return erc20Swap.swaps(utils.solidityKeccak256(
+      ['bytes32', 'uint', 'address', 'address', 'address', 'uint'],
+      [
+        preimageHash,
+        lockupAmount,
+        tokenAddress,
+        claimWallet.address,
+        senderWallet.address,
+        timelock,
+      ],
+    ));
+  };
+
+  const lockup = async (tokenAddress: string) => {
+    return erc20Swap.lock(
+      preimageHash,
+      lockupAmount,
+      tokenAddress,
+      claimWallet.address,
+      timelock,
+    );
+  };
 
   before(async () => {
-    // Deploy a test ERC20 contract and issue one token
-    token = await TestERC20.new(new BN(10).pow(new BN(18)));
-    instance = await ERC20Swap.new();
+    token = await deployContract(senderWallet, TestERC20Artifact, [tokenIssuance]) as IERC20;
+    badToken = await deployContract(senderWallet, BadERC20Artifact, [tokenIssuance]) as IERC20;
+
+    erc20Swap = await deployContract(senderWallet, ERC20SwapArtifact) as Erc20Swap;
+
+    expect(token.address).to.be.properAddress;
+    expect(badToken.address).to.be.properAddress;
+
+    expect(erc20Swap.address).to.be.properAddress;
   });
 
   it('should not accept Ether', async () => {
-    const amount = web3.utils.toWei(new BN(1), 'ether');
-
-    let successfulTransfer = false;
-
-    try {
-      await web3.eth.sendTransaction({
-        value: amount,
-        from: accounts[0],
-        to: instance.address,
-      });
-    } catch (error) {
-      successfulTransfer = true;
-    }
-
-    if (!successfulTransfer) {
-      throw { message: 'should not accept Ether' };
-    }
+    await expectRevert(senderWallet.sendTransaction({
+      to: erc20Swap.address,
+      value: constants.WeiPerEther,
+    }));
   });
 
-  it('should create new swaps', async () => {
-    await token.increaseAllowance(instance.address, swapAmount);
-    const result = await instance.create(preimageHash, swapAmount, token.address, claimAddress, timelock);
-
-    expect((await token.balanceOf(instance.address)).toNumber()).to.be.equal(swapAmount);
-
-    expect(result.logs[0].event).to.be.equal('Creation');
-
-    expect(result.logs[0].args.__length__).to.be.equal(1);
-    expect(result.logs[0].args._preimageHash).to.be.equal(preimageHashString);
-
-    const swapInfo = await instance.swaps(preimageHash);
-
-    expect(swapInfo[0].toNumber()).to.be.equal(swapAmount);
-    expect(swapInfo[1]).to.be.equal(token.address);
-    expect(swapInfo[2]).to.be.equal(claimAddress);
-    expect(swapInfo[3]).to.be.equal(accounts[0]);
-    expect(swapInfo[4].toNumber()).to.be.equal(timelock);
-    expect(swapInfo[5]).to.be.true;
-
-    // Test failure scenarios
-    const revertPreimageHash = bufferToBytes(crypto.sha256(randomBytes(32)));
-
-    try {
-      await instance.create(revertPreimageHash, 0, token.address, claimAddress, timelock);
-      throw { reason: 'should not create swaps with 0 amounts' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('the amount must not be zero');
-    }
-
-    try {
-      await instance.create(preimageHash, 1, token.address, claimAddress, timelock);
-      throw { reason: 'should not create two swaps with the same preimage hash' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('a swap with this preimage hash exists already');
-    }
-
-    try {
-      await instance.create(revertPreimageHash, 1, token.address, claimAddress, timelock);
-      throw { reason: 'should not create swaps when there is no allowance' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('requested amount exceeds allowance');
-    }
-
-    try {
-      const failedAllowance = 1;
-
-      await token.increaseAllowance(instance.address, failedAllowance, {
-        from: accounts[2],
-      });
-
-      await instance.create(revertPreimageHash, failedAllowance, token.address, claimAddress, timelock, {
-        from: accounts[2],
-      });
-
-      throw { reason: 'should not create swaps when transferring the tokens fails' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('ERC20: transfer amount exceeds balance');
-    }
+  it('should not lockup 0 value transactions', async () => {
+    await expectRevert(erc20Swap.lock(
+      preimageHash,
+      0,
+      token.address,
+      senderWallet.address,
+      await provider.getBlockNumber(),
+    ), 'ERC20Swap: amount must not be zero');
   });
 
-  it('should not claim swaps with preimages that have an invalid length', async () => {
-    const tryInvalidLength = async (length: number) => {
-      try {
-        await instance.claim(preimageHash, bufferToBytes(randomBytes(length)));
-        throw { reason: 'should not claim swaps with preimages that have an invalid length' };
-      } catch (error) {
-        expect(error.reason).to.be.equal('the preimage has to the have a length of 32 bytes');
-      }
-    };
-
-    await Promise.all([
-      tryInvalidLength(31),
-      tryInvalidLength(33),
-      tryInvalidLength(64),
-    ]);
+  it('should not lockup when ERC20 token cannot be transferred', async () => {
+    timelock = await provider.getBlockNumber();
+    await expectRevert(lockup(token.address), 'TransferHelper: could not transferFrom ERC20 tokens');
   });
 
-  it('should claim swaps', async () => {
-    // Test claiming with an incorrect preimage
-    try {
-      await instance.claim(preimageHash, bufferToBytes(randomBytes(32)));
-      throw { reason: 'should not claim swaps with a wrong preimage' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('the preimage does not correspond the provided hash');
-    }
+  it('should lockup', async () => {
+    // Set ERC20 token allowance
+    const approveTransaction = await token.approve(erc20Swap.address, lockupAmount);
+    await approveTransaction.wait(1);
 
-    // Claim with the correct preimage
-    const result = await instance.claim(preimageHash, bufferToBytes(preimage));
+    timelock = await provider.getBlockNumber();
 
-    expect((await token.balanceOf(instance.address)).toNumber()).to.be.equal(0);
-    expect((await token.balanceOf(claimAddress)).toNumber()).to.be.equal(swapAmount);
+    const lockupTransaction = await lockup(token.address);
+    const receipt = await lockupTransaction.wait(1);
 
-    expect(result.logs[0].event).to.be.equal('Claim');
+    // Check the token balance of the sender
+    expect(await token.balanceOf(senderWallet.address)).to.equal(tokenIssuance.sub(lockupAmount));
 
-    expect(result.logs[0].args.__length__).to.be.equal(1);
-    expect(result.logs[0].args._preimageHash).to.be.equal(preimageHashString);
+    // Check the token balance of the contract
+    expect(await token.balanceOf(erc20Swap.address)).to.equal(lockupAmount);
 
-    const swapInfo = await instance.swaps(preimageHash);
+    // Check the event emitted by the transaction
+    checkLockupEvent(receipt.events![2], preimageHash, lockupAmount, claimWallet.address, timelock, token.address);
 
-    expect(swapInfo[0].toNumber()).to.be.eq(swapAmount);
-    expect(swapInfo[1]).to.be.equal(token.address);
-    expect(swapInfo[2]).to.be.equal(claimAddress);
-    expect(swapInfo[3]).to.be.equal(accounts[0]);
-    expect(swapInfo[4].toNumber()).to.be.equal(timelock);
-    expect(swapInfo[5]).to.be.false;
-
-    // Test failure scenarios
-    const rawRevertPreimage = randomBytes(32);
-    const revertPreimage = bufferToBytes(rawRevertPreimage);
-    const revertPreimageHash = bufferToBytes(crypto.sha256(rawRevertPreimage));
-
-    try {
-      await instance.claim(preimageHash, bufferToBytes(preimage));
-      throw { reason: 'should not claim the same swap twice' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('there is no pending swap with this preimage hash');
-    }
-
-    try {
-      await instance.claim(revertPreimageHash, revertPreimage);
-      throw { reason: 'should not claim nonexistent swaps' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('there is no pending swap with this preimage hash');
-    }
+    // Verify the swap was added to the mapping
+    expect(await querySwap(token.address)).to.equal(true);
   });
 
-  it('should refund swaps', async () => {
-    const initialSenderTokenBalance = await token.balanceOf(accounts[0]);
+  it('should not lockup multiple times with the same values', async () => {
+    // Set ERC20 token allowance
+    const approveTransaction = await token.approve(erc20Swap.address, lockupAmount);
+    await approveTransaction.wait(1);
 
-    const refundPreimage = randomBytes(32);
-    const refundPreimageHash = bufferToBytes(crypto.sha256(refundPreimage));
-    const refundPreimageHashString = `0x${getHexString(crypto.sha256(refundPreimage))}`;
+    await expectRevert(lockup(token.address), 'ERC20Swap: swap exists already');
+  });
 
-    await token.increaseAllowance(instance.address, swapAmount);
-    await instance.create(refundPreimageHash, swapAmount, token.address, claimAddress, timelock);
+  it('should not claim with preimages that have a length unequal to 32', async () => {
+    await expectInvalidDataLength(erc20Swap.claim(
+      randomBytes(31),
+      lockupAmount,
+      token.address,
+      senderWallet.address,
+      timelock,
+    ));
 
-    const result = await instance.refund(refundPreimageHash);
+    await expectInvalidDataLength(erc20Swap.claim(
+      randomBytes(33),
+      lockupAmount,
+      token.address,
+      senderWallet.address,
+      timelock,
+    ));
+  });
 
-    expect((await token.balanceOf(instance.address)).toNumber()).to.be.equal(0);
-    expect(await token.balanceOf(accounts[0])).to.be.deep.equal(initialSenderTokenBalance);
+  it('should not claim with invalid preimages with the length of 32', async () => {
+    await expectRevert(erc20Swap.claim(
+      randomBytes(32),
+      lockupAmount,
+      token.address,
+      senderWallet.address,
+      timelock,
+    ), 'ERC20Swap: swap does not exist');
+  });
 
-    expect(result.logs[0].event).to.be.equal('Refund');
+  it('should claim', async () => {
+    const claimTransaction = await erc20Swap.connect(claimWallet).claim(
+      preimage,
+      lockupAmount,
+      token.address,
+      senderWallet.address,
+      timelock,
+    );
+    const receipt = await claimTransaction.wait(1);
 
-    expect(result.logs[0].args.__length__).to.be.equal(1);
-    expect(result.logs[0].args._preimageHash).to.be.equal(refundPreimageHashString);
+    // Check the token balance of the contract
+    expect(await token.balanceOf(erc20Swap.address)).to.equal(0);
 
-    const swapInfo = await instance.swaps(preimageHash);
+    // Check the token balance of the claim address
+    expect(await token.balanceOf(claimWallet.address)).to.equal(lockupAmount);
 
-    expect(swapInfo[0].toNumber()).to.be.eq(swapAmount);
-    expect(swapInfo[1]).to.be.equal(token.address);
-    expect(swapInfo[2]).to.be.equal(claimAddress);
-    expect(swapInfo[3]).to.be.equal(accounts[0]);
-    expect(swapInfo[4].toNumber()).to.be.equal(timelock);
-    expect(swapInfo[5]).to.be.false;
+    // Check the event emitted by the transaction
+    checkContractEvent(receipt.events![0], 'Claim', preimageHash, preimage);
 
-    // Test failure scenarios
-    try {
-      await instance.refund(refundPreimageHash);
-      throw { reason: 'should not refund the same swap twice' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('there is no pending swap with this preimage hash');
-    }
+    // Send the claimed ERC20 tokens back to the sender wallet
+    await token.connect(claimWallet).transfer(senderWallet.address, lockupAmount);
 
-    const timeoutRefundPreimageHash = bufferToBytes(crypto.sha256(randomBytes(32)));
+    // Verify the swap was removed to the mapping
+    expect(await querySwap(token.address)).to.equal(false);
+  });
 
-    await token.increaseAllowance(instance.address, swapAmount);
-    await instance.create(timeoutRefundPreimageHash, swapAmount, token.address, claimAddress, getEthereumTimestamp() + 60);
+  it('should not claim the same swap twice', async () => {
+    await expectRevert(erc20Swap.connect(claimWallet).claim(
+      preimage,
+      lockupAmount,
+      token.address,
+      senderWallet.address,
+      timelock,
+    ), 'ERC20Swap: swap does not exist');
+  });
 
-    try {
-      await instance.refund(timeoutRefundPreimageHash);
-      throw { reason: 'should not refund if the swap has not timed out yet' };
-    } catch (error) {
-      expect(error.reason).to.be.equal('swap has not timed out yet');
-    }
+  it('should refund', async () => {
+    // Set ERC20 token allowance
+    await token.approve(erc20Swap.address, lockupAmount);
+
+    // Lockup again to have a swap that can be refunded
+    // A block is mined for the lockup transaction and therefore the refund is included in two blocks
+    timelock = (await provider.getBlockNumber()) + 2;
+    await lockup(token.address);
+
+    // Refund
+    const refundTransaction = await erc20Swap.refund(
+      preimageHash,
+      lockupAmount,
+      token.address,
+      claimWallet.address,
+      timelock,
+    );
+    const receipt = await refundTransaction.wait(1);
+
+    // Check the balance of the contract
+    expect(await token.balanceOf(erc20Swap.address)).to.equal(0);
+
+    // Check the balance of the refund address
+    expect(await token.balanceOf(senderWallet.address)).to.equal(tokenIssuance);
+
+    // Check the event emitted by the transaction
+    checkContractEvent(receipt.events![0], 'Refund', preimageHash);
+
+    // Verify the swap was removed to the mapping
+    expect(await querySwap(token.address)).to.equal(false);
+  });
+
+  it('should not refund the same swap twice', async () => {
+    await expectRevert(erc20Swap.connect(claimWallet).refund(
+      preimageHash,
+      lockupAmount,
+      token.address,
+      claimWallet.address,
+      timelock,
+    ), 'ERC20Swap: swap does not exist');
+  });
+
+  it('should not refund swaps that have not timed out yet', async () => {
+    // Set ERC20 token allowance
+    await token.approve(erc20Swap.address, lockupAmount.toString());
+
+    // Lockup again to have a swap that can be refunded
+    // A block is mined for the lockup transaction and therefore the refund is included in two blocks
+    // which means that refunds should fail if the swap expires in three blocks
+    timelock = (await provider.getBlockNumber()) + 3;
+    await lockup(token.address);
+
+    // Refund
+    await expectRevert(erc20Swap.refund(
+      preimageHash,
+      lockupAmount,
+      token.address,
+      claimWallet.address,
+      timelock,
+    ), 'ERC20Swap: swap has not timed out yet');
+  });
+
+  it('should handle bad ERC20 tokens', async () => {
+    // Approve and lockup the bad token
+    await badToken.approve(erc20Swap.address, lockupAmount.toString());
+
+    timelock = await provider.getBlockNumber();
+    await lockup(badToken.address);
+
+    // Check the balances to make sure tokens were transferred to the contract
+    expect(await badToken.balanceOf(erc20Swap.address)).to.equal(lockupAmount);
+    expect(await badToken.balanceOf(senderWallet.address)).to.equal(tokenIssuance.sub(lockupAmount));
+
+    // Claim the bad token
+    const claimTransaction = await erc20Swap.connect(claimWallet).claim(
+      preimage,
+      lockupAmount,
+      badToken.address,
+      senderWallet.address,
+      timelock,
+    );
+    await claimTransaction.wait(1);
+
+    // Check the balances again to make sure tokens were transferred to the claim address
+    expect(await badToken.balanceOf(erc20Swap.address)).to.equal(0);
+    expect(await badToken.balanceOf(claimWallet.address)).to.equal(lockupAmount);
   });
 });
