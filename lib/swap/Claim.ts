@@ -26,7 +26,7 @@ export const constructClaimTransaction = (
   feePerByte: number,
   isRbf = true,
   timeoutBlockHeight?: number,
-) => {
+): Transaction => {
   const tx = new Transaction();
 
   // Refund transactions are just like claim ones and therefore this method
@@ -59,7 +59,7 @@ export const constructClaimTransaction = (
   utxos.forEach((utxo, index) => {
     switch (utxo.type) {
       // Construct and sign the input scripts for P2SH inputs
-      case OutputType.Legacy:
+      case OutputType.Legacy: {
         const sigHash = tx.hashForSignature(index, utxo.redeemScript, Transaction.SIGHASH_ALL);
         const signature = utxo.keys.sign(sigHash);
 
@@ -72,9 +72,10 @@ export const constructClaimTransaction = (
 
         tx.setInputScript(index, scriptBuffersToScript(inputScript));
         break;
+      }
 
       // Construct the nested redeem script for nested SegWit inputs
-      case OutputType.Compatibility:
+      case OutputType.Compatibility: {
         const nestedScript = [
           varuint.encode(ops.OP_0).toString('hex'),
           crypto.sha256(utxo.redeemScript),
@@ -82,8 +83,9 @@ export const constructClaimTransaction = (
 
         const nested = scriptBuffersToScript(nestedScript);
 
-        tx.setInputScript(index, scriptBuffersToScript([nested]));
+        tx.setInputScript(index, scriptBuffersToScript([ nested ]));
         break;
+      }
     }
 
     // Construct and sign the witness for (nested) SegWit inputs

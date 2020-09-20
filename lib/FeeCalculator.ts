@@ -102,7 +102,7 @@ const estimateOutput = (output: Output): number => {
 /**
  * Estimates the vbytes of a transaction
  */
-export const estimateSize = (inputs: Input[], outputs: Output[]) => {
+export const estimateSize = (inputs: Input[], outputs: Output[]): number => {
   // A raw transaction has always 4 bytes for the version and 4 for the locktime
   let sum = 8 * 4;
   let hasWitness = false;
@@ -130,7 +130,7 @@ export const estimateSize = (inputs: Input[], outputs: Output[]) => {
 /**
  * Estimates the amount of satoshis that should be paid as fee
  */
-export const estimateFee = (satsPerVbyte: number, inputs: Input[], outputs: Output[]) => {
+export const estimateFee = (satsPerVbyte: number, inputs: Input[], outputs: Output[]): number => {
   const size = estimateSize(inputs, outputs);
 
   return size * satsPerVbyte;

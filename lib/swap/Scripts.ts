@@ -12,7 +12,7 @@ import { script, crypto } from 'bitcoinjs-lib';
  *
  * @returns P2WPKH output script Buffer
  */
-export const p2wpkhOutput = (hash: Buffer) => {
+export const p2wpkhOutput = (hash: Buffer): Buffer => {
   return script.compile([
     ops.OP_0,
     hash,
@@ -26,7 +26,7 @@ export const p2wpkhOutput = (hash: Buffer) => {
  *
  * @returns P2WSH output script Buffer
  */
-export const p2wshOutput = (scriptHex: Buffer) => {
+export const p2wshOutput = (scriptHex: Buffer): Buffer => {
   return script.compile([
     ops.OP_0,
     crypto.sha256(scriptHex),
@@ -40,7 +40,7 @@ export const p2wshOutput = (scriptHex: Buffer) => {
  *
  * @returns P2PKH output script Buffer
  */
-export const p2pkhOutput = (hash: Buffer) => {
+export const p2pkhOutput = (hash: Buffer): Buffer => {
   return script.compile([
     ops.OP_DUP,
     ops.OP_HASH160,
@@ -57,7 +57,7 @@ export const p2pkhOutput = (hash: Buffer) => {
  *
  * @returns P2SH output script Buffer
  */
-export const p2shOutput = (scriptHex: Buffer) => {
+export const p2shOutput = (scriptHex: Buffer): Buffer => {
   return script.compile([
     ops.OP_HASH160,
     crypto.hash160(scriptHex),
@@ -70,7 +70,7 @@ export const p2shOutput = (scriptHex: Buffer) => {
  *
  * @param hash public key hash hex Buffer
  */
-export const p2shP2wpkhOutput = (hash: Buffer) => {
+export const p2shP2wpkhOutput = (hash: Buffer): { redeemScript: Buffer, outputScript: Buffer } => {
   const witness = p2wpkhOutput(hash);
 
   return {
@@ -84,7 +84,7 @@ export const p2shP2wpkhOutput = (hash: Buffer) => {
  *
  * @param scriptHex redeem script hex Buffer
  */
-export const p2shP2wshOutput = (scriptHex: Buffer) => {
+export const p2shP2wshOutput = (scriptHex: Buffer): Buffer => {
   const witness = p2wshOutput(scriptHex);
 
   return p2shOutput(witness);

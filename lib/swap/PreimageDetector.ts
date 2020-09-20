@@ -3,7 +3,7 @@ import { Transaction, script } from 'bitcoinjs-lib';
 /**
  * Detects the preimage from a claim transaction
  */
-export const detectPreimage = (vin: number, claimTransaction: Transaction) => {
+export const detectPreimage = (vin: number, claimTransaction: Transaction): Buffer => {
   const input = claimTransaction.ins[vin];
 
   // Get the preimage for P2WSH and nested P2SH-P2WSH

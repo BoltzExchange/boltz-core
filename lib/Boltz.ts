@@ -14,8 +14,6 @@ import { constructRefundTransaction } from './swap/Refund';
 import { estimateFee, estimateSize } from './FeeCalculator';
 import { ScriptElement, TransactionOutput } from './consts/Types';
 
-// TODO: use ABIs from factories?
-// TODO: check if dependencies are missing when ethers is not installed
 const ContractABIs = {
   IERC20: IERC20ABI.abi,
   EtherSwap: EtherSwapABI.abi,

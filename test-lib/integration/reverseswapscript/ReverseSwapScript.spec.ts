@@ -3,7 +3,7 @@ import { getHexBuffer } from '../../../lib/Utils';
 import { p2wshOutput } from '../../../lib/swap/Scripts';
 import { ClaimDetails, RefundDetails } from '../../../lib/consts/Types';
 import { Networks, reverseSwapScript, OutputType } from '../../../lib/Boltz';
-import { bitcoinClient, createSwapDetails, sendFundsToReedemScript } from '../Utils';
+import { bitcoinClient, createSwapDetails, sendFundsToRedeemScript } from '../Utils';
 
 export let invalidPreimageLengthSwap: ClaimDetails;
 
@@ -38,7 +38,7 @@ describe('ReverseSwapScript', () => {
 
     const redeemScript = reverseSwapScript(invalidPreimageHash, claimKeys.publicKey!, refundKeys.publicKey!, timeoutBlockHeight);
 
-    const invalidOutput = await sendFundsToReedemScript(
+    const invalidOutput = await sendFundsToRedeemScript(
       p2wshOutput,
       OutputType.Bech32,
       redeemScript,
