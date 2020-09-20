@@ -67,7 +67,7 @@ const deployContract = async (bre: BuidlerRuntimeEnvironment, contractName: stri
   return contract.address;
 };
 
-const deploy = async (bre: BuidlerRuntimeEnvironment) => {
+const deploy = async (bre: BuidlerRuntimeEnvironment): Promise<string[]> => {
   // Don't deploy the token on mainnet
   if (bre.network.config.chainId === 1) {
     contracts.pop();

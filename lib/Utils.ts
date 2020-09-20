@@ -3,7 +3,7 @@
  *
  * @returns a hex encoded Buffer
  */
-export const getHexBuffer = (input: string) => {
+export const getHexBuffer = (input: string): Buffer => {
   return Buffer.from(input, 'hex');
 };
 
@@ -12,6 +12,6 @@ export const getHexBuffer = (input: string) => {
  *
  * @returns a hex encoded string
  */
-export const getHexString = (input: Buffer) => {
+export const getHexString = (input: Buffer): string => {
   return input.toString('hex');
 };

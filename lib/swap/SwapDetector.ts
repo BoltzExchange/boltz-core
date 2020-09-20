@@ -7,17 +7,19 @@ import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
 import { p2shOutput, p2shP2wshOutput, p2wshOutput } from './Scripts';
 
+type DetectedSwap = { type: OutputType, vout: number } & TxOutput | undefined;
+
 /**
  * Detects a swap output with the matching redeem script in a transaction
  */
-export const detectSwap = (redeemScript: Buffer, transaction: Transaction) => {
+export const detectSwap = (redeemScript: Buffer, transaction: Transaction): DetectedSwap => {
   const scripts = [
     p2shOutput(redeemScript),
     p2shP2wshOutput(redeemScript),
     p2wshOutput(redeemScript),
   ].map(value => getHexString(value));
 
-  let returnValue: { type: OutputType, vout: number } & TxOutput | undefined;
+  let returnValue: DetectedSwap = undefined;
 
   transaction.outs.forEach((output, vout) => {
     const index = scripts.indexOf(getHexString(output.script));

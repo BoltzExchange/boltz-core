@@ -51,7 +51,7 @@ const derEncode = (point: string) => {
  *
  * @returns encoded signature Buffer
  */
-export const encodeSignature = (flag: number, signature: Buffer) => {
+export const encodeSignature = (flag: number, signature: Buffer): Buffer => {
   const pointSize = 32;
 
   const signatureEnd = pointSize + pointSize;
@@ -114,7 +114,7 @@ export const getOutputScriptType = (outputScript: Buffer): Output | undefined =>
 
   if (rawScript && rawScript.length > 1) {
     switch (rawScript[0]) {
-      case ops.OP_0:
+      case ops.OP_0: {
         // If the second entry of the script array has the length of 20 it is a
         // PKH output if not it is a SH output
         const secondEntry = rawScript[1] as Buffer;
@@ -128,6 +128,7 @@ export const getOutputScriptType = (outputScript: Buffer): Output | undefined =>
           isSh,
           type: OutputType.Bech32,
         };
+      }
 
       case ops.OP_HASH160:
         // The FeeCalculator treats legacy SH outputs the same way as compatibility PKH ones
@@ -145,7 +146,7 @@ export const getOutputScriptType = (outputScript: Buffer): Output | undefined =>
 /**
  * Encode a block height into a formed pushdata script
  */
-export const encodeCltv = (timeoutBlockHeight: number) => {
+export const encodeCltv = (timeoutBlockHeight: number): Buffer => {
   return script.number.encode(
     bip65.encode({ blocks: timeoutBlockHeight }),
   );

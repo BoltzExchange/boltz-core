@@ -5,7 +5,6 @@ import { contracts, deploy } from './scripts/deploy';
 
 usePlugin('@nomiclabs/buidler-ethers');
 usePlugin('@nomiclabs/buidler-waffle');
-usePlugin('@nomiclabs/buidler-solhint');
 usePlugin('@nomiclabs/buidler-etherscan');
 
 const paths = {
@@ -22,7 +21,7 @@ const mnemonicKey = mnemonic !== '' ? Wallet.fromMnemonic(mnemonic).privateKey :
 
 const config: BuidlerConfig = {
   solc: {
-    version: '0.6.12',
+    version: '0.7.1',
     optimizer: {
       enabled: true,
       runs: 200,
@@ -32,10 +31,6 @@ const config: BuidlerConfig = {
     rinkeby: {
       accounts: [mnemonicKey],
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,
-    },
-    ganache: {
-      accounts: ['0xc62d626999898ce6b5e4cb7122d7f9ffa3c08dda6d1b2b35ec3a4e0b9ebfd5dc'],
-      url: 'http://127.0.0.1:8545',
     },
   },
   etherscan: {

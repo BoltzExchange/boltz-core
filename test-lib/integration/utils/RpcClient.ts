@@ -8,9 +8,8 @@ type RpcConfig = {
 };
 
 class RpcClient {
-  private auth: string;
-
-  private options = {};
+  private readonly auth: string;
+  private readonly options = {};
 
   constructor(config: RpcConfig) {
     this.auth = Buffer.from(`${config.rpcuser}:${config.rpcpass}`).toString('base64');
@@ -23,7 +22,7 @@ class RpcClient {
     };
   }
 
-  public request = <T>(method: string, params?: any[]) => {
+  public request = <T>(method: string, params?: any[]): Promise<T> => {
     return new Promise<T>((resolve, reject) => {
       const serializedRequest = JSON.stringify({
         method,

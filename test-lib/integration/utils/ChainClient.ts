@@ -94,7 +94,7 @@ class ChainClient {
     this.client = new RpcClient(config);
   }
 
-  public init = async () => {
+  public init = async (): Promise<void> => {
     this.miningAddress = await this.getNewAddress();
     const { blocks } = await this.getBlockchainInfo();
 
@@ -104,11 +104,11 @@ class ChainClient {
     }
   }
 
-  public getNetworkInfo = () => {
+  public getNetworkInfo = (): Promise<NetworkInfo> => {
     return this.client.request<NetworkInfo>('getnetworkinfo');
   }
 
-  public getBlockchainInfo = () => {
+  public getBlockchainInfo = (): Promise<BlockchainInfo> => {
     return this.client.request<BlockchainInfo>('getblockchaininfo');
   }
 
@@ -116,18 +116,15 @@ class ChainClient {
     return this.client.request<Block>('getblock', [hash]);
   }
 
-  public sendRawTransaction = (rawTransaction: string) => {
+  public sendRawTransaction = (rawTransaction: string): Promise<string> => {
     return this.client.request<string>('sendrawtransaction', [rawTransaction]);
   }
 
-  /**
-   * @param blockhash if provided Bitcoin Core will search for the transaction only in that block
-   */
-  public getRawTransaction = (id: string, verbose = false, blockhash?: string) => {
+  public getRawTransaction = (id: string, verbose = false, blockhash?: string): Promise<string | RawTransaction> => {
     return this.client.request<string | RawTransaction>('getrawtransaction', [id, verbose, blockhash]);
   }
 
-  public estimateFee = async (confTarget = 2) => {
+  public estimateFee = async (confTarget = 2): Promise<number> => {
     const response = await this.client.request<any>('estimatesmartfee', [confTarget]);
 
     if (response.feerate) {
@@ -138,7 +135,7 @@ class ChainClient {
     return 2;
   }
 
-  public getNewAddress = (type = OutputType.Bech32) => {
+  public getNewAddress = (type = OutputType.Bech32): Promise<string> => {
     const outputType = (() => {
       switch (type) {
         case OutputType.Bech32:
@@ -153,14 +150,11 @@ class ChainClient {
     return this.client.request<string>('getnewaddress', ['', outputType]);
   }
 
-  /**
-   * @param amount in satoshis
-   */
-  public sendToAddress = (address: string, amount: number) => {
+  public sendToAddress = (address: string, amount: number): Promise<string> => {
     return this.client.request<string>('sendtoaddress', [address, amount / ChainClient.decimals]);
   }
 
-  public generate = async (blocks: number) => {
+  public generate = async (blocks: number): Promise<string[]> => {
     return this.client.request<string[]>('generatetoaddress', [blocks, this.miningAddress]);
   }
 }

@@ -17,7 +17,7 @@ export const destinationOutput = p2wpkhOutput(
   ),
 );
 
-export const claimSwap = async (claimDetails: ClaimDetails) => {
+export const claimSwap = async (claimDetails: ClaimDetails): Promise<void> => {
   const claimTransaction = constructClaimTransaction(
     [claimDetails],
     destinationOutput,
@@ -28,7 +28,7 @@ export const claimSwap = async (claimDetails: ClaimDetails) => {
   await bitcoinClient.sendRawTransaction(claimTransaction.toHex());
 };
 
-export const refundSwap = async (refundDetails: RefundDetails, blockHeight: number) => {
+export const refundSwap = async (refundDetails: RefundDetails, blockHeight: number): Promise<void> => {
   const refundTransaction = constructRefundTransaction(
     [refundDetails],
     destinationOutput,
@@ -45,7 +45,10 @@ export const createSwapDetails = async (
   preimageHash: Buffer,
   claimKeys: ECPair.ECPairInterface,
   refundKeys: ECPair.ECPairInterface,
-) => {
+): Promise<{
+  claimDetails: ClaimDetails[],
+  refundDetails: RefundDetails[],
+}> => {
   const claimDetails: ClaimDetails[] = [];
   const refundDetails: RefundDetails[] = [];
 
@@ -90,18 +93,28 @@ const createOutputs = async (
   const redeemScript = generateScript(preimageHash, claimKeys.publicKey!, refundKeys.publicKey!, timeoutBlockHeight);
 
   return [
-    await sendFundsToReedemScript(p2shOutput, OutputType.Legacy, redeemScript, timeoutBlockHeight),
-    await sendFundsToReedemScript(p2wshOutput, OutputType.Bech32, redeemScript, timeoutBlockHeight),
-    await sendFundsToReedemScript(p2shP2wshOutput, OutputType.Compatibility, redeemScript, timeoutBlockHeight),
+    await sendFundsToRedeemScript(p2shOutput, OutputType.Legacy, redeemScript, timeoutBlockHeight),
+    await sendFundsToRedeemScript(p2wshOutput, OutputType.Bech32, redeemScript, timeoutBlockHeight),
+    await sendFundsToRedeemScript(p2shP2wshOutput, OutputType.Compatibility, redeemScript, timeoutBlockHeight),
   ];
 };
 
-export const sendFundsToReedemScript = async (
+export const sendFundsToRedeemScript = async (
   outputFunction: (scriptHex: Buffer) => Buffer,
   outputType: OutputType,
   redeemScript: Buffer,
   timeoutBlockHeight: number,
-) => {
+): Promise<{
+  redeemScript: Buffer,
+  timeoutBlockHeight: number,
+  swapOutput: {
+    vout: number,
+    value: number,
+    script: Buffer,
+    txHash: Buffer,
+    type: OutputType,
+  },
+}> => {
   const swapAddress = address.fromOutputScript(outputFunction(redeemScript), Networks.bitcoinRegtest);
   const transactionId = await bitcoinClient.sendToAddress(swapAddress, 10000);
   const transaction = Transaction.fromHex(await bitcoinClient.getRawTransaction(transactionId) as string);
