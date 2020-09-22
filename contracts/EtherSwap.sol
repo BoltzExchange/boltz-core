@@ -7,7 +7,13 @@ contract EtherSwap {
 
     mapping (bytes32 => bool) public swaps;
 
-    event Lockup(bytes32 indexed preimageHash, uint amount, address claimAddress, uint timelock);
+    event Lockup(
+        bytes32 indexed preimageHash,
+        uint amount,
+        address claimAddress,
+        address indexed refundAddress,
+        uint timelock
+    );
 
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
     event Refund(bytes32 indexed preimageHash);
@@ -53,7 +59,7 @@ contract EtherSwap {
         require(swaps[hash] == false, "EtherSwap: swap exists already");
         swaps[hash] = true;
 
-        emit Lockup(preimageHash, msg.value, claimAddress, timelock);
+        emit Lockup(preimageHash, msg.value, claimAddress, msg.sender, timelock);
     }
 
     function claim(

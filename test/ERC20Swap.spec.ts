@@ -30,6 +30,8 @@ describe('ERC20Swap', async () => {
 
   let erc20Swap: Erc20Swap;
 
+  let lockupTransactionHash: string;
+
   const querySwap = (tokenAddress: string) => {
     return erc20Swap.swaps(utils.solidityKeccak256(
       ['bytes32', 'uint', 'address', 'address', 'address', 'uint'],
@@ -96,6 +98,8 @@ describe('ERC20Swap', async () => {
     timelock = await provider.getBlockNumber();
 
     const lockupTransaction = await lockup(token.address);
+    lockupTransactionHash = lockupTransaction.hash;
+
     const receipt = await lockupTransaction.wait(1);
 
     // Check the token balance of the sender
@@ -105,10 +109,27 @@ describe('ERC20Swap', async () => {
     expect(await token.balanceOf(erc20Swap.address)).to.equal(lockupAmount);
 
     // Check the event emitted by the transaction
-    checkLockupEvent(receipt.events![2], preimageHash, lockupAmount, claimWallet.address, timelock, token.address);
+    checkLockupEvent(
+      receipt.events![2],
+      preimageHash,
+      lockupAmount,
+      claimWallet.address,
+      senderWallet.address,
+      timelock,
+      token.address,
+    );
 
     // Verify the swap was added to the mapping
     expect(await querySwap(token.address)).to.equal(true);
+  });
+
+  it('should query Swaps by refund address', async () => {
+    const queriedEvents = await erc20Swap.queryFilter(
+      erc20Swap.filters.Lockup(null, null, null, null, senderWallet.address, null),
+    );
+
+    expect(queriedEvents.length).to.equal(1);
+    expect(queriedEvents[0].transactionHash).to.equal(lockupTransactionHash);
   });
 
   it('should not lockup multiple times with the same values', async () => {

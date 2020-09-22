@@ -14,6 +14,7 @@ contract ERC20Swap {
         uint256 amount,
         address tokenAddress,
         address claimAddress,
+        address indexed refundAddress,
         uint timelock
     );
 
@@ -65,7 +66,7 @@ contract ERC20Swap {
         require(swaps[hash] == false, "ERC20Swap: swap exists already");
         swaps[hash] = true;
 
-        emit Lockup(preimageHash, amount, tokenAddress, claimAddress, timelock);
+        emit Lockup(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
     }
 
     function claim(
