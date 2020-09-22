@@ -1,4 +1,4 @@
-# [0.3.0](https://github.com/BoltzExchange/boltz-core/compare/v0.2.1...v0.3.0) (2020-09-20)
+# [0.3.0](https://github.com/BoltzExchange/boltz-core/compare/v0.2.1...v0.3.0) (2020-09-22)
 
 
 ### Bug Fixes
@@ -10,24 +10,18 @@
 ### Features
 
 * make contracts more efficient ([bd6b68e](https://github.com/BoltzExchange/boltz-core/commit/bd6b68ebeafcc7b254fe49753ec4cde2c3bbd12f))
+* make swaps queryable by refund address ([a31df21](https://github.com/BoltzExchange/boltz-core/commit/a31df21ede1e0e4aa0be240a89c1e378521de47b))
 
 
 
-## [0.1.1](https://github.com/BoltzExchange/boltz-core/compare/v0.1.0...v0.1.1) (2020-01-22)
-
-
-### Bug Fixes
-
-* NPM library install ([a6ec910](https://github.com/BoltzExchange/boltz-core/commit/a6ec910cad9af6f8e78e182720894c24f41550a3))
-
-
-
-# [0.1.0](https://github.com/BoltzExchange/boltz-core/compare/v0.0.10...v0.1.0) (2020-01-22)
+## [0.2.1](https://github.com/BoltzExchange/boltz-core/compare/v0.2.0...v0.2.1) (2020-06-29)
 
 
 ### Bug Fixes
 
 * export ERC20 ABI ([e3d5941](https://github.com/BoltzExchange/boltz-core/commit/e3d59411f56a10a819131fe621b98ec38d1dae75))
+* main pointing to non existing file ([#39](https://github.com/BoltzExchange/boltz-core/issues/39)) ([2c7b75c](https://github.com/BoltzExchange/boltz-core/commit/2c7b75cdf1f66ed4def1c3e987257342a2bc35f5))
+* NPM library install ([2b61d77](https://github.com/BoltzExchange/boltz-core/commit/2b61d77d8783bea1d7914989f5335a3edbeb5633))
 * update dependencies ([1e2de0f](https://github.com/BoltzExchange/boltz-core/commit/1e2de0f2bc3d50e84566786dfcb53d444f5f4166))
 
 
@@ -38,12 +32,21 @@
 
 
 
-## [0.0.9](https://github.com/BoltzExchange/boltz-core/compare/v0.0.8...v0.0.9) (2019-10-23)
+## [0.0.10](https://github.com/BoltzExchange/boltz-core/compare/v0.0.9...v0.0.10) (2019-12-23)
 
 
 ### Features
 
-* add method to detect preimage from claim transaction ([9ae111c](https://github.com/BoltzExchange/boltz-core/commit/9ae111c))
+* add reverse swap script ([75a422f](https://github.com/BoltzExchange/boltz-core/commit/75a422f65e41c85c3695f4944fcbc74e7ee71c94))
+
+
+
+## [0.0.9](https://github.com/BoltzExchange/boltz-core/compare/v0.0.8...v0.0.9) (2019-10-24)
+
+
+### Features
+
+* add method to detect preimage from claim transaction ([#31](https://github.com/BoltzExchange/boltz-core/issues/31)) ([f1d0bb0](https://github.com/BoltzExchange/boltz-core/commit/f1d0bb0cdb005e8e06c803e82cbc40d190c0d171))
 
 
 
@@ -52,25 +55,20 @@
 
 ### Features
 
-* add Dogecoin network values ([#29](https://github.com/BoltzExchange/boltz-core/issues/29)) ([60e0fbe](https://github.com/BoltzExchange/boltz-core/commit/60e0fbe))
+* add Dogecoin network values ([#29](https://github.com/BoltzExchange/boltz-core/issues/29)) ([60e0fbe](https://github.com/BoltzExchange/boltz-core/commit/60e0fbebc425de9389d26c36f4a24f36c730eff9))
 
 
 
 ## [0.0.7](https://github.com/BoltzExchange/boltz-core/compare/v0.0.6...v0.0.7) (2019-04-16)
 
 
-### Bug Fixes
 
-* use Bitcoin regtest network values from bitcoinjs-lib ([7d2afd6](https://github.com/BoltzExchange/boltz-core/commit/7d2afd6))
-
-
-
-## [0.0.6](https://github.com/BoltzExchange/boltz-core/compare/v0.0.5...v0.0.6) (2019-03-01)
+## [0.0.6](https://github.com/BoltzExchange/boltz-core/compare/v0.0.5...v0.0.6) (2019-03-02)
 
 
 ### Bug Fixes
 
-* network values for Litecoin regtest ([#20](https://github.com/BoltzExchange/boltz-core/issues/20)) ([d0a2400](https://github.com/BoltzExchange/boltz-core/commit/d0a2400))
+* network values for Litecoin regtest ([#20](https://github.com/BoltzExchange/boltz-core/issues/20)) ([d0a2400](https://github.com/BoltzExchange/boltz-core/commit/d0a2400c4d3b3daca3b41295f6a0a7647542ab98))
 
 
 
@@ -79,7 +77,7 @@
 
 ### Bug Fixes
 
-* disallow maximal sequence for refund transactions ([#9](https://github.com/BoltzExchange/boltz-core/issues/9)) ([abed72c](https://github.com/BoltzExchange/boltz-core/commit/abed72c))
+* disallow maximal sequence for refund transactions ([#9](https://github.com/BoltzExchange/boltz-core/issues/9)) ([abed72c](https://github.com/BoltzExchange/boltz-core/commit/abed72c3a849c47de92c14bf106452d4e37c583a))
 
 
 
@@ -88,13 +86,13 @@
 
 ### Bug Fixes
 
-* fee estimation for P2(W)SH inputs and outputs ([e1f9ac9](https://github.com/BoltzExchange/boltz-core/commit/e1f9ac9))
+* fee estimation for P2(W)SH inputs and outputs ([e1f9ac9](https://github.com/BoltzExchange/boltz-core/commit/e1f9ac9b5d9be7f87879abb54de1484b63e11afb))
 
 
 ### Features
 
-* add parameter for opt-in RBF ([e4314c3](https://github.com/BoltzExchange/boltz-core/commit/e4314c3))
-* claim or refund multiple UTXOs in one transaction ([3dbe106](https://github.com/BoltzExchange/boltz-core/commit/3dbe106))
+* add parameter for opt-in RBF ([e4314c3](https://github.com/BoltzExchange/boltz-core/commit/e4314c33bae6b16c89fb08bd32a09dc8f826d771))
+* claim or refund multiple UTXOs in one transaction ([3dbe106](https://github.com/BoltzExchange/boltz-core/commit/3dbe106efa89fa09f463489aa97877129028c256))
 
 
 
@@ -103,7 +101,7 @@
 
 ### Bug Fixes
 
-* hardcode dummy preimage ([#4](https://github.com/BoltzExchange/boltz-core/issues/4)) ([bdd209d](https://github.com/BoltzExchange/boltz-core/commit/bdd209d))
+* hardcode dummy preimage ([#4](https://github.com/BoltzExchange/boltz-core/issues/4)) ([bdd209d](https://github.com/BoltzExchange/boltz-core/commit/bdd209d5061ab0291abb2110c771900cc79309c7))
 
 
 
@@ -112,9 +110,9 @@
 
 ### Features
 
-* add needed methods ([f710cf2](https://github.com/BoltzExchange/boltz-core/commit/f710cf2))
-* add swap scripts ([553952d](https://github.com/BoltzExchange/boltz-core/commit/553952d))
-* export more reusable methods and objects ([#2](https://github.com/BoltzExchange/boltz-core/issues/2)) ([2e464e6](https://github.com/BoltzExchange/boltz-core/commit/2e464e6))
+* add needed methods ([f710cf2](https://github.com/BoltzExchange/boltz-core/commit/f710cf21e17883b982d72d19224650e11c27f3be))
+* add swap scripts ([553952d](https://github.com/BoltzExchange/boltz-core/commit/553952da95cb3ae733000ede594510aec12b7737))
+* export more reusable methods and objects ([#2](https://github.com/BoltzExchange/boltz-core/issues/2)) ([2e464e6](https://github.com/BoltzExchange/boltz-core/commit/2e464e64746f686e09c2f097756d8b7437f3969a))
 
 
 
