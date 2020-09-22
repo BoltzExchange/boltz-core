@@ -62,7 +62,7 @@ task('deploy-verify', 'Deploy the contracts and verify them on Etherscan', async
   console.log();
 
   for (let i = 0; i < contracts.length; i += 1) {
-    await bre.run('verify-contract', { contractName: contracts[i], address: addresses[i] });
+    await bre.run('verify', { contractName: contracts[i], address: addresses[i] });
   }
 });
 
