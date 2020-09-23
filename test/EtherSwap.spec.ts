@@ -22,6 +22,8 @@ describe('EtherSwap', async () => {
 
   let etherSwap: EtherSwap;
 
+  let lockupTransactionHash: string;
+
   const querySwap = () => {
     return etherSwap.swaps(utils.solidityKeccak256(
       ['bytes32', 'uint', 'address', 'address', 'uint'],
@@ -71,16 +73,34 @@ describe('EtherSwap', async () => {
     timelock = await provider.getBlockNumber();
 
     const lockupTransaction = await lockup();
+    lockupTransactionHash = lockupTransaction.hash;
+
     const receipt = await lockupTransaction.wait(1);
 
     // Check the balance of the contract
     expect(await provider.getBalance(etherSwap.address)).to.equal(lockupAmount);
 
     // Check the event emitted by the transaction
-    checkLockupEvent(receipt.events![0], preimageHash, lockupAmount, claimWallet.address, timelock);
+    checkLockupEvent(
+      receipt.events![0],
+      preimageHash,
+      lockupAmount,
+      claimWallet.address,
+      senderWallet.address,
+      timelock,
+    );
 
     // Verify the swap was added to the mapping
     expect(await querySwap()).to.equal(true);
+  });
+
+  it('should query Swaps by refund address', async () => {
+    const queriedEvents = await etherSwap.queryFilter(
+      etherSwap.filters.Lockup(null, null, null, senderWallet.address, null),
+    );
+
+    expect(queriedEvents.length).to.equal(1);
+    expect(queriedEvents[0].transactionHash).to.equal(lockupTransactionHash);
   });
 
   it('should not lockup multiple times with the same values', async () => {

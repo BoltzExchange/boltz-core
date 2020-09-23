@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { BigNumber, constants, Event } from 'ethers';
 import { getHexString } from '../lib/Utils';
+import { fromEventAddress } from '../lib/ethereum/EthereumUtils';
 
 export const decodeBytes = (input: string) => {
   return input.slice(2);
@@ -62,16 +63,19 @@ export const checkLockupEvent = (
   preimageHash: Buffer,
   amount: BigNumber,
   claimAddress: string,
+  refundAddress: string,
   timelock: number,
   tokenAddress?: string,
 ) => {
   expect(event.event).to.equal('Lockup');
 
   expect(decodeBytes(event.topics[1])).to.equal(getHexString(preimageHash));
+  expect(fromEventAddress(event.topics[2])).to.equal(refundAddress);
 
   expect(decodeBytes(event.args!.preimageHash)).to.equal(getHexString(preimageHash));
   expect(event.args!.amount).to.equal(amount);
   expect(event.args!.claimAddress).to.equal(claimAddress);
+  expect(event.args!.refundAddress).to.equal(refundAddress);
   expect(event.args!.timelock).to.equal(timelock);
 
   if (tokenAddress) {
