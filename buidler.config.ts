@@ -10,15 +10,17 @@ usePlugin('@nomiclabs/buidler-etherscan');
 const paths = {
   infuraKey: '.infura.key',
   etherscanKey: '.etherscan.key',
-  mnemonic: '.deployment.mnemonic',
+  mnemonics: '.mnemonics.json',
 };
 
-const mnemonic = fs.existsSync(paths.mnemonic) ? fs.readFileSync(paths.mnemonic).toString().trim() : '';
+const mnemonics = fs.existsSync(paths.mnemonics) ? JSON.parse(fs.readFileSync(paths.mnemonics).toString()) : undefined;
 const infuraKey = fs.existsSync(paths.infuraKey) ? fs.readFileSync(paths.infuraKey).toString().trim() : '';
 const etherscanKey = fs.existsSync(paths.etherscanKey) ? fs.readFileSync(paths.etherscanKey).toString().trim() : '';
 
-const mnemonicKey = mnemonic !== '' ? Wallet.fromMnemonic(mnemonic).privateKey : '';
-
+const mnemonicKeys = {
+  testnet: mnemonics ? Wallet.fromMnemonic(mnemonics.testnet).privateKey : '',
+  mainnet: mnemonics ? Wallet.fromMnemonic(mnemonics.mainnet).privateKey : '',
+};
 const config: BuidlerConfig = {
   solc: {
     version: '0.7.1',
@@ -29,9 +31,13 @@ const config: BuidlerConfig = {
   },
   networks: {
     rinkeby: {
-      accounts: [mnemonicKey],
+      accounts: [mnemonicKeys.testnet],
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,
     },
+    mainnet: {
+      accounts: [mnemonicKeys.mainnet],
+      url: `https://mainnet.infura.io/v3/${infuraKey}`,
+    }
   },
   etherscan: {
     apiKey: etherscanKey,
