@@ -14,7 +14,11 @@ let gasSpent = BigNumber.from(0);
 
 const getGasPrice = async (bre: BuidlerRuntimeEnvironment) => {
   const weiToGwei = BigNumber.from(10).pow(9);
-  const gasPrice = await bre.ethers.provider.getGasPrice();
+
+  const configGasPrice = bre.network.config.gasPrice;
+  const gasPrice = typeof configGasPrice === 'number' ?
+    BigNumber.from(configGasPrice) :
+    await bre.ethers.provider.getGasPrice();
 
   return gasPrice.div(weiToGwei);
 };
@@ -59,7 +63,7 @@ const deployContract = async (bre: BuidlerRuntimeEnvironment, contractName: stri
 
   const deployReceipt = await waitForReceipt(bre, contract.deployTransaction.hash);
 
-  gasSpent = gasSpent.add(deployReceipt.cumulativeGasUsed.mul(contract.deployTransaction.gasPrice));
+  gasSpent = gasSpent.add(deployReceipt.gasUsed.mul(contract.deployTransaction.gasPrice));
 
   console.log(`  Address: ${contract.address}`);
   console.log();
@@ -68,15 +72,16 @@ const deployContract = async (bre: BuidlerRuntimeEnvironment, contractName: stri
 };
 
 const deploy = async (bre: BuidlerRuntimeEnvironment): Promise<string[]> => {
-  // Don't deploy the token on mainnet
-  if (bre.network.config.chainId === 1) {
+  // Don't deploy the test token on mainnet
+  if (bre.network.name === 'mainnet') {
     contracts.pop();
   }
 
   console.log();
-  console.log(`Deploying contracts: ${Object.values(contracts).join(', ')}`);
+  console.log(`Using address: ${await (await bre.ethers.getSigners())[0].getAddress()} `);
   console.log(`Network: ${bre.network.name}`);
   console.log(`Gas price: ${await getGasPrice(bre)} gwei`);
+  console.log(`Deploying contracts: ${Object.values(contracts).join(', ')}`);
   console.log();
 
   const addresses: string[] = [];

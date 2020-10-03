@@ -71,7 +71,7 @@ typechain/
 # Buidler deployment secrets
 .infura.key
 .etherscan.key
-.deployment.mnemonic
+.mnemonics.json
 
 # MythX output folder
-bin/ 
+bin/
