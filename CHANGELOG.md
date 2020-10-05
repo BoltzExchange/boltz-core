@@ -1,3 +1,18 @@
+## [0.3.1](https://github.com/BoltzExchange/boltz-core/compare/v3.0.0...v0.3.1) (2020-10-05)
+
+
+### Bug Fixes
+
+* deployment scripts on mainnet ([#44](https://github.com/BoltzExchange/boltz-core/issues/44)) ([f2cee9c](https://github.com/BoltzExchange/boltz-core/commit/f2cee9cb166e4a87ab08ca2c5bbcfb788936614c))
+* update to Solidty v0.7.2 ([#45](https://github.com/BoltzExchange/boltz-core/issues/45)) ([56fdeef](https://github.com/BoltzExchange/boltz-core/commit/56fdeef1b444d2c739a6adf9e4862bcf86b6deb2))
+
+
+### Features
+
+* make sample ERC20 contracts configurable ([58e7108](https://github.com/BoltzExchange/boltz-core/commit/58e7108d7b528d92059ba3151164e4b1b15d8b07))
+
+
+
 # [0.3.0](https://github.com/BoltzExchange/boltz-core/compare/v0.2.1...v0.3.0) (2020-09-22)
 
 
