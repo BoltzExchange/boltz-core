@@ -32,10 +32,10 @@ contract BadERC20 is IBadERC20 {
     string private _symbol;
     uint8 private _decimals;
 
-    constructor(uint256 initialSupply) {
-        _name = "BadERC20";
-        _symbol = "BAD";
-        _decimals = 18;
+    constructor(string memory name, string memory symbol, uint8 decimals, uint256 initialSupply) {
+        _name = name;
+        _symbol = symbol;
+        _decimals = decimals;
 
         _balances[msg.sender] = _balances[msg.sender].add(initialSupply);
         emit Transfer(address(0), msg.sender, initialSupply);

@@ -57,8 +57,8 @@ describe('ERC20Swap', async () => {
   };
 
   before(async () => {
-    token = await deployContract(senderWallet, TestERC20Artifact, [tokenIssuance]) as IERC20;
-    badToken = await deployContract(senderWallet, BadERC20Artifact, [tokenIssuance]) as IERC20;
+    token = await deployContract(senderWallet, TestERC20Artifact, ["TestERC20", "TRC", 18, tokenIssuance]) as IERC20;
+    badToken = await deployContract(senderWallet, BadERC20Artifact, ["BadERC20", "BAD", 18, tokenIssuance]) as IERC20;
 
     erc20Swap = await deployContract(senderWallet, ERC20SwapArtifact) as Erc20Swap;
 
@@ -66,6 +66,10 @@ describe('ERC20Swap', async () => {
     expect(badToken.address).to.be.properAddress;
 
     expect(erc20Swap.address).to.be.properAddress;
+  });
+
+  it('should have the correct version', async () => {
+    expect(await erc20Swap.version()).to.be.equal(1);
   });
 
   it('should not accept Ether', async () => {

@@ -54,6 +54,10 @@ describe('EtherSwap', async () => {
     expect(etherSwap.address).to.be.properAddress;
   });
 
+  it('should have the correct version', async () => {
+    expect(await etherSwap.version()).to.be.equal(1);
+  });
+
   it('should not accept Ether without function signature', async () => {
     await expectRevert(senderWallet.sendTransaction({
       to: etherSwap.address,
