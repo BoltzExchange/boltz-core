@@ -1,4 +1,13 @@
-## [0.3.1](https://github.com/BoltzExchange/boltz-core/compare/v3.0.0...v0.3.1) (2020-10-05)
+## [0.3.2](https://github.com/BoltzExchange/boltz-core/compare/v0.3.1...v0.3.2) (2020-10-07)
+
+
+### Bug Fixes
+
+* contract deployment scripts ([cd1f50f](https://github.com/BoltzExchange/boltz-core/commit/cd1f50fe2ecd741c294f83203e0d539456f41cdd))
+
+
+
+## [0.3.1](https://github.com/BoltzExchange/boltz-core/compare/v0.3.0...v0.3.1) (2020-10-05)
 
 
 ### Bug Fixes

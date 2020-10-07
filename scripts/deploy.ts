@@ -54,7 +54,7 @@ const deployContract = async (bre: BuidlerRuntimeEnvironment, contractName: stri
   let contract: Contract;
 
   if (tokenSupply) {
-    contract = await factory.deploy(tokenSupply);
+    contract = await factory.deploy('TestERC20', 'TRC', 18, tokenSupply);
   } else {
     contract = await factory.deploy();
   }
