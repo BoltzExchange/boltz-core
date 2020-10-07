@@ -49,7 +49,7 @@ describe('EtherSwap', async () => {
   };
 
   before(async () => {
-    etherSwap = await deployContract(senderWallet, EtherSwapArtifact) as EtherSwap;
+    etherSwap = await deployContract(senderWallet, EtherSwapArtifact) as any as EtherSwap;
 
     expect(etherSwap.address).to.be.properAddress;
   });
