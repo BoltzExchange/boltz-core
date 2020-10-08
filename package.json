@@ -1,12 +1,12 @@
 {
   "name": "boltz-core",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
     "compile": "npm run compile:solidity && npm run compile:typescript",
     "compile:solidity": "buidler compile && npm run compile:solidity:ethers",
-    "compile:solidity:ethers": "typechain --target ethers-v5 --outDir typechain/ ./artifacts/IERC20.json && typechain --target ethers-v5 --outDir typechain/ ./artifacts/EtherSwap.json && typechain --target ethers-v5 --outDir typechain/ ./artifacts/ERC20Swap.json",
+    "compile:solidity:ethers": "typechain --target ethers-v5 --outDir typechain/ ./artifacts/ERC20.json && typechain --target ethers-v5 --outDir typechain/ ./artifacts/EtherSwap.json && typechain --target ethers-v5 --outDir typechain/ ./artifacts/ERC20Swap.json",
     "compile:typescript": "tsc",
     "compile:typescript:watch": "tsc --watch",
     "lint": "eslint --max-warnings 0 --ext .ts .",
@@ -65,7 +65,7 @@
     "eslint-plugin-jest": "^24.1.0",
     "eslint-plugin-node": "^11.1.0",
     "ethereum-waffle": "^3.1.1",
-    "ethers": "^5.0.16",
+    "ethers": "^5.0.17",
     "jest": "^26.5.2",
     "ts-jest": "^26.4.1",
     "ts-node": "^9.0.0",
