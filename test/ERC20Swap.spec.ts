@@ -4,7 +4,7 @@ import { crypto } from 'bitcoinjs-lib';
 import { BigNumber, constants, utils } from 'ethers';
 import { deployContract, MockProvider, solidity } from 'ethereum-waffle';
 import { Erc20Swap } from '../typechain/Erc20Swap';
-import { Ierc20 as IERC20 } from '../typechain/Ierc20';
+import { Erc20 as ERC20 } from '../typechain/Erc20';
 import BadERC20Artifact from '../artifacts/BadERC20.json';
 import ERC20SwapArtifact from '../artifacts/ERC20Swap.json';
 import TestERC20Artifact from '../artifacts/TestERC20.json';
@@ -25,8 +25,8 @@ describe('ERC20Swap', async () => {
 
   let timelock: number;
 
-  let token: IERC20;
-  let badToken: IERC20;
+  let token: ERC20;
+  let badToken: ERC20;
 
   let erc20Swap: Erc20Swap;
 
@@ -57,8 +57,8 @@ describe('ERC20Swap', async () => {
   };
 
   before(async () => {
-    token = await deployContract(senderWallet, TestERC20Artifact, ["TestERC20", "TRC", 18, tokenIssuance]) as any as IERC20;
-    badToken = await deployContract(senderWallet, BadERC20Artifact, ["BadERC20", "BAD", 18, tokenIssuance]) as any as IERC20;
+    token = await deployContract(senderWallet, TestERC20Artifact, ["TestERC20", "TRC", 18, tokenIssuance]) as any as ERC20;
+    badToken = await deployContract(senderWallet, BadERC20Artifact, ["BadERC20", "BAD", 18, tokenIssuance]) as any as ERC20;
 
     erc20Swap = await deployContract(senderWallet, ERC20SwapArtifact) as any as Erc20Swap;
 
