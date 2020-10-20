@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.7.3;
+pragma solidity 0.7.4;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
@@ -24,25 +24,23 @@ interface IBadERC20 {
 contract BadERC20 is IBadERC20 {
     using SafeMath for uint256;
 
+    uint8 public decimals;
+
     mapping (address => uint256) private _balances;
 
     mapping (address => mapping (address => uint256)) private _allowances;
 
     string private _name;
     string private _symbol;
-    uint8 private _decimals;
 
-    constructor(string memory name, string memory symbol, uint8 decimals, uint256 initialSupply) {
+    constructor(string memory name, string memory symbol, uint8 _decimals, uint256 initialSupply) {
+        decimals = _decimals;
+
         _name = name;
         _symbol = symbol;
-        _decimals = decimals;
 
         _balances[msg.sender] = _balances[msg.sender].add(initialSupply);
         emit Transfer(address(0), msg.sender, initialSupply);
-    }
-
-    function decimals() public view returns (uint8) {
-        return _decimals;
     }
 
     function balanceOf(address account) public view override returns (uint256) {
