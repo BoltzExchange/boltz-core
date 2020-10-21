@@ -23,7 +23,7 @@ const mnemonicKeys = {
 };
 const config: BuidlerConfig = {
   solc: {
-    version: '0.7.3',
+    version: '0.7.4',
     optimizer: {
       enabled: true,
       runs: 200,
