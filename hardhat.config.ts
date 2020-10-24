@@ -1,11 +1,10 @@
 import fs from 'fs';
 import { Wallet } from 'ethers';
-import { BuidlerConfig, task, usePlugin } from '@nomiclabs/buidler/config';
+import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-waffle';
+import '@nomiclabs/hardhat-etherscan';
 import { contracts, deploy } from './scripts/deploy';
-
-usePlugin('@nomiclabs/buidler-ethers');
-usePlugin('@nomiclabs/buidler-waffle');
-usePlugin('@nomiclabs/buidler-etherscan');
+import { HardhatUserConfig, task } from 'hardhat/config';
 
 const paths = {
   infuraKey: '.infura.key',
@@ -21,43 +20,46 @@ const mnemonicKeys = {
   testnet: mnemonics ? Wallet.fromMnemonic(mnemonics.testnet).privateKey : '',
   mainnet: mnemonics ? Wallet.fromMnemonic(mnemonics.mainnet).privateKey : '',
 };
-const config: BuidlerConfig = {
-  solc: {
+
+const config: HardhatUserConfig = {
+  solidity: {
     version: '0.7.4',
-    optimizer: {
-      enabled: true,
-      runs: 200,
-    },
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    }
   },
   networks: {
     rinkeby: {
-      accounts: [mnemonicKeys.testnet],
+      from: mnemonicKeys.testnet,
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,
     },
     mainnet: {
-      accounts: [mnemonicKeys.mainnet],
+      from: mnemonicKeys.mainnet,
       url: `https://mainnet.infura.io/v3/${infuraKey}`,
-    }
+    },
   },
   etherscan: {
     apiKey: etherscanKey,
   },
 };
 
-task('accounts', 'Prints all accounts', async (_, bre) => {
-  const accounts = await bre.ethers.getSigners();
+task('accounts', 'Prints all accounts', async (_, hre) => {
+  const accounts = await hre.ethers.getSigners();
 
   for (let i = 0; i < accounts.length; i += 1) {
     console.log(`${i + 1}: ${await accounts[i].getAddress()}`);
   }
 });
 
-task('deploy', 'Deploy the contracts', async (_, bre) => {
-  await deploy(bre);
+task('deploy', 'Deploy the contracts', async (_, hre) => {
+  await deploy(hre);
 });
 
-task('deploy-verify', 'Deploy the contracts and verify them on Etherscan', async (_, bre) => {
-  const addresses = await deploy(bre);
+task('deploy-verify', 'Deploy the contracts and verify them on Etherscan', async (_, hre) => {
+  const addresses = await deploy(hre);
 
   // Don't verify the ERC20 contract
   if (contracts.length === 3) {
@@ -68,7 +70,7 @@ task('deploy-verify', 'Deploy the contracts and verify them on Etherscan', async
   console.log();
 
   for (let i = 0; i < contracts.length; i += 1) {
-    await bre.run('verify', { contractName: contracts[i], address: addresses[i] });
+    await hre.run('verify', { contractName: contracts[i], address: addresses[i] });
   }
 });
 
