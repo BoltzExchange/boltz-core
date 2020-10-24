@@ -5,9 +5,9 @@ import { BigNumber, constants, utils } from 'ethers';
 import { deployContract, MockProvider, solidity } from 'ethereum-waffle';
 import { Erc20Swap } from '../typechain/Erc20Swap';
 import { Erc20 as ERC20 } from '../typechain/Erc20';
-import BadERC20Artifact from '../artifacts/BadERC20.json';
-import ERC20SwapArtifact from '../artifacts/ERC20Swap.json';
-import TestERC20Artifact from '../artifacts/TestERC20.json';
+import BadERC20Artifact from '../artifacts/contracts/BadERC20.sol/BadERC20.json';
+import ERC20SwapArtifact from '../artifacts/contracts/ERC20Swap.sol/ERC20Swap.json';
+import TestERC20Artifact from '../artifacts/contracts/TestERC20.sol/TestERC20.json';
 import { checkContractEvent, checkLockupEvent, expectInvalidDataLength, expectRevert } from './Utils';
 
 chai.use(solidity);

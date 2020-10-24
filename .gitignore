@@ -63,12 +63,12 @@ typedoc/
 # Visual Studio Code configuration
 .vscode
 
-# Buidler
-cache
+# Hardhat
+cache/
 artifacts/
 typechain/
 
-# Buidler deployment secrets
+# Hardhat deployment secrets
 .infura.key
 .etherscan.key
 .mnemonics.json

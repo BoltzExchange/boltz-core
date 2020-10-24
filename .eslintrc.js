@@ -22,7 +22,7 @@ module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   ignorePatterns: [
-    // Ignore the mocha tests of buidler
+    // Ignore the mocha tests of hardhat
     'test/',
 
     'dist/',

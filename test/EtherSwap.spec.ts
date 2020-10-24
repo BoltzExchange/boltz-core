@@ -1,10 +1,10 @@
 import chai from 'chai';
-import { constants, utils } from 'ethers';
 import { randomBytes } from 'crypto';
 import { crypto } from 'bitcoinjs-lib';
+import { constants, utils } from 'ethers';
 import { deployContract, MockProvider, solidity } from 'ethereum-waffle';
 import { EtherSwap } from '../typechain/EtherSwap';
-import EtherSwapArtifact from '../artifacts/EtherSwap.json';
+import EtherSwapArtifact from '../artifacts/contracts/EtherSwap.sol/EtherSwap.json';
 import { checkContractEvent, checkLockupEvent, expectInvalidDataLength, expectRevert } from './Utils';
 
 chai.use(solidity);
