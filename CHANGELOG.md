@@ -1,3 +1,12 @@
+## [0.3.4](https://github.com/BoltzExchange/boltz-core/compare/v0.3.3...v0.3.4) (2020-10-26)
+
+
+### Bug Fixes
+
+* remove export that requires ethers.js ([d038852](https://github.com/BoltzExchange/boltz-core/commit/d0388526f4dd8236cba38627188bf86f0757903e))
+
+
+
 ## [0.3.3](https://github.com/BoltzExchange/boltz-core/compare/v0.3.2...v0.3.3) (2020-10-08)
 
 
