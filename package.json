@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
