@@ -1,3 +1,12 @@
+## [0.3.5](https://github.com/BoltzExchange/boltz-core/compare/v0.3.4...v0.3.5) (2020-10-30)
+
+
+### Bug Fixes
+
+* export TestERC20 ABI ([178979b](https://github.com/BoltzExchange/boltz-core/commit/178979bb126f9d3dda3a8fc93770de35b4f8fd57))
+
+
+
 ## [0.3.4](https://github.com/BoltzExchange/boltz-core/compare/v0.3.3...v0.3.4) (2020-10-26)
 
 
