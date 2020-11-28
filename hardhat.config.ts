@@ -74,4 +74,31 @@ task('deploy-verify', 'Deploy the contracts and verify them on Etherscan', async
   }
 });
 
+task('metamask-register', 'Generate method names and their hashes for the MetaMask registration', async (_, hre) => {
+  console.log();
+  console.log();
+
+  for (const contract of contracts) {
+    if (contract === 'TestERC20') {
+      continue;
+    }
+
+    const factory = await hre.ethers.getContractFactory(contract);
+
+    console.log(`Contract ${contract}`);
+    console.log();
+
+    for (const methodName of Object.keys(factory.interface.functions)) {
+      // Do not print view functions for which no MetaMask popup approval is needed
+      if (factory.interface.functions[methodName].stateMutability !== 'view') {
+        console.log(`  Method name: ${methodName}`);
+        console.log(`  Trimmed hash: ${hre.ethers.utils.solidityKeccak256(['string'], [methodName]).substring(0, 10)}`);
+        console.log();
+      }
+    }
+
+    console.log();
+  }
+});
+
 export default config;
