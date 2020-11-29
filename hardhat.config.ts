@@ -1,4 +1,5 @@
 import fs from 'fs';
+import 'hardhat-gas-reporter';
 import { Wallet } from 'ethers';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';

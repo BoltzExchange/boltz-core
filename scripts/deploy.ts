@@ -29,12 +29,12 @@ const wait = (seconds: number) => {
   });
 };
 
-const waitForReceipt = async (bre: HardhatRuntimeEnvironment, transactionHash: string) => {
-  const receipt = await bre.ethers.provider.getTransactionReceipt(transactionHash);
+const waitForReceipt = async (hre: HardhatRuntimeEnvironment, transactionHash: string) => {
+  const receipt = await hre.ethers.provider.getTransactionReceipt(transactionHash);
 
   if (receipt === null) {
     await wait(1);
-    return waitForReceipt(bre, transactionHash);
+    return waitForReceipt(hre, transactionHash);
   }
 
   return receipt;
