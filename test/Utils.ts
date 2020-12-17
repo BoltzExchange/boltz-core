@@ -15,36 +15,24 @@ export const decodeBytes = (input: string) => {
   return input.slice(2);
 };
 
-export const getFailureReason = (receipt: any) => {
-  let results: object;
-
-  if (receipt.results) {
-    results = receipt.results;
-  } else {
-    results = receipt.error.results;
-  }
-
-  return Object.values(results)[0].reason;
-};
-
 export const expectRevert = async (promise: Promise<any>, reason?: string) => {
   let revert = false;
 
   try {
     await promise;
   } catch (error) {
-    let results: object;
-
-    if (error.results) {
-      results = error.results;
-    } else {
-      results = error.error.results;
-    }
-
-    expect(Object.values(results)[0].error).to.equal('revert');
-
     if (reason) {
-      expect(getFailureReason(error)).to.equal(reason);
+      const stackTrace = error.stackTrace;
+
+      for (const trace of stackTrace) {
+        if (trace.message) {
+          const message = utils.toUtf8String(
+            `0x${(trace.message as Buffer).toString('hex').substr(136)}`,
+          ).substr(0, reason.length);
+
+          expect(message).to.equal(reason);
+        }
+      }
     }
 
     revert = true;

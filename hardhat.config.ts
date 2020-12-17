@@ -1,4 +1,5 @@
 import fs from 'fs';
+import 'hardhat-gas-reporter';
 import { Wallet } from 'ethers';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';
@@ -23,7 +24,7 @@ const mnemonicKeys = {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.7.5',
+    version: '0.7.6',
     settings: {
       optimizer: {
         enabled: true,

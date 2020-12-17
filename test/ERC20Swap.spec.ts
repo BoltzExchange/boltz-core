@@ -1,21 +1,25 @@
 import chai from 'chai';
+// @ts-ignore
+import { ethers } from 'hardhat';
 import { randomBytes } from 'crypto';
 import { crypto } from 'bitcoinjs-lib';
-import { BigNumber, constants, utils } from 'ethers';
-import { deployContract, MockProvider, solidity } from 'ethereum-waffle';
+import { solidity } from 'ethereum-waffle';
 import { ERC20 } from '../typechain/ERC20';
 import { ERC20Swap } from '../typechain/ERC20Swap';
-import BadERC20Artifact from '../artifacts/contracts/BadERC20.sol/BadERC20.json';
-import ERC20SwapArtifact from '../artifacts/contracts/ERC20Swap.sol/ERC20Swap.json';
-import TestERC20Artifact from '../artifacts/contracts/TestERC20.sol/TestERC20.json';
+import { BigNumber, constants, providers, Signer, utils } from 'ethers';
 import { checkContractEvent, checkLockupEvent, expectInvalidDataLength, expectRevert } from './Utils';
 
 chai.use(solidity);
 const { expect } = chai;
 
 describe('ERC20Swap', async () => {
-  const provider = new MockProvider();
-  const [senderWallet, claimWallet] = provider.getWallets();
+  let provider: providers.Provider;
+
+  let claimSigner: Signer;
+  let claimAddress: string;
+
+  let senderSigner: Signer;
+  let senderAddress: string;
 
   const preimage = randomBytes(32);
   const preimageHash = crypto.sha256(preimage);
@@ -39,8 +43,8 @@ describe('ERC20Swap', async () => {
         preimageHash,
         lockupAmount,
         tokenAddress,
-        claimWallet.address,
-        senderWallet.address,
+        claimAddress,
+        senderAddress,
         timelock,
       ],
     ));
@@ -51,16 +55,26 @@ describe('ERC20Swap', async () => {
       preimageHash,
       lockupAmount,
       tokenAddress,
-      claimWallet.address,
+      claimAddress,
       timelock,
     );
   };
 
   before(async () => {
-    token = await deployContract(senderWallet, TestERC20Artifact, ["TestERC20", "TRC", 18, tokenIssuance]) as any as ERC20;
-    badToken = await deployContract(senderWallet, BadERC20Artifact, ["BadERC20", "BAD", 18, tokenIssuance]) as any as ERC20;
+    const signers = await ethers.getSigners();
 
-    erc20Swap = await deployContract(senderWallet, ERC20SwapArtifact) as any as ERC20Swap;
+    provider = signers[0].provider!;
+
+    senderSigner = signers[0];
+    senderAddress = await senderSigner.getAddress();
+
+    claimSigner = signers[1];
+    claimAddress = await claimSigner.getAddress();
+
+    token = await (await ethers.getContractFactory('TestERC20')).deploy('TestERC20', 'TRC', 18, tokenIssuance) as any as ERC20;
+    badToken = await (await ethers.getContractFactory('BadERC20')).deploy('BadERC20', 'BAD', 18, tokenIssuance) as any as ERC20;
+
+    erc20Swap = await (await ethers.getContractFactory('ERC20Swap')).deploy() as any as ERC20Swap;
 
     expect(token.address).to.be.properAddress;
     expect(badToken.address).to.be.properAddress;
@@ -69,11 +83,11 @@ describe('ERC20Swap', async () => {
   });
 
   it('should have the correct version', async () => {
-    expect(await erc20Swap.version()).to.be.equal(1);
+    expect(await erc20Swap.version()).to.be.equal(2);
   });
 
   it('should not accept Ether', async () => {
-    await expectRevert(senderWallet.sendTransaction({
+    await expectRevert(senderSigner.sendTransaction({
       to: erc20Swap.address,
       value: constants.WeiPerEther,
     }));
@@ -84,9 +98,9 @@ describe('ERC20Swap', async () => {
       preimageHash,
       0,
       token.address,
-      senderWallet.address,
+      senderAddress,
       await provider.getBlockNumber(),
-    ), 'ERC20Swap: amount must not be zero');
+    ), 'ERC20Swap: locked amount must not be zero');
   });
 
   it('should not lockup when ERC20 token cannot be transferred', async () => {
@@ -107,7 +121,7 @@ describe('ERC20Swap', async () => {
     const receipt = await lockupTransaction.wait(1);
 
     // Check the token balance of the sender
-    expect(await token.balanceOf(senderWallet.address)).to.equal(tokenIssuance.sub(lockupAmount));
+    expect(await token.balanceOf(senderAddress)).to.equal(tokenIssuance.sub(lockupAmount));
 
     // Check the token balance of the contract
     expect(await token.balanceOf(erc20Swap.address)).to.equal(lockupAmount);
@@ -117,8 +131,8 @@ describe('ERC20Swap', async () => {
       receipt.events![2],
       preimageHash,
       lockupAmount,
-      claimWallet.address,
-      senderWallet.address,
+      claimAddress,
+      senderAddress,
       timelock,
       token.address,
     );
@@ -129,7 +143,7 @@ describe('ERC20Swap', async () => {
 
   it('should query Swaps by refund address', async () => {
     const queriedEvents = await erc20Swap.queryFilter(
-      erc20Swap.filters.Lockup(null, null, null, null, senderWallet.address, null),
+      erc20Swap.filters.Lockup(null, null, null, null, senderAddress, null),
     );
 
     expect(queriedEvents.length).to.equal(1);
@@ -149,7 +163,7 @@ describe('ERC20Swap', async () => {
       randomBytes(31),
       lockupAmount,
       token.address,
-      senderWallet.address,
+      senderAddress,
       timelock,
     ));
 
@@ -157,7 +171,7 @@ describe('ERC20Swap', async () => {
       randomBytes(33),
       lockupAmount,
       token.address,
-      senderWallet.address,
+      senderAddress,
       timelock,
     ));
   });
@@ -167,17 +181,17 @@ describe('ERC20Swap', async () => {
       randomBytes(32),
       lockupAmount,
       token.address,
-      senderWallet.address,
+      senderAddress,
       timelock,
-    ), 'ERC20Swap: swap does not exist');
+    ), 'ERC20Swap: swap has no tokens locked in the contract');
   });
 
   it('should claim', async () => {
-    const claimTransaction = await erc20Swap.connect(claimWallet).claim(
+    const claimTransaction = await erc20Swap.connect(claimSigner).claim(
       preimage,
       lockupAmount,
       token.address,
-      senderWallet.address,
+      senderAddress,
       timelock,
     );
     const receipt = await claimTransaction.wait(1);
@@ -186,26 +200,26 @@ describe('ERC20Swap', async () => {
     expect(await token.balanceOf(erc20Swap.address)).to.equal(0);
 
     // Check the token balance of the claim address
-    expect(await token.balanceOf(claimWallet.address)).to.equal(lockupAmount);
+    expect(await token.balanceOf(claimAddress)).to.equal(lockupAmount);
 
     // Check the event emitted by the transaction
     checkContractEvent(receipt.events![0], 'Claim', preimageHash, preimage);
 
     // Send the claimed ERC20 tokens back to the sender wallet
-    await token.connect(claimWallet).transfer(senderWallet.address, lockupAmount);
+    await token.connect(claimSigner).transfer(senderAddress, lockupAmount);
 
     // Verify the swap was removed to the mapping
     expect(await querySwap(token.address)).to.equal(false);
   });
 
   it('should not claim the same swap twice', async () => {
-    await expectRevert(erc20Swap.connect(claimWallet).claim(
+    await expectRevert(erc20Swap.connect(claimSigner).claim(
       preimage,
       lockupAmount,
       token.address,
-      senderWallet.address,
+      senderAddress,
       timelock,
-    ), 'ERC20Swap: swap does not exist');
+    ), 'ERC20Swap: swap has no tokens locked in the contract');
   });
 
   it('should refund', async () => {
@@ -222,7 +236,7 @@ describe('ERC20Swap', async () => {
       preimageHash,
       lockupAmount,
       token.address,
-      claimWallet.address,
+      claimAddress,
       timelock,
     );
     const receipt = await refundTransaction.wait(1);
@@ -231,7 +245,7 @@ describe('ERC20Swap', async () => {
     expect(await token.balanceOf(erc20Swap.address)).to.equal(0);
 
     // Check the balance of the refund address
-    expect(await token.balanceOf(senderWallet.address)).to.equal(tokenIssuance);
+    expect(await token.balanceOf(senderAddress)).to.equal(tokenIssuance);
 
     // Check the event emitted by the transaction
     checkContractEvent(receipt.events![0], 'Refund', preimageHash);
@@ -241,13 +255,13 @@ describe('ERC20Swap', async () => {
   });
 
   it('should not refund the same swap twice', async () => {
-    await expectRevert(erc20Swap.connect(claimWallet).refund(
+    await expectRevert(erc20Swap.refund(
       preimageHash,
       lockupAmount,
       token.address,
-      claimWallet.address,
+      claimAddress,
       timelock,
-    ), 'ERC20Swap: swap does not exist');
+    ), 'ERC20Swap: swap has no tokens locked in the contract');
   });
 
   it('should not refund swaps that have not timed out yet', async () => {
@@ -265,7 +279,7 @@ describe('ERC20Swap', async () => {
       preimageHash,
       lockupAmount,
       token.address,
-      claimWallet.address,
+      claimAddress,
       timelock,
     ), 'ERC20Swap: swap has not timed out yet');
   });
@@ -279,20 +293,58 @@ describe('ERC20Swap', async () => {
 
     // Check the balances to make sure tokens were transferred to the contract
     expect(await badToken.balanceOf(erc20Swap.address)).to.equal(lockupAmount);
-    expect(await badToken.balanceOf(senderWallet.address)).to.equal(tokenIssuance.sub(lockupAmount));
+    expect(await badToken.balanceOf(senderAddress)).to.equal(tokenIssuance.sub(lockupAmount));
 
     // Claim the bad token
-    const claimTransaction = await erc20Swap.connect(claimWallet).claim(
+    const claimTransaction = await erc20Swap.connect(claimSigner).claim(
       preimage,
       lockupAmount,
       badToken.address,
-      senderWallet.address,
+      senderAddress,
       timelock,
     );
     await claimTransaction.wait(1);
 
     // Check the balances again to make sure tokens were transferred to the claim address
     expect(await badToken.balanceOf(erc20Swap.address)).to.equal(0);
-    expect(await badToken.balanceOf(claimWallet.address)).to.equal(lockupAmount);
+    expect(await badToken.balanceOf(claimAddress)).to.equal(lockupAmount);
+  });
+
+  it('should lockup with prepay miner fee', async () => {
+    const approveTransaction = await token.approve(erc20Swap.address, lockupAmount);
+    await approveTransaction.wait(1);
+
+    const claimBalanceBefore = await provider.getBalance(claimAddress);
+
+    timelock = await provider.getBlockNumber();
+
+    const prepayAmount = BigNumber.from(1);
+
+    const lockupTransaction = await erc20Swap.lockPrepayMinerfee(
+      preimageHash,
+      lockupAmount,
+      token.address,
+      claimAddress,
+      timelock,
+      {
+        value: prepayAmount,
+      }
+    );
+
+    const receipt = await lockupTransaction.wait(1);
+
+    expect(await provider.getBalance(claimAddress)).to.equal(claimBalanceBefore.add(prepayAmount));
+
+    checkLockupEvent(
+      receipt.events![2],
+      preimageHash,
+      lockupAmount,
+      claimAddress,
+      senderAddress,
+      timelock,
+      token.address,
+    );
+
+    expect(await querySwap(token.address)).to.equal(true);
   });
 });
