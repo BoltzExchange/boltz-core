@@ -1,3 +1,13 @@
+# [0.4.0](https://github.com/BoltzExchange/boltz-core/compare/v0.3.5...v0.4.0) (2020-12-22)
+
+
+### Features
+
+* add Hardhat task to print method names and hashes ([#55](https://github.com/BoltzExchange/boltz-core/issues/55)) ([5942a6e](https://github.com/BoltzExchange/boltz-core/commit/5942a6e2191c8638732315477432d966aefa55de))
+* add prepay functionality to contracts ([a2c8050](https://github.com/BoltzExchange/boltz-core/commit/a2c805073fec46239b2cc0be4d5c57d7ab45d37e))
+
+
+
 ## [0.3.5](https://github.com/BoltzExchange/boltz-core/compare/v0.3.4...v0.3.5) (2020-10-30)
 
 
