@@ -3,6 +3,7 @@ import { networks } from 'bitcoinjs-lib';
 const bitcoinPrefix = '\\x18Bitcoin Signed Message:\n';
 const litecoinPrefix = '\\x19Litecoin Signed Message:\n';
 const dogecoinPrefix = '\\x19Dogecoin Signed Message:\n';
+const vertcoinPrefix = '\\x20Vertcoin Signed Message:\n';
 
 const testnetBip32 = {
   public: 0x019DA462,
@@ -90,6 +91,35 @@ const Networks = {
     scriptHash: 0xc4,
     wif: 0xef,
   },
+  
+  // Vertcoin networks
+  vertcoinMainnet: {
+    messagePrefix: vertcoinPrefix,
+    bip32: {
+      private: 0x0488ade4,
+      public: 0x0488b21e,
+    },
+    bech32: 'vtc',
+    pubKeyHash: 0x47,
+    scriptHash: 0x05,
+    wif: 0x80,
+  },
+  vertcoinTestnet: {
+    messagePrefix: vertcoinPrefix,
+    bip32: testnetBip32,
+    bech32: 'tvtc',
+    pubKeyHash: 0x4a,
+    scriptHash: 0xc4,
+    wif: 0xef,
+  },
+  vertcoinRegtest: {
+    messagePrefix: vertcoinPrefix,
+    bip32: testnetBip32,
+    bech32: 'rvtc',
+    pubKeyHash: 0x4a,
+    scriptHash: 0xc4,
+    wif: 0xef,
+  },  
 };
 
 export default Networks;
