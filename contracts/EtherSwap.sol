@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.2;
 
 import "./TransferHelper.sol";
 
@@ -57,7 +57,7 @@ contract EtherSwap {
         uint timelock,
         uint prepayAmount
     ) external payable {
-        // Revert on overflow in next statement
+        // Revert on underflow in next statement
         require(msg.value > prepayAmount, "EtherSwap: sent amount must be greater than the prepay amount");
 
         // Lock the amount of Ether sent minus the prepay amount in the contract
@@ -102,7 +102,7 @@ contract EtherSwap {
         emit Claim(preimageHash, preimage);
 
         // Transfer the Ether to the claim address
-        TransferHelper.transferEther(msg.sender, amount);
+        TransferHelper.transferEther(payable(msg.sender), amount);
     }
 
     /// Refunds Ether locked in the contract
@@ -135,7 +135,7 @@ contract EtherSwap {
 
         emit Refund(preimageHash);
 
-        TransferHelper.transferEther(msg.sender, amount);
+        TransferHelper.transferEther(payable(msg.sender), amount);
     }
 
     // Private functions

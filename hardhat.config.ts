@@ -1,6 +1,5 @@
 import fs from 'fs';
 import 'hardhat-gas-reporter';
-import { Wallet } from 'ethers';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
@@ -14,38 +13,72 @@ const paths = {
 };
 
 const mnemonics = fs.existsSync(paths.mnemonics) ? JSON.parse(fs.readFileSync(paths.mnemonics).toString()) : undefined;
-const infuraKey = fs.existsSync(paths.infuraKey) ? fs.readFileSync(paths.infuraKey).toString().trim() : '';
-const etherscanKey = fs.existsSync(paths.etherscanKey) ? fs.readFileSync(paths.etherscanKey).toString().trim() : '';
-
-const mnemonicKeys = {
-  testnet: mnemonics ? Wallet.fromMnemonic(mnemonics.testnet).privateKey : '',
-  mainnet: mnemonics ? Wallet.fromMnemonic(mnemonics.mainnet).privateKey : '',
-};
+const infuraKey = fs.existsSync(paths.infuraKey) ? fs.readFileSync(paths.infuraKey).toString().trim() : undefined;
+const etherscanKey = fs.existsSync(paths.etherscanKey) ? fs.readFileSync(paths.etherscanKey).toString().trim() : undefined;
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.7.6',
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: '0.8.2',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1000,
+            details: {
+              yul: true,
+              cse: true,
+              deduplicate: true,
+              orderLiterals: true,
+              constantOptimizer: true,
+            }
+          },
+        }
       },
-    }
+      {
+        version: '0.7.6',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1000,
+            details: {
+              yul: true,
+              cse: true,
+              deduplicate: true,
+              orderLiterals: true,
+              constantOptimizer: true,
+            }
+          },
+        },
+      },
+    ],
   },
-  networks: {
+};
+
+if (mnemonics && infuraKey) {
+  config.networks = {
     rinkeby: {
-      from: mnemonicKeys.testnet,
+      accounts: {
+        count: 1,
+        mnemonic: mnemonics.testnet,
+      },
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,
     },
     mainnet: {
-      from: mnemonicKeys.mainnet,
+      accounts: {
+        count: 1,
+        mnemonic: mnemonics.mainnet,
+      },
       url: `https://mainnet.infura.io/v3/${infuraKey}`,
     },
-  },
-  etherscan: {
+  };
+}
+
+if (etherscanKey) {
+  config.etherscan = {
     apiKey: etherscanKey,
-  },
-};
+  };
+}
 
 task('accounts', 'Prints all accounts', async (_, hre) => {
   const accounts = await hre.ethers.getSigners();
