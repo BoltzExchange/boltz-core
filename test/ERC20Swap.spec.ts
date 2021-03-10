@@ -36,17 +36,14 @@ describe('ERC20Swap', async () => {
 
   let lockupTransactionHash: string;
 
-  const querySwap = (tokenAddress: string) => {
-    return erc20Swap.swaps(utils.solidityKeccak256(
-      ['bytes32', 'uint', 'address', 'address', 'address', 'uint'],
-      [
-        preimageHash,
-        lockupAmount,
-        tokenAddress,
-        claimAddress,
-        senderAddress,
-        timelock,
-      ],
+  const querySwap = async (tokenAddress: string) => {
+    return erc20Swap.swaps(await erc20Swap.hashValues(
+      preimageHash,
+      lockupAmount,
+      tokenAddress,
+      claimAddress,
+      senderAddress,
+      timelock,
     ));
   };
 
@@ -91,6 +88,29 @@ describe('ERC20Swap', async () => {
       to: erc20Swap.address,
       value: constants.WeiPerEther,
     }));
+  });
+
+  it('should hash swap values', async () => {
+    timelock = await provider.getBlockNumber();
+
+    expect(await erc20Swap.hashValues(
+      preimageHash,
+      lockupAmount,
+      token.address,
+      claimAddress,
+      senderAddress,
+      timelock,
+    )).to.equal(utils.solidityKeccak256(
+      ['bytes32', 'uint', 'address', 'address', 'address', 'uint'],
+      [
+        preimageHash,
+        lockupAmount,
+        token.address,
+        claimAddress,
+        senderAddress,
+        timelock,
+      ],
+    ));
   });
 
   it('should not lockup 0 value transactions', async () => {
