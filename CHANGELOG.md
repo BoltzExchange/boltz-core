@@ -1,3 +1,12 @@
+## [0.4.1](https://github.com/BoltzExchange/boltz-core/compare/v0.4.0...v0.4.1) (2021-03-10)
+
+
+### Features
+
+* expose hashValues function of contracts ([b192fac](https://github.com/BoltzExchange/boltz-core/commit/b192fac1e9fb0d47483e91f43402728b06a5b3fd))
+
+
+
 # [0.4.0](https://github.com/BoltzExchange/boltz-core/compare/v0.3.5...v0.4.0) (2020-12-22)
 
 
