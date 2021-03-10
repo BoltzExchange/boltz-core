@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.2;
 
 import "./TransferHelper.sol";
 
@@ -175,15 +175,6 @@ contract ERC20Swap {
         emit Lockup(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
     }
 
-    // Private functions
-
-    /// Checks whether a swap has tokens locked in the contract
-    /// @dev This function reverts if the swap has no tokens locked in the contract
-    /// @param hash Value hash of the swap
-    function checkSwapIsLocked(bytes32 hash) private view {
-        require(swaps[hash] == true, "ERC20Swap: swap has no tokens locked in the contract");
-    }
-
     /// Hashes all the values of a swap with Keccak256
     /// @param preimageHash Preimage hash of the swap
     /// @param amount Amount the swap has locked in the smallest denomination of the token
@@ -199,7 +190,7 @@ contract ERC20Swap {
         address claimAddress,
         address refundAddress,
         uint timelock
-    ) private pure returns (bytes32) {
+    ) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(
             preimageHash,
             amount,
@@ -208,5 +199,14 @@ contract ERC20Swap {
             refundAddress,
             timelock
         ));
+    }
+
+    // Private functions
+
+    /// Checks whether a swap has tokens locked in the contract
+    /// @dev This function reverts if the swap has no tokens locked in the contract
+    /// @param hash Value hash of the swap
+    function checkSwapIsLocked(bytes32 hash) private view {
+        require(swaps[hash] == true, "ERC20Swap: swap has no tokens locked in the contract");
     }
 }

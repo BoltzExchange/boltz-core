@@ -3,7 +3,7 @@
 // Copyright 2020 Uniswap team
 // Based on: https://github.com/Uniswap/uniswap-lib/blob/master/contracts/libraries/TransferHelper.sol
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.2;
 
 library TransferHelper {
     /// Transfers Ether to an address

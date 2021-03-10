@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.7.6;
+pragma solidity 0.8.2;
 
 import "./TransferHelper.sol";
 
@@ -57,7 +57,7 @@ contract EtherSwap {
         uint timelock,
         uint prepayAmount
     ) external payable {
-        // Revert on overflow in next statement
+        // Revert on underflow in next statement
         require(msg.value > prepayAmount, "EtherSwap: sent amount must be greater than the prepay amount");
 
         // Lock the amount of Ether sent minus the prepay amount in the contract
@@ -102,7 +102,7 @@ contract EtherSwap {
         emit Claim(preimageHash, preimage);
 
         // Transfer the Ether to the claim address
-        TransferHelper.transferEther(msg.sender, amount);
+        TransferHelper.transferEther(payable(msg.sender), amount);
     }
 
     /// Refunds Ether locked in the contract
@@ -135,7 +135,32 @@ contract EtherSwap {
 
         emit Refund(preimageHash);
 
-        TransferHelper.transferEther(msg.sender, amount);
+        TransferHelper.transferEther(payable(msg.sender), amount);
+    }
+
+    // Public functions
+
+    /// Hashes all the values of a swap with Keccak256
+    /// @param preimageHash Preimage hash of the swap
+    /// @param amount Amount the swap has locked in WEI
+    /// @param claimAddress Address that can claim the locked Ether
+    /// @param refundAddress Address that locked the Ether and can refund them
+    /// @param timelock Block height after which the locked Ether can be refunded
+    /// @return Value hash of the swap
+    function hashValues(
+        bytes32 preimageHash,
+        uint amount,
+        address claimAddress,
+        address refundAddress,
+        uint timelock
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            preimageHash,
+            amount,
+            claimAddress,
+            refundAddress,
+            timelock
+        ));
     }
 
     // Private functions
@@ -174,28 +199,5 @@ contract EtherSwap {
     /// @param hash Value hash of the swap
     function checkSwapIsLocked(bytes32 hash) private view {
         require(swaps[hash] == true, "EtherSwap: swap has no Ether locked in the contract");
-    }
-
-    /// Hashes all the values of a swap with Keccak256
-    /// @param preimageHash Preimage hash of the swap
-    /// @param amount Amount the swap has locked in WEI
-    /// @param claimAddress Address that can claim the locked Ether
-    /// @param refundAddress Address that locked the Ether and can refund them
-    /// @param timelock Block height after which the locked Ether can be refunded
-    /// @return Value hash of the swap
-    function hashValues(
-        bytes32 preimageHash,
-        uint amount,
-        address claimAddress,
-        address refundAddress,
-        uint timelock
-    ) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
-                preimageHash,
-                amount,
-                claimAddress,
-                refundAddress,
-                timelock
-            ));
     }
 }
