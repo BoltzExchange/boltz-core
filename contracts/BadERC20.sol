@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.7.6;
-
-import "@openzeppelin/contracts/math/SafeMath.sol";
+pragma solidity 0.8.3;
 
 // This token is intentionally not complying to the ERC20 standard so that the ERC20Swap contract
 // can be tested against such non-standardised tokens
@@ -22,8 +20,6 @@ interface IBadERC20 {
 }
 
 contract BadERC20 is IBadERC20 {
-    using SafeMath for uint256;
-
     uint8 public decimals;
 
     mapping (address => uint256) private _balances;
@@ -39,7 +35,7 @@ contract BadERC20 is IBadERC20 {
         _name = name;
         _symbol = symbol;
 
-        _balances[msg.sender] = _balances[msg.sender].add(initialSupply);
+        _balances[msg.sender] = _balances[msg.sender] + initialSupply;
         emit Transfer(address(0), msg.sender, initialSupply);
     }
 
@@ -61,11 +57,10 @@ contract BadERC20 is IBadERC20 {
 
     function transferFrom(address sender, address recipient, uint256 amount) external override {
         _transfer(sender, recipient, amount);
-        _approve(
-            sender,
-            msg.sender,
-            _allowances[sender][msg.sender].sub(amount, "ERC20: transfer amount exceeds allowance")
-        );
+
+        uint256 currentAllowance = _allowances[sender][msg.sender];
+        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+        _approve(sender, msg.sender, currentAllowance - amount);
     }
 
     function _approve(address owner, address spender, uint256 amount) internal {
@@ -80,8 +75,11 @@ contract BadERC20 is IBadERC20 {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
-        _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
-        _balances[recipient] = _balances[recipient].add(amount);
+        uint256 senderBalance = _balances[sender];
+        require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
+        _balances[sender] = senderBalance - amount;
+        _balances[recipient] += amount;
+
         emit Transfer(sender, recipient, amount);
     }
 }
