@@ -22,12 +22,12 @@ export const expectRevert = async (promise: Promise<any>, reason?: string) => {
     await promise;
   } catch (error) {
     if (reason) {
-      const stackTrace = error.stackTrace;
+      const stackTrace = (error as any).stackTrace;
 
       for (const trace of stackTrace) {
         if (trace.message) {
           const message = utils.toUtf8String(
-            `0x${(trace.message as Buffer).toString('hex').substr(136)}`,
+            `0x${(trace.message.value as Buffer).toString('hex').substr(136)}`,
           ).substr(0, reason.length);
 
           expect(message).to.equal(reason);
@@ -47,7 +47,7 @@ export const expectInvalidDataLength = async (promise: Promise<any>) => {
   try {
     await promise;
   } catch (error) {
-    expect(error.reason).to.be.equal('incorrect data length');
+    expect((error as any).reason).to.be.equal('incorrect data length');
     thrown = true;
   }
 

@@ -1,4 +1,5 @@
-import { Transaction, ECPair, crypto } from 'bitcoinjs-lib';
+import { ECPair } from 'ecpair';
+import { Transaction, crypto } from 'bitcoinjs-lib';
 import { getScriptHashFunction } from './Utils';
 import swapScript from '../../../lib/swap/SwapScript';
 import { detectSwap } from '../../../lib/swap/SwapDetector';

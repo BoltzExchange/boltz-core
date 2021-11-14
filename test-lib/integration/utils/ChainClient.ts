@@ -102,27 +102,27 @@ class ChainClient {
     if (blocks < 101) {
       await this.generate(101 - blocks);
     }
-  }
+  };
 
   public getNetworkInfo = (): Promise<NetworkInfo> => {
     return this.client.request<NetworkInfo>('getnetworkinfo');
-  }
+  };
 
   public getBlockchainInfo = (): Promise<BlockchainInfo> => {
     return this.client.request<BlockchainInfo>('getblockchaininfo');
-  }
+  };
 
   public getBlock = (hash: string): Promise<Block> => {
     return this.client.request<Block>('getblock', [hash]);
-  }
+  };
 
   public sendRawTransaction = (rawTransaction: string): Promise<string> => {
     return this.client.request<string>('sendrawtransaction', [rawTransaction]);
-  }
+  };
 
   public getRawTransaction = (id: string, verbose = false, blockhash?: string): Promise<string | RawTransaction> => {
     return this.client.request<string | RawTransaction>('getrawtransaction', [id, verbose, blockhash]);
-  }
+  };
 
   public estimateFee = async (confTarget = 2): Promise<number> => {
     const response = await this.client.request<any>('estimatesmartfee', [confTarget]);
@@ -133,7 +133,7 @@ class ChainClient {
     }
 
     return 2;
-  }
+  };
 
   public getNewAddress = (type = OutputType.Bech32): Promise<string> => {
     const outputType = (() => {
@@ -148,15 +148,15 @@ class ChainClient {
     })();
 
     return this.client.request<string>('getnewaddress', ['', outputType]);
-  }
+  };
 
   public sendToAddress = (address: string, amount: number): Promise<string> => {
     return this.client.request<string>('sendtoaddress', [address, amount / ChainClient.decimals]);
-  }
+  };
 
   public generate = async (blocks: number): Promise<string[]> => {
     return this.client.request<string[]>('generatetoaddress', [blocks, this.miningAddress]);
-  }
+  };
 }
 
 export default ChainClient;

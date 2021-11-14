@@ -1,4 +1,5 @@
-import { ECPair, crypto } from 'bitcoinjs-lib';
+import { ECPair } from 'ecpair';
+import { crypto } from 'bitcoinjs-lib';
 import { getHexBuffer } from '../../../lib/Utils';
 import { Networks, swapScript } from '../../../lib/Boltz';
 import { bitcoinClient, createSwapDetails } from '../Utils';
