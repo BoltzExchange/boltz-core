@@ -1,3 +1,4 @@
+import Errors from './consts/Errors';
 import Networks from './consts/Networks';
 import * as Scripts from './swap/Scripts';
 import swapScript from './swap/SwapScript';
@@ -21,6 +22,7 @@ const ContractABIs = {
 };
 
 export {
+  Errors,
   Networks,
 
   OutputType,

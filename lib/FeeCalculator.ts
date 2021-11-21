@@ -1,3 +1,4 @@
+import Errors from './consts/Errors';
 import { OutputType } from './consts/Enums';
 
 export type Input = {
@@ -28,6 +29,7 @@ const outputVbytesEstimations = {
   pkh: {
     [OutputType.Bech32]: 31 * 4,
     [OutputType.Legacy]: 34 * 4,
+    [OutputType.Taproot]: 43 * 4,
   },
   sh: {
     [OutputType.Bech32]: 44 * 4,
@@ -36,6 +38,10 @@ const outputVbytesEstimations = {
 };
 
 const estimateInput = (input: Input) => {
+  if (input.type === OutputType.Taproot) {
+    throw Errors.TAPROOT_NOT_SUPPORTED;
+  }
+
   if (input.swapDetails) {
     const swapSize = [
       // PUSHDATA opcode
@@ -70,33 +76,15 @@ const estimateInput = (input: Input) => {
 };
 
 const estimateOutput = (output: Output): number => {
-  if (output.isSh) {
-    switch (output.type) {
-      case OutputType.Bech32:
-        return outputVbytesEstimations.sh[OutputType.Bech32];
-
-      case OutputType.Compatibility:
-        return outputVbytesEstimations.sh[OutputType.Legacy];
-
-      case OutputType.Legacy:
-        return outputVbytesEstimations.sh[OutputType.Legacy];
-    }
-  } else {
-    switch (output.type) {
-      case OutputType.Bech32:
-        return outputVbytesEstimations.pkh[OutputType.Bech32];
-
-      case OutputType.Compatibility:
-        return outputVbytesEstimations.sh[OutputType.Legacy];
-
-      case OutputType.Legacy:
-        return outputVbytesEstimations.pkh[OutputType.Legacy];
-    }
+  if (output.type === OutputType.Compatibility) {
+    return outputVbytesEstimations.sh[OutputType.Legacy];
   }
 
-  // Although all options are covered by the switch statements
-  // TypeScript shows and error if this line isn't there
-  return outputVbytesEstimations.pkh[OutputType.Legacy];
+  if (output.isSh) {
+    return outputVbytesEstimations.sh[output.type];
+  } else {
+    return outputVbytesEstimations.pkh[output.type];
+  }
 };
 
 /**
