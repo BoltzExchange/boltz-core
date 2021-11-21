@@ -1,3 +1,12 @@
+# [0.5.0](https://github.com/BoltzExchange/boltz-core/compare/v0.4.1...v0.5.0) (2021-11-21)
+
+
+### Features
+
+* estimate fee of Taproot outputs ([3fb7b22](https://github.com/BoltzExchange/boltz-core/commit/3fb7b225cbc2ce2f93e251e17833ecdf3a63ecd0))
+
+
+
 ## [0.4.1](https://github.com/BoltzExchange/boltz-core/compare/v0.4.0...v0.4.1) (2021-03-10)
 
 
