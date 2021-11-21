@@ -130,6 +130,9 @@ export const getOutputScriptType = (outputScript: Buffer): Output | undefined =>
         };
       }
 
+      case ops.OP_1:
+        return { isSh: false, type: OutputType.Taproot };
+
       case ops.OP_HASH160:
         // The FeeCalculator treats legacy SH outputs the same way as compatibility PKH ones
         // Which one of the aforementioned types the outputScript is does not

@@ -186,7 +186,7 @@ describe('EtherSwap', async () => {
 
     // Check the balance of the claim address
     expect(await provider.getBalance(claimAddress)).to.equal(
-      balanceBeforeClaim.add(lockupAmount).sub(claimTransaction.gasPrice.mul(receipt.cumulativeGasUsed)),
+      balanceBeforeClaim.add(lockupAmount).sub(claimTransaction.gasPrice!.mul(receipt.cumulativeGasUsed)),
     );
 
     // Check the event emitted by the transaction
@@ -227,7 +227,7 @@ describe('EtherSwap', async () => {
 
     // Check the balance of the refund address
     expect(await provider.getBalance(senderAddress)).to.equal(
-      balanceBeforeRefund.add(lockupAmount).sub(refundTransaction.gasPrice.mul(receipt.cumulativeGasUsed)),
+      balanceBeforeRefund.add(lockupAmount).sub(refundTransaction.gasPrice!.mul(receipt.cumulativeGasUsed)),
     );
 
     // Check the event emitted by the transaction

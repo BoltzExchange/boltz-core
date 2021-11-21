@@ -1,4 +1,5 @@
-import { ECPair, crypto, address, Transaction } from 'bitcoinjs-lib';
+import { ECPair, ECPairInterface } from 'ecpair';
+import { crypto, address, Transaction } from 'bitcoinjs-lib';
 import ChainClient from './utils/ChainClient';
 import { ClaimDetails, RefundDetails } from '../../lib/consts/Types';
 import { p2wpkhOutput, p2shOutput, p2wshOutput, p2shP2wshOutput } from '../../lib/swap/Scripts';
@@ -43,8 +44,8 @@ export const createSwapDetails = async (
   generateScript: (preimageHash: Buffer, claimPublicKey: Buffer, refundPublicKey: Buffer, timeoutBlockHeight: number) => Buffer,
   preimage: Buffer,
   preimageHash: Buffer,
-  claimKeys: ECPair.ECPairInterface,
-  refundKeys: ECPair.ECPairInterface,
+  claimKeys: ECPairInterface,
+  refundKeys: ECPairInterface,
 ): Promise<{
   claimDetails: ClaimDetails[],
   refundDetails: RefundDetails[],
@@ -84,8 +85,8 @@ export const createSwapDetails = async (
 const createOutputs = async (
   generateScript: (preimageHash: Buffer, claimPublicKey: Buffer, refundPublicKey: Buffer, timeoutBlockHeight: number) => Buffer,
   preimageHash: Buffer,
-  claimKeys: ECPair.ECPairInterface,
-  refundKeys: ECPair.ECPairInterface,
+  claimKeys: ECPairInterface,
+  refundKeys: ECPairInterface,
 ) => {
   const { blocks } = await bitcoinClient.getBlockchainInfo();
   const timeoutBlockHeight = blocks + 1;

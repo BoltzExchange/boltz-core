@@ -1,9 +1,11 @@
-// tslint:disable:max-line-length
-import { fromBase58 } from 'bip32';
+import BIP32Factory from 'bip32';
+import * as ecc from 'tiny-secp256k1';
 import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
 import { RefundDetails } from '../../../lib/consts/Types';
 import { constructRefundTransaction } from '../../../lib/swap/Refund';
+
+const bip32 = BIP32Factory(ecc);
 
 describe('Refund', () => {
   const utxo = {
@@ -11,7 +13,7 @@ describe('Refund', () => {
     vout: 0,
     value: 2000,
 
-    keys: fromBase58('xprv9xgxR6htMdXUXGipynZp1janNrWNYJxaz2o4tH9fdtZqcF26BX5VB88GSM5KgZHWCyAyb8FZpQik2UET84CHfGWXFMG5zWWjmtDMgqYuo19'),
+    keys: bip32.fromBase58('xprv9xgxR6htMdXUXGipynZp1janNrWNYJxaz2o4tH9fdtZqcF26BX5VB88GSM5KgZHWCyAyb8FZpQik2UET84CHfGWXFMG5zWWjmtDMgqYuo19'),
     redeemScript: getHexBuffer('a914a0738c92fde6361f09d28950c7bd0d2bf32b34be87632103be4a251dae719d565ce1d6a7a5787df99fc1ecc1f6e847567981a686f32abce167027802b1752103f7877d4ae985bb30b6f150ad6b6b9935c342432beed1a4781347b169c1e2417368ac'),
   };
 

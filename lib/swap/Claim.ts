@@ -5,11 +5,12 @@
 import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
 import * as varuint from 'varuint-bitcoin';
-import { Transaction, crypto, script } from 'bitcoinjs-lib';
+import { crypto, script, Transaction } from 'bitcoinjs-lib';
+import Errors from '../consts/Errors';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
 import { estimateFee, Input } from '../FeeCalculator';
-import { encodeSignature, scriptBuffersToScript, getOutputScriptType } from './SwapUtils';
+import { encodeSignature, getOutputScriptType, scriptBuffersToScript } from './SwapUtils';
 
 /**
  * Claim swaps
@@ -27,6 +28,12 @@ export const constructClaimTransaction = (
   isRbf = true,
   timeoutBlockHeight?: number,
 ): Transaction => {
+  for (const input of utxos) {
+    if (input.type === OutputType.Taproot) {
+      throw Errors.TAPROOT_NOT_SUPPORTED;
+    }
+  }
+
   const tx = new Transaction();
 
   // Refund transactions are just like claim ones and therefore this method
