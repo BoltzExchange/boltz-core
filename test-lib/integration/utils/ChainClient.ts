@@ -1,4 +1,4 @@
-import { Transaction } from 'bitcoinjs-lib';
+import { Transaction } from 'liquidjs-lib';
 import RpcClient from './RpcClient';
 import { OutputType } from '../../../lib/Boltz';
 

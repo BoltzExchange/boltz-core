@@ -1,4 +1,4 @@
-import { Transaction, script } from 'bitcoinjs-lib';
+import { Transaction, script } from 'liquidjs-lib';
 
 /**
  * Detects the preimage from a claim transaction

@@ -2,7 +2,7 @@
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
 
-import { Transaction, TxOutput } from 'bitcoinjs-lib';
+import { Transaction, TxOutput } from 'liquidjs-lib';
 import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
 import { p2shOutput, p2shP2wshOutput, p2wshOutput } from './Scripts';
@@ -28,6 +28,8 @@ export const detectSwap = (redeemScript: Buffer, transaction: Transaction): Dete
       vout,
       script: output.script,
       value: output.value,
+      asset: output.asset,
+      nonce: output.nonce,
     };
 
     switch (index) {

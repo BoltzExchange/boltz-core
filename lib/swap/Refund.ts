@@ -2,7 +2,7 @@
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
 
-import { Transaction } from 'bitcoinjs-lib';
+import { Transaction } from 'liquidjs-lib';
 import { getHexBuffer } from '../Utils';
 import { constructClaimTransaction } from './Claim';
 import { RefundDetails, ClaimDetails } from '../consts/Types';

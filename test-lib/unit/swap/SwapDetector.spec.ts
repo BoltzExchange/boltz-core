@@ -1,8 +1,10 @@
 import { ECPair } from 'ecpair';
-import { Transaction, crypto } from 'bitcoinjs-lib';
-import { getScriptHashFunction } from './Utils';
+import { Transaction, crypto } from 'liquidjs-lib';
+import { getScriptHashFunction, LBTC_REGTEST } from './Utils';
 import swapScript from '../../../lib/swap/SwapScript';
 import { detectSwap } from '../../../lib/swap/SwapDetector';
+import { EmptyScript, Nonce } from '../../../lib/consts/Buffer';
+import { satoshiToConfidentialValue } from 'liquidjs-lib/types/confidential';
 
 describe('SwapDetector', () => {
   let redeemScript: Buffer;
@@ -39,7 +41,9 @@ describe('SwapDetector', () => {
       const script = scriptHashFunction(redeemScript);
 
       scripts.push(script);
-      transaction.addOutput(script, 1);
+      transaction.addOutput(script, satoshiToConfidentialValue(1), LBTC_REGTEST, Nonce);
+      transaction.addOutput(EmptyScript, satoshiToConfidentialValue(500), LBTC_REGTEST, Nonce);
+
 
       transactions.push(transaction);
     }

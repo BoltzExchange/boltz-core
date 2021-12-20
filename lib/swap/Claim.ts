@@ -5,12 +5,15 @@
 import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
 import * as varuint from 'varuint-bitcoin';
-import { crypto, script, Transaction } from 'bitcoinjs-lib';
+import { crypto, script, Transaction, Network } from 'liquidjs-lib';
 import Errors from '../consts/Errors';
+import { Nonce, EmptyScript, PrefixUnconfidential } from '../consts/Buffer';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
 import { estimateFee, Input } from '../FeeCalculator';
 import { encodeSignature, getOutputScriptType, scriptBuffersToScript } from './SwapUtils';
+import { regtest } from 'liquidjs-lib/types/networks';
+import { confidentialValueToSatoshi, satoshiToConfidentialValue } from 'liquidjs-lib/types/confidential';
 
 /**
  * Claim swaps
@@ -27,6 +30,7 @@ export const constructClaimTransaction = (
   feePerByte: number,
   isRbf = true,
   timeoutBlockHeight?: number,
+  network: Network = regtest,
 ): Transaction => {
   for (const input of utxos) {
     if (input.type === OutputType.Taproot) {
@@ -48,7 +52,7 @@ export const constructClaimTransaction = (
   const feeInputs: Input[] = [];
 
   utxos.forEach((utxo) => {
-    utxoValueSum += utxo.value;
+    utxoValueSum += confidentialValueToSatoshi(utxo.value);
     feeInputs.push({ type: utxo.type, swapDetails: utxo });
 
     // Add the swap as input to the transaction
@@ -60,8 +64,27 @@ export const constructClaimTransaction = (
   // Estimate the fee for the transaction
   const fee = estimateFee(feePerByte, feeInputs, [getOutputScriptType(destinationScript)!]);
 
+
+  const LBTC = Buffer.concat([
+    PrefixUnconfidential, 
+    Buffer.from(network.assetHash, 'hex').reverse(),
+  ]);
+
   // Send the sum of the UTXOs minus the estimated fee to the destination address
-  tx.addOutput(destinationScript, utxoValueSum - fee);
+  tx.addOutput(
+    destinationScript, 
+    satoshiToConfidentialValue(utxoValueSum - fee), 
+    LBTC, 
+    Nonce
+  );
+  // Add explicit fee output
+  tx.addOutput(
+    EmptyScript, 
+    satoshiToConfidentialValue(fee), 
+    LBTC, 
+    Nonce
+  );
+
 
   utxos.forEach((utxo, index) => {
     switch (utxo.type) {

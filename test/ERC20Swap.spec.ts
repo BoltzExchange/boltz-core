@@ -2,7 +2,7 @@ import chai from 'chai';
 // @ts-ignore
 import { ethers } from 'hardhat';
 import { randomBytes } from 'crypto';
-import { crypto } from 'bitcoinjs-lib';
+import { crypto } from 'liquidjs-lib';
 import { solidity } from 'ethereum-waffle';
 import { ERC20 } from '../typechain/ERC20';
 import { ERC20Swap } from '../typechain/ERC20Swap';

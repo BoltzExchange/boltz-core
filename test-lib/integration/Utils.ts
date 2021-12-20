@@ -1,5 +1,5 @@
 import { ECPair, ECPairInterface } from 'ecpair';
-import { crypto, address, Transaction } from 'bitcoinjs-lib';
+import { crypto, address, Transaction } from 'liquidjs-lib';
 import ChainClient from './utils/ChainClient';
 import { ClaimDetails, RefundDetails } from '../../lib/consts/Types';
 import { p2wpkhOutput, p2shOutput, p2wshOutput, p2shP2wshOutput } from '../../lib/swap/Scripts';
@@ -110,17 +110,19 @@ export const sendFundsToRedeemScript = async (
   timeoutBlockHeight: number,
   swapOutput: {
     vout: number,
-    value: number,
+    value: Buffer,
     script: Buffer,
+    asset: Buffer,
+    nonce: Buffer,
     txHash: Buffer,
     type: OutputType,
   },
 }> => {
-  const swapAddress = address.fromOutputScript(outputFunction(redeemScript), Networks.bitcoinRegtest);
+  const swapAddress = address.fromOutputScript(outputFunction(redeemScript), Networks.liquidRegtest);
   const transactionId = await bitcoinClient.sendToAddress(swapAddress, 10000);
   const transaction = Transaction.fromHex(await bitcoinClient.getRawTransaction(transactionId) as string);
 
-  const { vout, value, script } = detectSwap(redeemScript, transaction)!;
+  const { vout, value, script, asset, nonce } = detectSwap(redeemScript, transaction)!;
 
   return {
     redeemScript,
@@ -129,6 +131,8 @@ export const sendFundsToRedeemScript = async (
       vout,
       value,
       script,
+      asset,
+      nonce,
       type: outputType,
       txHash: transaction.getHash(),
     },

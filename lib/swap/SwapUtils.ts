@@ -6,7 +6,7 @@ import Bn from 'bn.js';
 import bip66 from 'bip66';
 import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
-import { script } from 'bitcoinjs-lib';
+import { script } from 'liquidjs-lib';
 import * as varuint from 'varuint-bitcoin';
 import { OutputType } from '../consts/Enums';
 import { ScriptElement } from '../consts/Types';

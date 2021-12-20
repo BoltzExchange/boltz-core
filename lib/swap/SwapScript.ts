@@ -3,7 +3,7 @@
  */
 
 import ops from '@boltz/bitcoin-ops';
-import { crypto } from 'bitcoinjs-lib';
+import { crypto } from 'liquidjs-lib';
 import { toPushdataScript, encodeCltv } from './SwapUtils';
 
 /**

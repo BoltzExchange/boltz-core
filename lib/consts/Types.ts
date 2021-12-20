@@ -1,6 +1,6 @@
 import { BIP32Interface } from 'bip32';
 import { ECPairInterface } from 'ecpair';
-import { TxOutput } from 'bitcoinjs-lib';
+import { TxOutput } from 'liquidjs-lib';
 import { OutputType } from './Enums';
 
 export type Error = {
