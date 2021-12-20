@@ -5,15 +5,15 @@
 import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
 import * as varuint from 'varuint-bitcoin';
-import { crypto, script, Transaction } from 'liquidjs-lib';
+import { crypto, script, Transaction, networks, confidential } from 'liquidjs-lib';
 import Errors from '../consts/Errors';
 import { Nonce, EmptyScript, PrefixUnconfidential } from '../consts/Buffer';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
 import { estimateFee, Input } from '../FeeCalculator';
 import { encodeSignature, getOutputScriptType, scriptBuffersToScript } from './SwapUtils';
-import { liquid } from 'liquidjs-lib/types/networks';
-import { confidentialValueToSatoshi, satoshiToConfidentialValue } from 'liquidjs-lib/types/confidential';
+
+const { confidentialValueToSatoshi, satoshiToConfidentialValue } = confidential;
 
 /**
  * Claim swaps
@@ -30,8 +30,8 @@ export const constructClaimTransaction = (
   destinationScript: Buffer,
   feePerByte: number,
   isRbf = true,
+  assetHash: string = networks.liquid.assetHash,
   timeoutBlockHeight?: number,
-  assetHash: string = liquid.assetHash,
 ): Transaction => {
   for (const input of utxos) {
     if (input.type === OutputType.Taproot) {

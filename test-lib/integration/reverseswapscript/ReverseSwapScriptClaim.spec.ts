@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import { networks } from 'liquidjs-lib';
 import { constructClaimTransaction } from '../../../lib/Boltz';
 import { bitcoinClient, destinationOutput, claimSwap } from '../Utils';
 import { claimDetails, invalidPreimageLengthSwap } from './ReverseSwapScript.spec';
@@ -54,6 +55,7 @@ describe('ReverseSwapScript claim', () => {
       destinationOutput,
       1,
       false,
+      networks.regtest.assetHash
     );
 
     await bitcoinClient.sendRawTransaction(claimTransaction.toHex());

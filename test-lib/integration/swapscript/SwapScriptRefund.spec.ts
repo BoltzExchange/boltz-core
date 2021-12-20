@@ -2,7 +2,7 @@ import { refundDetails } from './SwapScript.spec';
 import { destinationOutput, bitcoinClient } from '../Utils';
 import { RefundDetails } from '../../../lib/consts/Types';
 import { constructRefundTransaction } from '../../../lib/Boltz';
-import { regtest } from 'liquidjs-lib/types/networks';
+import { networks } from 'liquidjs-lib';
 
 describe('SwapScript refund', () => {
   let bestBlockHeight: number;
@@ -45,7 +45,7 @@ describe('SwapScript refund', () => {
       bestBlockHeight,
       1,
       true,
-      regtest.assetHash
+      networks.regtest.assetHash
     );
 
     await bitcoinClient.sendRawTransaction(refundTransaction.toHex());

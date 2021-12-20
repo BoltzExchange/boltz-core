@@ -1,10 +1,9 @@
 import { ECPair, ECPairInterface } from 'ecpair';
-import { crypto, address, Transaction } from 'liquidjs-lib';
+import { crypto, address, Transaction, networks } from 'liquidjs-lib';
 import ChainClient from './utils/ChainClient';
 import { ClaimDetails, RefundDetails } from '../../lib/consts/Types';
 import { p2wpkhOutput, p2shOutput, p2wshOutput, p2shP2wshOutput } from '../../lib/swap/Scripts';
 import { Networks, OutputType, detectSwap, constructClaimTransaction, constructRefundTransaction } from '../../lib/Boltz';
-import { regtest } from 'liquidjs-lib/types/networks';
 
 export const bitcoinClient = new ChainClient({
   host: '127.0.0.1',
@@ -37,7 +36,7 @@ export const refundSwap = async (refundDetails: RefundDetails, blockHeight: numb
     blockHeight,
     1,
     true,
-    regtest.assetHash
+    networks.regtest.assetHash
   );
 
   await bitcoinClient.sendRawTransaction(refundTransaction.toHex());

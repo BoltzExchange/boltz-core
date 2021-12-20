@@ -2,7 +2,7 @@ import Errors from '../../../lib/consts/Errors';
 import { OutputType } from '../../../lib/consts/Enums';
 import { p2wshOutput, p2shOutput, p2shP2wshOutput } from '../../../lib/swap/Scripts';
 import { PrefixUnconfidential } from '../../../lib/consts/Buffer';
-import { regtest } from 'liquidjs-lib/types/networks';
+import { networks } from 'liquidjs-lib';
 
 export const getScriptHashFunction = (type: OutputType): (scriptHex: Buffer) => Buffer => {
   switch (type) {
@@ -15,5 +15,5 @@ export const getScriptHashFunction = (type: OutputType): (scriptHex: Buffer) => 
 
 export const LBTC_REGTEST = Buffer.concat([
   PrefixUnconfidential,
-  Buffer.from(regtest.assetHash, 'hex').reverse(),
+  Buffer.from(networks.regtest.assetHash, 'hex').reverse(),
 ]);
