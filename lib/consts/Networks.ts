@@ -1,4 +1,6 @@
 import { networks } from 'bitcoinjs-lib';
+import { networks as liquidNetworks } from 'liquidjs-lib';
+
 
 const bitcoinPrefix = '\\x18Bitcoin Signed Message:\n';
 const litecoinPrefix = '\\x19Litecoin Signed Message:\n';
@@ -27,6 +29,11 @@ const Networks = {
     wif: 0x64,
   },
   bitcoinRegtest: networks.regtest,
+  
+  // Liquid networks
+  liquidMainnet: liquidNetworks.liquid,
+  liquidTestnet: liquidNetworks.testnet,
+  liquidRegtest: liquidNetworks.regtest,
 
   // Litecoin networks
   litecoinMainnet: {

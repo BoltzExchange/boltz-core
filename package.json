@@ -46,6 +46,7 @@
     "bitcoinjs-lib": "^6.0.0",
     "bn.js": "^5.2.0",
     "ecpair": "^1.0.1",
+    "liquidjs-lib": "^5.2.3",
     "varuint-bitcoin": "^1.1.2"
   },
   "devDependencies": {
