@@ -29,7 +29,7 @@ const Networks = {
     wif: 0x64,
   },
   bitcoinRegtest: networks.regtest,
-  
+
   // Liquid networks
   liquidMainnet: liquidNetworks.liquid,
   liquidTestnet: liquidNetworks.testnet,

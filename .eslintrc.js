@@ -14,6 +14,7 @@ module.exports = {
     'node/no-unsupported-features/es-syntax': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/adjacent-overload-signatures': 'off',
+    'import/no-unresolved': 'off',
 
     'semi': 'error',
     'no-trailing-spaces': 'error',

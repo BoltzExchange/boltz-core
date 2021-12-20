@@ -8,8 +8,7 @@ import { p2wpkhOutput } from '../../../lib/swap/Scripts';
 import { detectPreimage } from '../../../lib/swap/PreimageDetector';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import { satoshiToConfidentialValue } from 'liquidjs-lib/types/confidential';
-import { regtest } from 'liquidjs-lib/types/networks';
-import { Nonce, PrefixUnconfidential } from '../../../lib/consts/Buffer';
+import { Nonce } from '../../../lib/consts/Buffer';
 
 describe('Preimagedetector', () => {
   const claimKeys = ECPair.makeRandom();

@@ -14,6 +14,6 @@ export const getScriptHashFunction = (type: OutputType): (scriptHex: Buffer) => 
 };
 
 export const LBTC_REGTEST = Buffer.concat([
-  PrefixUnconfidential, 
+  PrefixUnconfidential,
   Buffer.from(regtest.assetHash, 'hex').reverse(),
 ]);

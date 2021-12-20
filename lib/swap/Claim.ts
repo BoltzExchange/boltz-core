@@ -5,14 +5,14 @@
 import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
 import * as varuint from 'varuint-bitcoin';
-import { crypto, script, Transaction, Network } from 'liquidjs-lib';
+import { crypto, script, Transaction } from 'liquidjs-lib';
 import Errors from '../consts/Errors';
 import { Nonce, EmptyScript, PrefixUnconfidential } from '../consts/Buffer';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
 import { estimateFee, Input } from '../FeeCalculator';
 import { encodeSignature, getOutputScriptType, scriptBuffersToScript } from './SwapUtils';
-import { regtest } from 'liquidjs-lib/types/networks';
+import { liquid } from 'liquidjs-lib/types/networks';
 import { confidentialValueToSatoshi, satoshiToConfidentialValue } from 'liquidjs-lib/types/confidential';
 
 /**
@@ -23,6 +23,7 @@ import { confidentialValueToSatoshi, satoshiToConfidentialValue } from 'liquidjs
  * @param feePerByte how many satoshis per vbyte should be paid as fee
  * @param isRbf whether the transaction should signal full Replace-by-Fee
  * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
+ * @param assetHash asset hash of Liquid asset
  */
 export const constructClaimTransaction = (
   utxos: ClaimDetails[],
@@ -30,7 +31,7 @@ export const constructClaimTransaction = (
   feePerByte: number,
   isRbf = true,
   timeoutBlockHeight?: number,
-  network: Network = regtest,
+  assetHash: string = liquid.assetHash,
 ): Transaction => {
   for (const input of utxos) {
     if (input.type === OutputType.Taproot) {
@@ -66,22 +67,22 @@ export const constructClaimTransaction = (
 
 
   const LBTC = Buffer.concat([
-    PrefixUnconfidential, 
-    Buffer.from(network.assetHash, 'hex').reverse(),
+    PrefixUnconfidential,
+    Buffer.from(assetHash, 'hex').reverse(),
   ]);
 
   // Send the sum of the UTXOs minus the estimated fee to the destination address
   tx.addOutput(
-    destinationScript, 
-    satoshiToConfidentialValue(utxoValueSum - fee), 
-    LBTC, 
+    destinationScript,
+    satoshiToConfidentialValue(utxoValueSum - fee),
+    LBTC,
     Nonce
   );
   // Add explicit fee output
   tx.addOutput(
-    EmptyScript, 
-    satoshiToConfidentialValue(fee), 
-    LBTC, 
+    EmptyScript,
+    satoshiToConfidentialValue(fee),
+    LBTC,
     Nonce
   );
 
