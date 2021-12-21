@@ -88,7 +88,7 @@ describe('SwapUtils', () => {
   });
 
   test('should get the correct output type of output scripts', () => {
-    const keys = ECPair.makeRandom({ network: Networks.bitcoinRegtest });
+    const keys = ECPair.makeRandom({ network: Networks.liquidRegtest });
     const publicKeyHash = crypto.hash160(keys.publicKey!);
 
     // PKH outputs

@@ -6,14 +6,15 @@ import { ClaimDetails, RefundDetails } from '../../../lib/consts/Types';
 import { Networks, reverseSwapScript, OutputType } from '../../../lib/Boltz';
 import { bitcoinClient, createSwapDetails, sendFundsToRedeemScript } from '../Utils';
 
+
 export let invalidPreimageLengthSwap: ClaimDetails;
 
 export let claimDetails: ClaimDetails[] = [];
 export let refundDetails: RefundDetails[] = [];
 
 describe('ReverseSwapScript', () => {
-  const claimKeys = ECPair.makeRandom({ network: Networks.bitcoinRegtest });
-  const refundKeys = ECPair.makeRandom({ network: Networks.bitcoinRegtest });
+  const claimKeys = ECPair.makeRandom({ network: Networks.liquidRegtest });
+  const refundKeys = ECPair.makeRandom({ network: Networks.liquidRegtest });
 
   const invalidPreimage = getHexBuffer('b5b2dbb1f0663878ecbc20323b58b92c');
   const invalidPreimageHash = crypto.sha256(invalidPreimage);

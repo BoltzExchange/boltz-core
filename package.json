@@ -15,7 +15,7 @@
     "test": "npm run test:solidity && npm run test:unit && npm run test:int",
     "test:solidity": "hardhat test",
     "test:unit": "jest test-lib/unit",
-    "test:int": "jest test-lib/integration --runInBand",
+    "test:int": "jest test-lib/integration --runInBand --testTimeout 30000",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "preversion": "npm run lint && npm run compile && npm run test",
     "version": "npm run changelog",

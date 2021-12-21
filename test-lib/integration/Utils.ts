@@ -7,14 +7,14 @@ import { Networks, OutputType, detectSwap, constructClaimTransaction, constructR
 
 export const bitcoinClient = new ChainClient({
   host: '127.0.0.1',
-  port: 18443,
-  rpcuser: 'kek',
-  rpcpass: 'kek',
+  port: 18884,
+  rpcuser: 'admin1',
+  rpcpass: '123',
 });
 
 export const destinationOutput = p2wpkhOutput(
   crypto.hash160(
-    ECPair.makeRandom({ network: Networks.bitcoinRegtest }).publicKey!,
+    ECPair.makeRandom({ network: Networks.liquidRegtest }).publicKey!,
   ),
 );
 
@@ -24,6 +24,7 @@ export const claimSwap = async (claimDetails: ClaimDetails): Promise<void> => {
     destinationOutput,
     1,
     true,
+    networks.regtest.assetHash,
   );
 
   await bitcoinClient.sendRawTransaction(claimTransaction.toHex());

@@ -3,10 +3,12 @@ import { constructRefundTransaction } from '../../../lib/Boltz';
 import { destinationOutput, bitcoinClient, refundSwap } from '../Utils';
 import { networks } from 'liquidjs-lib';
 
+
 describe('ReverseSwapScript refund', () => {
   let bestBlockHeight: number;
 
   beforeAll(async () => {
+    await bitcoinClient.generate(1);
     const { blocks } = await bitcoinClient.getBlockchainInfo();
 
     // Although it is possible that the height of the best block is not the height at which

@@ -4,6 +4,7 @@ import { RefundDetails } from '../../../lib/consts/Types';
 import { constructRefundTransaction } from '../../../lib/Boltz';
 import { networks } from 'liquidjs-lib';
 
+
 describe('SwapScript refund', () => {
   let bestBlockHeight: number;
 
@@ -13,12 +14,15 @@ describe('SwapScript refund', () => {
       destinationOutput,
       bestBlockHeight,
       1,
+      true,
+      networks.regtest.assetHash
     );
 
     await bitcoinClient.sendRawTransaction(refundTransaction.toHex());
   };
 
   beforeAll(async () => {
+    await bitcoinClient.generate(1);
     const { blocks } = await bitcoinClient.getBlockchainInfo();
 
     // Although it is possible that the height of the best block is not the height at which
@@ -28,14 +32,18 @@ describe('SwapScript refund', () => {
 
   test('should refund a P2WSH swap', async () => {
     await refundSwap(refundDetails[0]);
+    await bitcoinClient.generate(1);
   });
 
   test('should refund a P2SH swap', async () => {
     await refundSwap(refundDetails[1]);
+    await bitcoinClient.generate(1);
   });
 
   test('should refund a P2SH nested P2WSH swap', async () => {
     await refundSwap(refundDetails[2]);
+    await bitcoinClient.generate(1);
+
   });
 
   test('should refund multiple swaps in one transaction', async () => {

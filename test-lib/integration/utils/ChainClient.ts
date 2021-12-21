@@ -135,7 +135,7 @@ class ChainClient {
     return 2;
   };
 
-  public getNewAddress = (type = OutputType.Bech32): Promise<string> => {
+  public getNewAddress = async (type = OutputType.Bech32): Promise<string> => {
     const outputType = (() => {
       switch (type) {
         case OutputType.Bech32:
@@ -147,7 +147,9 @@ class ChainClient {
       }
     })();
 
-    return this.client.request<string>('getnewaddress', ['', outputType]);
+    const confidential = await this.client.request<string>('getnewaddress', ['', outputType]);
+    const validate = await this.client.request<Record<string,any>>('validateaddress', [confidential]);
+    return validate.unconfidential;
   };
 
   public sendToAddress = (address: string, amount: number): Promise<string> => {
@@ -155,9 +157,15 @@ class ChainClient {
   };
 
   public generate = async (blocks: number): Promise<string[]> => {
-    return this.client.request<string[]>('generatetoaddress', [blocks, this.miningAddress]);
+    const hash = await this.client.request<string[]>('generatetoaddress', [blocks, this.miningAddress]);
+    await sleep(1000);
+    return hash;
   };
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default ChainClient;
-export { ChainConfig, RawTransaction };
+export { ChainConfig, RawTransaction, sleep };
