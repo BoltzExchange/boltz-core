@@ -10,8 +10,8 @@
     "compile:typescript": "tsc",
     "compile:typescript:watch": "tsc --watch",
     "lint": "eslint --max-warnings 0 --ext .ts .",
-    "docker:start": "./startRegtest.sh",
-    "docker:stop": "docker stop boltz-bitcoin && docker rm boltz-bitcoin",
+    "docker:start": "nigiri start --liquid",
+    "docker:stop": "nigiri stop --delete",
     "test": "npm run test:solidity && npm run test:unit && npm run test:int",
     "test:solidity": "hardhat test",
     "test:unit": "jest test-lib/unit",
@@ -24,7 +24,7 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BoltzExchange/boltz-core.git"
+    "url": "git+https://github.com/vulpemventures/boltz-core.git"
   },
   "files": [
     "LICENSE",
