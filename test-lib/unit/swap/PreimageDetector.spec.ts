@@ -1,9 +1,8 @@
-import { ECPair } from 'ecpair';
 import { Transaction, crypto } from 'bitcoinjs-lib';
-import { getScriptHashFunction } from './Utils';
 import { getHexBuffer } from '../../../lib/Utils';
 import swapScript from '../../../lib/swap/SwapScript';
 import { OutputType } from '../../../lib/consts/Enums';
+import { ECPair, getScriptHashFunction } from './Utils';
 import { p2wpkhOutput } from '../../../lib/swap/Scripts';
 import { detectPreimage } from '../../../lib/swap/PreimageDetector';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
