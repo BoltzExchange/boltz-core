@@ -1,6 +1,6 @@
-import { ECPair } from 'ecpair';
 import ops from '@boltz/bitcoin-ops';
 import { Transaction, crypto, script } from 'bitcoinjs-lib';
+import { ECPair } from './Utils';
 import Networks from '../../../lib/consts/Networks';
 import * as scripts from '../../../lib/swap/Scripts';
 import { OutputType } from '../../../lib/consts/Enums';

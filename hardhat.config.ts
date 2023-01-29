@@ -41,12 +41,12 @@ const config: HardhatUserConfig = {
 
 if (mnemonics && infuraKey) {
   config.networks = {
-    rinkeby: {
+    goerli: {
       accounts: {
         count: 1,
         mnemonic: mnemonics.testnet,
       },
-      url: `https://rinkeby.infura.io/v3/${infuraKey}`,
+      url: `https://goerli.infura.io/v3/${infuraKey}`,
     },
     mainnet: {
       accounts: {
