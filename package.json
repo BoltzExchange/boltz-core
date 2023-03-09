@@ -34,6 +34,8 @@
     ".gitmodules",
     "foundry.toml",
     "remappings.txt",
+    "contracts/*.sol",
+    "contracts/script",
     "dist/**/!(tsconfig.tsbuildinfo)",
     "out/ERC20.sol/ERC20.json",
     "out/TestERC20.sol/TestERC20.json",
