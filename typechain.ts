@@ -1,0 +1,9 @@
+import { execSync } from 'child_process';
+
+for (const contract of [
+  'ERC20',
+  'EtherSwap',
+  'ERC20Swap',
+]) {
+  execSync(`typechain --target ethers-v5 --out-dir typechain/ ./out/${contract}.sol/${contract}.json`);
+}

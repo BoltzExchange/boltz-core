@@ -11,9 +11,9 @@ import { detectPreimage } from './swap/PreimageDetector';
 import { constructRefundTransaction } from './swap/Refund';
 import { estimateFee, estimateSize } from './FeeCalculator';
 import { ScriptElement, TransactionOutput } from './consts/Types';
-import EtherSwapABI from '../artifacts/contracts/EtherSwap.sol/EtherSwap.json';
-import ERC20SwapABI from '../artifacts/contracts/ERC20Swap.sol/ERC20Swap.json';
-import ERC20ABI from '../artifacts/@openzeppelin/contracts/token/ERC20/ERC20.sol/ERC20.json';
+import ERC20ABI from '../out/ERC20.sol/ERC20.json';
+import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json';
+import ERC20SwapABI from '../out/ERC20Swap.sol/ERC20Swap.json';
 
 const ContractABIs = {
   ERC20: ERC20ABI.abi,

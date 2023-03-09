@@ -75,3 +75,7 @@ typechain/
 
 # MythX output folder
 bin/
+
+# Forge
+out/
+broadcast/
