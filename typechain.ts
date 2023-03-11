@@ -5,5 +5,5 @@ for (const contract of [
   'EtherSwap',
   'ERC20Swap',
 ]) {
-  execSync(`typechain --target ethers-v5 --out-dir typechain/ ./out/${contract}.sol/${contract}.json`);
+  execSync(`typechain --target ethers-v6 --out-dir typechain/ ./out/${contract}.sol/${contract}.json`);
 }
