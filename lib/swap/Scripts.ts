@@ -13,10 +13,7 @@ import { script, crypto } from 'bitcoinjs-lib';
  * @returns P2WPKH output script Buffer
  */
 export const p2wpkhOutput = (hash: Buffer): Buffer => {
-  return script.compile([
-    ops.OP_0,
-    hash,
-  ]);
+  return script.compile([ops.OP_0, hash]);
 };
 
 /**
@@ -27,10 +24,7 @@ export const p2wpkhOutput = (hash: Buffer): Buffer => {
  * @returns P2WSH output script Buffer
  */
 export const p2wshOutput = (scriptHex: Buffer): Buffer => {
-  return script.compile([
-    ops.OP_0,
-    crypto.sha256(scriptHex),
-  ]);
+  return script.compile([ops.OP_0, crypto.sha256(scriptHex)]);
 };
 
 /**
@@ -70,7 +64,9 @@ export const p2shOutput = (scriptHex: Buffer): Buffer => {
  *
  * @param hash public key hash hex Buffer
  */
-export const p2shP2wpkhOutput = (hash: Buffer): { redeemScript: Buffer, outputScript: Buffer } => {
+export const p2shP2wpkhOutput = (
+  hash: Buffer,
+): { redeemScript: Buffer; outputScript: Buffer } => {
   const witness = p2wpkhOutput(hash);
 
   return {

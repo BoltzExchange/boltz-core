@@ -19,7 +19,9 @@ describe('SwapScript claim', () => {
     }
 
     expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toEqual('mandatory-script-verify-flag-failed (Locktime requirement not satisfied)');
+    expect(actualError.message).toEqual(
+      'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
+    );
   });
 
   test('should claim a P2WSH swap', async () => {

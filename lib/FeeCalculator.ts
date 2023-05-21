@@ -2,7 +2,7 @@ import Errors from './consts/Errors';
 import { OutputType } from './consts/Enums';
 
 export type Input = {
-  type: OutputType,
+  type: OutputType;
 
   // In case the input is a Swap this fields have to be set
   swapDetails?: {
@@ -19,8 +19,8 @@ export type Output = {
 
 // Estimations for the vbytes of different PKH inputs
 const inputVbytesEstimations = {
-  [OutputType.Bech32]: 108 + (41 * 4),
-  [OutputType.Compatibility]: 108 + (64 * 4),
+  [OutputType.Bech32]: 108 + 41 * 4,
+  [OutputType.Compatibility]: 108 + 64 * 4,
   [OutputType.Legacy]: 148 * 4,
 };
 
@@ -63,7 +63,7 @@ const estimateInput = (input: Input) => {
         return 41 * 4 + swapSize;
 
       case OutputType.Compatibility:
-        return ((41 + 35) * 4) + swapSize;
+        return (41 + 35) * 4 + swapSize;
 
       case OutputType.Legacy:
         return (swapSize + 41) * 4;
@@ -118,7 +118,11 @@ export const estimateSize = (inputs: Input[], outputs: Output[]): number => {
 /**
  * Estimates the amount of satoshis that should be paid as fee
  */
-export const estimateFee = (satsPerVbyte: number, inputs: Input[], outputs: Output[]): number => {
+export const estimateFee = (
+  satsPerVbyte: number,
+  inputs: Input[],
+  outputs: Output[],
+): number => {
   const size = estimateSize(inputs, outputs);
 
   return size * satsPerVbyte;

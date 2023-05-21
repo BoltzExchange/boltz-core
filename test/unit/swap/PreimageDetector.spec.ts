@@ -11,7 +11,9 @@ describe('Preimagedetector', () => {
   const claimKeys = ECPair.makeRandom();
   const refundKeys = ECPair.makeRandom();
 
-  const preimage = getHexBuffer('7568110bcf788e974f918332f357dec2c33b2d76b2f61f9873afcb8f1598c91e');
+  const preimage = getHexBuffer(
+    '7568110bcf788e974f918332f357dec2c33b2d76b2f61f9873afcb8f1598c91e',
+  );
 
   const claimTransactions: Transaction[] = [];
 
@@ -33,16 +35,20 @@ describe('Preimagedetector', () => {
       const scriptHashFunction = getScriptHashFunction(i);
 
       const claimTransaction = constructClaimTransaction(
-        [{
-          preimage,
-          redeemScript,
-          type: i,
-          keys: claimKeys,
-          vout: 0,
-          value: 123123,
-          script: scriptHashFunction(redeemScript),
-          txHash: getHexBuffer('287d2e3a5726710c2b6c94084c28789b250d703feb1e10012921cc2d4ab7f277'),
-        }],
+        [
+          {
+            preimage,
+            redeemScript,
+            type: i,
+            keys: claimKeys,
+            vout: 0,
+            value: 123123,
+            script: scriptHashFunction(redeemScript),
+            txHash: getHexBuffer(
+              '287d2e3a5726710c2b6c94084c28789b250d703feb1e10012921cc2d4ab7f277',
+            ),
+          },
+        ],
         p2wpkhOutput(crypto.hash160(claimKeys.publicKey)),
         2,
         false,

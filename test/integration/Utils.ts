@@ -3,8 +3,19 @@ import { crypto, address, Transaction } from 'bitcoinjs-lib';
 import { ECPair } from '../unit/swap/Utils';
 import ChainClient from './utils/ChainClient';
 import { ClaimDetails, RefundDetails } from '../../lib/consts/Types';
-import { p2wpkhOutput, p2shOutput, p2wshOutput, p2shP2wshOutput } from '../../lib/swap/Scripts';
-import { Networks, OutputType, detectSwap, constructClaimTransaction, constructRefundTransaction } from '../../lib/Boltz';
+import {
+  p2wpkhOutput,
+  p2shOutput,
+  p2wshOutput,
+  p2shP2wshOutput,
+} from '../../lib/swap/Scripts';
+import {
+  Networks,
+  OutputType,
+  detectSwap,
+  constructClaimTransaction,
+  constructRefundTransaction,
+} from '../../lib/Boltz';
 
 export const bitcoinClient = new ChainClient({
   host: '127.0.0.1',
@@ -30,7 +41,10 @@ export const claimSwap = async (claimDetails: ClaimDetails): Promise<void> => {
   await bitcoinClient.sendRawTransaction(claimTransaction.toHex());
 };
 
-export const refundSwap = async (refundDetails: RefundDetails, blockHeight: number): Promise<void> => {
+export const refundSwap = async (
+  refundDetails: RefundDetails,
+  blockHeight: number,
+): Promise<void> => {
   const refundTransaction = constructRefundTransaction(
     [refundDetails],
     destinationOutput,
@@ -42,20 +56,30 @@ export const refundSwap = async (refundDetails: RefundDetails, blockHeight: numb
 };
 
 export const createSwapDetails = async (
-  generateScript: (preimageHash: Buffer, claimPublicKey: Buffer, refundPublicKey: Buffer, timeoutBlockHeight: number) => Buffer,
+  generateScript: (
+    preimageHash: Buffer,
+    claimPublicKey: Buffer,
+    refundPublicKey: Buffer,
+    timeoutBlockHeight: number,
+  ) => Buffer,
   preimage: Buffer,
   preimageHash: Buffer,
   claimKeys: ECPairInterface,
   refundKeys: ECPairInterface,
 ): Promise<{
-  claimDetails: ClaimDetails[],
-  refundDetails: RefundDetails[],
+  claimDetails: ClaimDetails[];
+  refundDetails: RefundDetails[];
 }> => {
   const claimDetails: ClaimDetails[] = [];
   const refundDetails: RefundDetails[] = [];
 
   for (let i = 0; i < 2; i += 1) {
-    const claimOutputs = await createOutputs(generateScript, preimageHash, claimKeys, refundKeys);
+    const claimOutputs = await createOutputs(
+      generateScript,
+      preimageHash,
+      claimKeys,
+      refundKeys,
+    );
 
     claimOutputs.forEach((out) => {
       claimDetails.push({
@@ -66,7 +90,12 @@ export const createSwapDetails = async (
       });
     });
 
-    const refundOutputs = await createOutputs(generateScript, preimageHash, claimKeys, refundKeys);
+    const refundOutputs = await createOutputs(
+      generateScript,
+      preimageHash,
+      claimKeys,
+      refundKeys,
+    );
 
     refundOutputs.forEach((out) => {
       refundDetails.push({
@@ -84,7 +113,12 @@ export const createSwapDetails = async (
 };
 
 const createOutputs = async (
-  generateScript: (preimageHash: Buffer, claimPublicKey: Buffer, refundPublicKey: Buffer, timeoutBlockHeight: number) => Buffer,
+  generateScript: (
+    preimageHash: Buffer,
+    claimPublicKey: Buffer,
+    refundPublicKey: Buffer,
+    timeoutBlockHeight: number,
+  ) => Buffer,
   preimageHash: Buffer,
   claimKeys: ECPairInterface,
   refundKeys: ECPairInterface,
@@ -92,12 +126,32 @@ const createOutputs = async (
   const { blocks } = await bitcoinClient.getBlockchainInfo();
   const timeoutBlockHeight = blocks + 1;
 
-  const redeemScript = generateScript(preimageHash, claimKeys.publicKey!, refundKeys.publicKey!, timeoutBlockHeight);
+  const redeemScript = generateScript(
+    preimageHash,
+    claimKeys.publicKey!,
+    refundKeys.publicKey!,
+    timeoutBlockHeight,
+  );
 
   return [
-    await sendFundsToRedeemScript(p2shOutput, OutputType.Legacy, redeemScript, timeoutBlockHeight),
-    await sendFundsToRedeemScript(p2wshOutput, OutputType.Bech32, redeemScript, timeoutBlockHeight),
-    await sendFundsToRedeemScript(p2shP2wshOutput, OutputType.Compatibility, redeemScript, timeoutBlockHeight),
+    await sendFundsToRedeemScript(
+      p2shOutput,
+      OutputType.Legacy,
+      redeemScript,
+      timeoutBlockHeight,
+    ),
+    await sendFundsToRedeemScript(
+      p2wshOutput,
+      OutputType.Bech32,
+      redeemScript,
+      timeoutBlockHeight,
+    ),
+    await sendFundsToRedeemScript(
+      p2shP2wshOutput,
+      OutputType.Compatibility,
+      redeemScript,
+      timeoutBlockHeight,
+    ),
   ];
 };
 
@@ -107,19 +161,24 @@ export const sendFundsToRedeemScript = async (
   redeemScript: Buffer,
   timeoutBlockHeight: number,
 ): Promise<{
-  redeemScript: Buffer,
-  timeoutBlockHeight: number,
+  redeemScript: Buffer;
+  timeoutBlockHeight: number;
   swapOutput: {
-    vout: number,
-    value: number,
-    script: Buffer,
-    txHash: Buffer,
-    type: OutputType,
-  },
+    vout: number;
+    value: number;
+    script: Buffer;
+    txHash: Buffer;
+    type: OutputType;
+  };
 }> => {
-  const swapAddress = address.fromOutputScript(outputFunction(redeemScript), Networks.bitcoinRegtest);
+  const swapAddress = address.fromOutputScript(
+    outputFunction(redeemScript),
+    Networks.bitcoinRegtest,
+  );
   const transactionId = await bitcoinClient.sendToAddress(swapAddress, 10000);
-  const transaction = Transaction.fromHex(await bitcoinClient.getRawTransaction(transactionId) as string);
+  const transaction = Transaction.fromHex(
+    (await bitcoinClient.getRawTransaction(transactionId)) as string,
+  );
 
   const { vout, value, script } = detectSwap(redeemScript, transaction)!;
 

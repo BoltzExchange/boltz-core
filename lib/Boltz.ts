@@ -24,26 +24,18 @@ const ContractABIs = {
 export {
   Errors,
   Networks,
-
   OutputType,
   ScriptElement,
   TransactionOutput,
-
   Scripts,
-
   swapScript,
   reverseSwapScript,
-
   detectSwap,
   detectPreimage,
-
   estimateFee,
   estimateSize,
-
   constructClaimTransaction,
   constructRefundTransaction,
-
   SwapUtils,
-
   ContractABIs,
 };

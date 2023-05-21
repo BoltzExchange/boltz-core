@@ -10,7 +10,11 @@ import Errors from '../consts/Errors';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
 import { estimateFee, Input } from '../FeeCalculator';
-import { encodeSignature, getOutputScriptType, scriptBuffersToScript } from './SwapUtils';
+import {
+  encodeSignature,
+  getOutputScriptType,
+  scriptBuffersToScript,
+} from './SwapUtils';
 
 /**
  * Claim swaps
@@ -58,7 +62,9 @@ export const constructClaimTransaction = (
   });
 
   // Estimate the fee for the transaction
-  const fee = estimateFee(feePerByte, feeInputs, [getOutputScriptType(destinationScript)!]);
+  const fee = estimateFee(feePerByte, feeInputs, [
+    getOutputScriptType(destinationScript)!,
+  ]);
 
   // Send the sum of the UTXOs minus the estimated fee to the destination address
   tx.addOutput(destinationScript, utxoValueSum - fee);
@@ -67,7 +73,11 @@ export const constructClaimTransaction = (
     switch (utxo.type) {
       // Construct and sign the input scripts for P2SH inputs
       case OutputType.Legacy: {
-        const sigHash = tx.hashForSignature(index, utxo.redeemScript, Transaction.SIGHASH_ALL);
+        const sigHash = tx.hashForSignature(
+          index,
+          utxo.redeemScript,
+          Transaction.SIGHASH_ALL,
+        );
         const signature = utxo.keys.sign(sigHash);
 
         const inputScript = [
@@ -90,21 +100,25 @@ export const constructClaimTransaction = (
 
         const nested = scriptBuffersToScript(nestedScript);
 
-        tx.setInputScript(index, scriptBuffersToScript([ nested ]));
+        tx.setInputScript(index, scriptBuffersToScript([nested]));
         break;
       }
     }
 
     // Construct and sign the witness for (nested) SegWit inputs
     if (utxo.type !== OutputType.Legacy) {
-      const sigHash = tx.hashForWitnessV0(index, utxo.redeemScript, utxo.value, Transaction.SIGHASH_ALL);
-      const signature = script.signature.encode(utxo.keys.sign(sigHash), Transaction.SIGHASH_ALL);
-
-      tx.setWitness(index, [
-        signature,
-        utxo.preimage,
+      const sigHash = tx.hashForWitnessV0(
+        index,
         utxo.redeemScript,
-      ]);
+        utxo.value,
+        Transaction.SIGHASH_ALL,
+      );
+      const signature = script.signature.encode(
+        utxo.keys.sign(sigHash),
+        Transaction.SIGHASH_ALL,
+      );
+
+      tx.setWitness(index, [signature, utxo.preimage, utxo.redeemScript]);
     }
   });
 

@@ -5,13 +5,13 @@ const litecoinPrefix = '\\x19Litecoin Signed Message:\n';
 const dogecoinPrefix = '\\x19Dogecoin Signed Message:\n';
 
 const testnetBip32 = {
-  public: 0x019DA462,
-  private: 0x019D9CFE,
+  public: 0x019da462,
+  private: 0x019d9cfe,
 };
 
 const simnetBip32 = {
-  public: 0x420BD3A,
-  private: 0x488B21E,
+  public: 0x420bd3a,
+  private: 0x488b21e,
 };
 
 const Networks = {
@@ -32,8 +32,8 @@ const Networks = {
   litecoinMainnet: {
     messagePrefix: litecoinPrefix,
     bip32: {
-      private: 0x488ADE4,
-      public: 0x488B21E,
+      private: 0x488ade4,
+      public: 0x488b21e,
     },
     bech32: 'ltc',
     scriptHash: 0x32,

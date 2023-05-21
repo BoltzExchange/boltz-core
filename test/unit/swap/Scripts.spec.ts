@@ -22,7 +22,8 @@ describe('Scripts', () => {
       args: {
         scriptHex: redeemScript,
       },
-      result: '00206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d',
+      result:
+        '00206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d',
     };
 
     const result = scripts.p2wshOutput(getHexBuffer(testData.args.scriptHex));
@@ -59,8 +60,12 @@ describe('Scripts', () => {
         hash: publicKeyHash,
       },
       result: {
-        redeemScript: getHexBuffer('00140000000000000000000000000000000000000000'),
-        outputScript: getHexBuffer('a91467c10d4d1092750f0d3aa4aa7152f90da1e7424887'),
+        redeemScript: getHexBuffer(
+          '00140000000000000000000000000000000000000000',
+        ),
+        outputScript: getHexBuffer(
+          'a91467c10d4d1092750f0d3aa4aa7152f90da1e7424887',
+        ),
       },
     };
 
@@ -70,14 +75,16 @@ describe('Scripts', () => {
   });
 
   test('should get P2SH nested P2WSH output script', () => {
-    const testData =  {
+    const testData = {
       args: {
         scriptHex: redeemScript,
       },
       result: 'a91466a823e1ae9236a70fe7321f5b26b09ec422a37787',
     };
 
-    const result = scripts.p2shP2wshOutput(getHexBuffer(testData.args.scriptHex));
+    const result = scripts.p2shP2wshOutput(
+      getHexBuffer(testData.args.scriptHex),
+    );
     expect(getHexString(result)).toEqual(testData.result);
   });
 });

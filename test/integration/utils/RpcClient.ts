@@ -12,7 +12,9 @@ class RpcClient {
   private readonly options = {};
 
   constructor(config: RpcConfig) {
-    this.auth = Buffer.from(`${config.rpcuser}:${config.rpcpass}`).toString('base64');
+    this.auth = Buffer.from(`${config.rpcuser}:${config.rpcpass}`).toString(
+      'base64',
+    );
 
     this.options = {
       host: config.host,

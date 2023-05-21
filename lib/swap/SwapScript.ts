@@ -16,7 +16,12 @@ import { toPushdataScript, encodeCltv } from './SwapUtils';
  *
  * @returns redeem script
  */
-const swapScript = (preimageHash: Buffer, claimPublicKey: Buffer, refundPublicKey: Buffer, timeoutBlockHeight: number): Buffer => {
+const swapScript = (
+  preimageHash: Buffer,
+  claimPublicKey: Buffer,
+  refundPublicKey: Buffer,
+  timeoutBlockHeight: number,
+): Buffer => {
   const cltv = encodeCltv(timeoutBlockHeight);
 
   return toPushdataScript([

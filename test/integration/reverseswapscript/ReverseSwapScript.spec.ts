@@ -4,7 +4,11 @@ import { getHexBuffer } from '../../../lib/Utils';
 import { p2wshOutput } from '../../../lib/swap/Scripts';
 import { ClaimDetails, RefundDetails } from '../../../lib/consts/Types';
 import { Networks, reverseSwapScript, OutputType } from '../../../lib/Boltz';
-import { bitcoinClient, createSwapDetails, sendFundsToRedeemScript } from '../Utils';
+import {
+  bitcoinClient,
+  createSwapDetails,
+  sendFundsToRedeemScript,
+} from '../Utils';
 
 export let invalidPreimageLengthSwap: ClaimDetails;
 
@@ -18,7 +22,9 @@ describe('ReverseSwapScript', () => {
   const invalidPreimage = getHexBuffer('b5b2dbb1f0663878ecbc20323b58b92c');
   const invalidPreimageHash = crypto.sha256(invalidPreimage);
 
-  const preimage = getHexBuffer('9b2b702b8fd1cbd1375b3a63a840b8a02c318d93309e8df3203e120045dd0ae0');
+  const preimage = getHexBuffer(
+    '9b2b702b8fd1cbd1375b3a63a840b8a02c318d93309e8df3203e120045dd0ae0',
+  );
   const preimageHash = crypto.sha256(preimage);
 
   beforeAll(async () => {
@@ -37,7 +43,12 @@ describe('ReverseSwapScript', () => {
     const { blocks } = await bitcoinClient.getBlockchainInfo();
     const timeoutBlockHeight = blocks + 1;
 
-    const redeemScript = reverseSwapScript(invalidPreimageHash, claimKeys.publicKey!, refundKeys.publicKey!, timeoutBlockHeight);
+    const redeemScript = reverseSwapScript(
+      invalidPreimageHash,
+      claimKeys.publicKey!,
+      refundKeys.publicKey!,
+      timeoutBlockHeight,
+    );
 
     const invalidOutput = await sendFundsToRedeemScript(
       p2wshOutput,
