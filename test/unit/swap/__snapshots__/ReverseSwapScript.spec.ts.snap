@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ReverseSwapScript should get a reverse swap script 1`] = `"8201208763a9144eee61c39e3b6d46f6fc7da6ae80519aa681f6d2882103f8109578aae1e5cfc497e466cf6ae6625497cd31886e87b2f4f54f3f0f46b53967750354df07b1752103ec0c1e45b709d708cd376a6f2daf19ac27be229647780d592e27d7fb7efb207a68ac"`;

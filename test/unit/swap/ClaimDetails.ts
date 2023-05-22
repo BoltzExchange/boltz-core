@@ -2,6 +2,7 @@ import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
+import { ClaimDetails } from '../../../lib/consts/Types';
 
 const bip32 = BIP32Factory(ecc);
 
@@ -40,3 +41,7 @@ export const claimDetails = [
     script: getHexBuffer('a9143cdeb56e328a10d3bfe107fd5a16bd73871adb8d87'),
   },
 ];
+
+export const claimDetailsMap = new Map<OutputType, ClaimDetails>(
+  claimDetails.map((entry) => [entry.type, entry]),
+);
