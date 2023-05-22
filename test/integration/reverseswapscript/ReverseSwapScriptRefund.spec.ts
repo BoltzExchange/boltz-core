@@ -1,36 +1,85 @@
-import { refundDetails } from './ReverseSwapScript.spec';
-import { constructRefundTransaction } from '../../../lib/Boltz';
-import { destinationOutput, bitcoinClient, refundSwap } from '../Utils';
+import {
+  constructRefundTransaction,
+  OutputType,
+  reverseSwapScript,
+  targetFee,
+} from '../../../lib/Boltz';
+import {
+  bitcoinClient,
+  createSwapOutput,
+  destinationOutput,
+  refundSwap,
+} from '../Utils';
 
 describe('ReverseSwapScript refund', () => {
   let bestBlockHeight: number;
 
   beforeAll(async () => {
-    const { blocks } = await bitcoinClient.getBlockchainInfo();
+    await bitcoinClient.init();
 
-    // Although it is possible that the height of the best block is not the height at which
-    // the HTLC times out one can assume that the best block is already after the timeout
+    const { blocks } = await bitcoinClient.getBlockchainInfo();
     bestBlockHeight = blocks;
   });
 
-  test('should refund a P2WSH reverse swap', async () => {
-    await refundSwap(refundDetails[0], bestBlockHeight);
+  test.each`
+    type                        | name
+    ${OutputType.Bech32}        | ${'P2WSH'}
+    ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
+    ${OutputType.Legacy}        | ${'P2SH'}
+  `(`should refund a $name reverse swap`, async ({ type }) => {
+    const { utxo } = await createSwapOutput(
+      type,
+      true,
+      reverseSwapScript,
+      bestBlockHeight,
+    );
+    await refundSwap(utxo, bestBlockHeight);
   });
 
-  test('should refund a P2SH reverse swap', async () => {
-    await refundSwap(refundDetails[1], bestBlockHeight);
-  });
-
-  test('should refund a P2SH nested P2WSH reverse swap', async () => {
-    await refundSwap(refundDetails[2], bestBlockHeight);
-  });
+  test.each`
+    type                        | name
+    ${OutputType.Bech32}        | ${'P2WSH'}
+    ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
+    ${OutputType.Legacy}        | ${'P2SH'}
+  `(
+    `should not refund a $name reverse swap before timeout`,
+    async ({ type }) => {
+      const { utxo } = await createSwapOutput(
+        type,
+        true,
+        reverseSwapScript,
+        bestBlockHeight + 1,
+      );
+      await expect(refundSwap(utxo, bestBlockHeight)).rejects.toEqual({
+        code: -26,
+        message:
+          'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
+      });
+    },
+  );
 
   test('should refund multiple reverse swaps in one transaction', async () => {
-    const refundTransaction = constructRefundTransaction(
-      refundDetails.slice(3, 6),
-      destinationOutput,
-      bestBlockHeight,
-      1,
+    const outputs = await Promise.all(
+      [OutputType.Bech32, OutputType.Compatibility, OutputType.Legacy].map(
+        (type) => {
+          return createSwapOutput(
+            type,
+            true,
+            reverseSwapScript,
+            bestBlockHeight,
+          );
+        },
+      ),
+    );
+    const utxos = outputs.map((output) => output.utxo);
+
+    const refundTransaction = targetFee(1, (fee) =>
+      constructRefundTransaction(
+        utxos,
+        destinationOutput,
+        bestBlockHeight,
+        fee,
+      ),
     );
 
     await bitcoinClient.sendRawTransaction(refundTransaction.toHex());

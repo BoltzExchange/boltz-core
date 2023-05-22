@@ -1,4 +1,4 @@
-import http from 'http';
+import { request } from 'http';
 
 type RpcConfig = {
   host: string;
@@ -31,7 +31,7 @@ class RpcClient {
         params,
       });
 
-      const request = http.request(this.options, (response) => {
+      const req = request(this.options, (response) => {
         let buffer = '';
 
         response.on('data', (chunk) => {
@@ -57,15 +57,15 @@ class RpcClient {
         });
       });
 
-      request.on('error', (error) => {
+      req.on('error', (error) => {
         reject(error);
       });
 
-      request.setHeader('Content-Length', serializedRequest.length);
-      request.setHeader('Authorization', `Basic ${this.auth}`);
+      req.setHeader('Content-Length', serializedRequest.length);
+      req.setHeader('Authorization', `Basic ${this.auth}`);
 
-      request.write(serializedRequest);
-      request.end();
+      req.write(serializedRequest);
+      req.end();
     });
   };
 }

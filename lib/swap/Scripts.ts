@@ -4,6 +4,7 @@
 
 import ops from '@boltz/bitcoin-ops';
 import { script, crypto } from 'bitcoinjs-lib';
+import { OutputType } from '../consts/Enums';
 
 /**
  * Get a P2WPKH output script
@@ -84,4 +85,19 @@ export const p2shP2wshOutput = (scriptHex: Buffer): Buffer => {
   const witness = p2wshOutput(scriptHex);
 
   return p2shOutput(witness);
+};
+
+export const outputFunctionForType = (
+  type: OutputType,
+): typeof p2shOutput | undefined => {
+  switch (type) {
+    case OutputType.Bech32:
+      return p2wshOutput;
+    case OutputType.Compatibility:
+      return p2shP2wshOutput;
+    case OutputType.Legacy:
+      return p2shOutput;
+  }
+
+  return;
 };

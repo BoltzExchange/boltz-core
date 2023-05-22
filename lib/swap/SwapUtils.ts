@@ -8,9 +8,8 @@ import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
 import { script } from 'bitcoinjs-lib';
 import * as varuint from 'varuint-bitcoin';
-import { OutputType } from '../consts/Enums';
 import { ScriptElement } from '../consts/Types';
-import { Output } from '../FeeCalculator';
+import { Output, OutputType } from '../consts/Enums';
 import { getHexBuffer, getHexString } from '../Utils';
 
 const zeroHexBuffer = getHexBuffer('00');

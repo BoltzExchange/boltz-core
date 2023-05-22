@@ -9,26 +9,21 @@ import { crypto, script, Transaction } from 'bitcoinjs-lib';
 import Errors from '../consts/Errors';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
-import { estimateFee, Input } from '../FeeCalculator';
-import {
-  encodeSignature,
-  getOutputScriptType,
-  scriptBuffersToScript,
-} from './SwapUtils';
+import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
 
 /**
  * Claim swaps
  *
  * @param utxos UTXOs that should be claimed or refunded
  * @param destinationScript the output script to which the funds should be sent
- * @param feePerByte how many satoshis per vbyte should be paid as fee
+ * @param fee how many satoshis should be paid as fee
  * @param isRbf whether the transaction should signal full Replace-by-Fee
  * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
  */
 export const constructClaimTransaction = (
   utxos: ClaimDetails[],
   destinationScript: Buffer,
-  feePerByte: number,
+  fee: number,
   isRbf = true,
   timeoutBlockHeight?: number,
 ): Transaction => {
@@ -48,26 +43,18 @@ export const constructClaimTransaction = (
   }
 
   // The sum of the values of all UTXOs that should be claimed or refunded
-  let utxoValueSum = 0;
-  const feeInputs: Input[] = [];
+  let utxoValueSum = BigInt(0);
 
   utxos.forEach((utxo) => {
-    utxoValueSum += utxo.value;
-    feeInputs.push({ type: utxo.type, swapDetails: utxo });
+    utxoValueSum += BigInt(utxo.value);
 
     // Add the swap as input to the transaction
-    //
     // RBF reference: https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki#summary
     tx.addInput(utxo.txHash, utxo.vout, isRbf ? 0xfffffffd : 0xffffffff);
   });
 
-  // Estimate the fee for the transaction
-  const fee = estimateFee(feePerByte, feeInputs, [
-    getOutputScriptType(destinationScript)!,
-  ]);
-
   // Send the sum of the UTXOs minus the estimated fee to the destination address
-  tx.addOutput(destinationScript, utxoValueSum - fee);
+  tx.addOutput(destinationScript, Number(utxoValueSum - BigInt(fee)));
 
   utxos.forEach((utxo, index) => {
     switch (utxo.type) {

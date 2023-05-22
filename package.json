@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "test": "npm run test:solidity && npm run test:unit && npm run test:int",
     "test:solidity": "forge test",
     "test:unit": "jest test/unit",
-    "test:int": "jest test/integration --runInBand",
+    "test:int": "jest test/integration",
     "deploy:solidity": "forge script Deploy --broadcast --rpc-url http://127.0.0.1:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "preversion": "npm run lint && npm run compile && npm run test",
@@ -29,6 +29,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BoltzExchange/boltz-core.git"
+  },
+  "engines": {
+    "node": ">=14"
   },
   "files": [
     "LICENSE",
@@ -57,10 +60,10 @@
   "devDependencies": {
     "@typechain/ethers-v6": "^0.3.2",
     "@types/jest": "^29.5.1",
-    "@types/node": "^20.2.2",
+    "@types/node": "^20.2.3",
     "@types/ws": "^8.5.4",
-    "@typescript-eslint/eslint-plugin": "^5.59.6",
-    "@typescript-eslint/parser": "^5.59.6",
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7",
     "conventional-changelog-cli": "^2.2.2",
     "cross-os": "^1.5.0",
     "eslint": "^8.41.0",

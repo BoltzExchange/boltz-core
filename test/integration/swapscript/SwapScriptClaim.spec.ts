@@ -1,47 +1,71 @@
 import { randomBytes } from 'crypto';
-import { claimDetails } from './SwapScript.spec';
-import { constructClaimTransaction } from '../../../lib/Boltz';
-import { bitcoinClient, destinationOutput, claimSwap } from '../Utils';
+import {
+  constructClaimTransaction,
+  OutputType,
+  swapScript,
+  targetFee,
+} from '../../../lib/Boltz';
+import {
+  bitcoinClient,
+  claimSwap,
+  createSwapOutput,
+  destinationOutput,
+} from '../Utils';
 
 describe('SwapScript claim', () => {
+  beforeAll(async () => {
+    await bitcoinClient.init();
+  });
+
+  afterAll(async () => {
+    await bitcoinClient.generate(1);
+  });
+
   test('should not claim swaps if the preimage has an invalid hash', async () => {
+    const { utxo } = await createSwapOutput(
+      OutputType.Bech32,
+      false,
+      swapScript,
+    );
+
     let actualError: any;
 
     try {
-      const toClaim = {
-        ...claimDetails[0],
-      };
-      toClaim.preimage = randomBytes(32);
+      utxo.preimage = randomBytes(32);
 
-      await claimSwap(toClaim);
+      await claimSwap(utxo);
     } catch (error) {
       actualError = error;
     }
 
     expect(actualError.code).toEqual(-26);
     expect(actualError.message).toEqual(
-      'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
+      'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
     );
   });
 
-  test('should claim a P2WSH swap', async () => {
-    await claimSwap(claimDetails[0]);
-  });
-
-  test('should claim a P2SH swap', async () => {
-    await claimSwap(claimDetails[1]);
-  });
-
-  test('should claim a P2SH nested P2WSH swap', async () => {
-    await claimSwap(claimDetails[2]);
+  test.each`
+    type                        | name
+    ${OutputType.Bech32}        | ${'P2WSH'}
+    ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
+    ${OutputType.Legacy}        | ${'P2SH'}
+  `(`should claim a $name swap`, async ({ type }) => {
+    const { utxo } = await createSwapOutput(type, false, swapScript);
+    await claimSwap(utxo);
   });
 
   test('should claim multiple swaps in one transaction', async () => {
-    const claimTransaction = constructClaimTransaction(
-      claimDetails.slice(3, 6),
-      destinationOutput,
-      1,
-      false,
+    const outputs = await Promise.all(
+      [OutputType.Bech32, OutputType.Compatibility, OutputType.Legacy].map(
+        (type) => {
+          return createSwapOutput(type, false, swapScript);
+        },
+      ),
+    );
+    const utxos = outputs.map((output) => output.utxo);
+
+    const claimTransaction = targetFee(1, (fee) =>
+      constructClaimTransaction(utxos, destinationOutput, fee, false),
     );
 
     await bitcoinClient.sendRawTransaction(claimTransaction.toHex());

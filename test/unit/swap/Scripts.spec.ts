@@ -1,5 +1,12 @@
 import { getHexString, getHexBuffer } from '../../../lib/Utils';
 import * as scripts from '../../../lib/swap/Scripts';
+import { OutputType } from '../../../lib/consts/Enums';
+import {
+  outputFunctionForType,
+  p2shOutput,
+  p2shP2wshOutput,
+  p2wshOutput,
+} from '../../../lib/swap/Scripts';
 
 describe('Scripts', () => {
   const publicKeyHash = '0000000000000000000000000000000000000000';
@@ -87,4 +94,17 @@ describe('Scripts', () => {
     );
     expect(getHexString(result)).toEqual(testData.result);
   });
+
+  test.each([
+    [OutputType.Bech32, p2wshOutput],
+    [OutputType.Compatibility, p2shP2wshOutput],
+    [OutputType.Legacy, p2shOutput],
+    [OutputType.Taproot, undefined],
+    [42 as OutputType, undefined],
+  ])(
+    'should get correct SH function for output type %s',
+    (type: OutputType, expectedFunc: typeof p2shOutput | undefined) => {
+      expect(outputFunctionForType(type)).toEqual(expectedFunc);
+    },
+  );
 });

@@ -1,4 +1,5 @@
 import Errors from './consts/Errors';
+import { targetFee } from './TargetFee';
 import Networks from './consts/Networks';
 import * as Scripts from './swap/Scripts';
 import swapScript from './swap/SwapScript';
@@ -9,7 +10,6 @@ import reverseSwapScript from './swap/ReverseSwapScript';
 import { constructClaimTransaction } from './swap/Claim';
 import { detectPreimage } from './swap/PreimageDetector';
 import { constructRefundTransaction } from './swap/Refund';
-import { estimateFee, estimateSize } from './FeeCalculator';
 import { ScriptElement, TransactionOutput } from './consts/Types';
 import ERC20ABI from '../out/ERC20.sol/ERC20.json';
 import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json';
@@ -28,12 +28,11 @@ export {
   ScriptElement,
   TransactionOutput,
   Scripts,
+  targetFee,
   swapScript,
   reverseSwapScript,
   detectSwap,
   detectPreimage,
-  estimateFee,
-  estimateSize,
   constructClaimTransaction,
   constructRefundTransaction,
   SwapUtils,
