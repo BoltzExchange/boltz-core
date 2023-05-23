@@ -48,7 +48,7 @@
   ],
   "dependencies": {
     "@boltz/bitcoin-ops": "^2.0.0",
-    "@openzeppelin/contracts": "^4.8.3",
+    "@openzeppelin/contracts": "^4.9.0",
     "bip32": "^4.0.0",
     "bip65": "^1.0.3",
     "bip66": "^1.1.5",
