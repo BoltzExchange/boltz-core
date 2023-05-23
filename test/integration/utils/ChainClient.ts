@@ -77,10 +77,19 @@ interface ChainClient {
   on(event: 'block', listener: (height: number) => void): this;
   emit(event: 'block', height: number): boolean;
 
-  on(event: 'transaction.relevant.mempool', listener: (transaction: Transaction) => void): this;
-  emit(event: 'transaction.relevant.mempool', transaction: Transaction): boolean;
+  on(
+    event: 'transaction.relevant.mempool',
+    listener: (transaction: Transaction) => void,
+  ): this;
+  emit(
+    event: 'transaction.relevant.mempool',
+    transaction: Transaction,
+  ): boolean;
 
-  on(event: 'transaction.relevant.block', listener: (transaction: Transaction) => void): this;
+  on(
+    event: 'transaction.relevant.block',
+    listener: (transaction: Transaction) => void,
+  ): this;
   emit(event: 'transaction.relevant.block', transaction: Transaction): boolean;
 }
 
@@ -120,12 +129,22 @@ class ChainClient {
     return this.client.request<string>('sendrawtransaction', [rawTransaction]);
   };
 
-  public getRawTransaction = (id: string, verbose = false, blockhash?: string): Promise<string | RawTransaction> => {
-    return this.client.request<string | RawTransaction>('getrawtransaction', [id, verbose, blockhash]);
+  public getRawTransaction = (
+    id: string,
+    verbose = false,
+    blockhash?: string,
+  ): Promise<string | RawTransaction> => {
+    return this.client.request<string | RawTransaction>('getrawtransaction', [
+      id,
+      verbose,
+      blockhash,
+    ]);
   };
 
   public estimateFee = async (confTarget = 2): Promise<number> => {
-    const response = await this.client.request<any>('estimatesmartfee', [confTarget]);
+    const response = await this.client.request<any>('estimatesmartfee', [
+      confTarget,
+    ]);
 
     if (response.feerate) {
       const feePerKb = response.feerate * ChainClient.decimals;
@@ -151,11 +170,17 @@ class ChainClient {
   };
 
   public sendToAddress = (address: string, amount: number): Promise<string> => {
-    return this.client.request<string>('sendtoaddress', [address, amount / ChainClient.decimals]);
+    return this.client.request<string>('sendtoaddress', [
+      address,
+      amount / ChainClient.decimals,
+    ]);
   };
 
   public generate = async (blocks: number): Promise<string[]> => {
-    return this.client.request<string[]>('generatetoaddress', [blocks, this.miningAddress]);
+    return this.client.request<string[]>('generatetoaddress', [
+      blocks,
+      this.miningAddress,
+    ]);
   };
 }
 

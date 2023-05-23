@@ -8,9 +8,8 @@ import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
 import { script } from 'bitcoinjs-lib';
 import * as varuint from 'varuint-bitcoin';
-import { OutputType } from '../consts/Enums';
 import { ScriptElement } from '../consts/Types';
-import { Output } from '../FeeCalculator';
+import { Output, OutputType } from '../consts/Enums';
 import { getHexBuffer, getHexString } from '../Utils';
 
 const zeroHexBuffer = getHexBuffer('00');
@@ -109,7 +108,9 @@ export const toPushdataScript = (elements: ScriptElement[]): Buffer => {
 /**
  * Get the OutputType and whether it is a SH of a output script
  */
-export const getOutputScriptType = (outputScript: Buffer): Output | undefined => {
+export const getOutputScriptType = (
+  outputScript: Buffer,
+): Output | undefined => {
   const rawScript = script.decompile(outputScript);
 
   if (rawScript && rawScript.length > 1) {
@@ -139,7 +140,8 @@ export const getOutputScriptType = (outputScript: Buffer): Output | undefined =>
         // matter for the fee estimation of a output
         return { type: OutputType.Legacy, isSh: true };
 
-      case ops.OP_DUP: return { type: OutputType.Legacy, isSh: false };
+      case ops.OP_DUP:
+        return { type: OutputType.Legacy, isSh: false };
     }
   }
 
@@ -150,7 +152,5 @@ export const getOutputScriptType = (outputScript: Buffer): Output | undefined =>
  * Encode a block height into a formed pushdata script
  */
 export const encodeCltv = (timeoutBlockHeight: number): Buffer => {
-  return script.number.encode(
-    bip65.encode({ blocks: timeoutBlockHeight }),
-  );
+  return script.number.encode(bip65.encode({ blocks: timeoutBlockHeight }));
 };

@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Scripts should get P2PKH output script 1`] = `"76a914000000000000000000000000000000000000000088ac"`;
+
+exports[`Scripts should get P2SH nested P2WPKH output script 1`] = `
+{
+  "outputScript": {
+    "data": [
+      169,
+      20,
+      103,
+      193,
+      13,
+      77,
+      16,
+      146,
+      117,
+      15,
+      13,
+      58,
+      164,
+      170,
+      113,
+      82,
+      249,
+      13,
+      161,
+      231,
+      66,
+      72,
+      135,
+    ],
+    "type": "Buffer",
+  },
+  "redeemScript": {
+    "data": [
+      0,
+      20,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    ],
+    "type": "Buffer",
+  },
+}
+`;
+
+exports[`Scripts should get P2SH nested P2WSH output script 1`] = `"a91466a823e1ae9236a70fe7321f5b26b09ec422a37787"`;
+
+exports[`Scripts should get P2SH output script 1`] = `"a9149f7fd096d37ed2c0e3f7f0cfc924beef4ffceb6887"`;
+
+exports[`Scripts should get P2WPKH output script 1`] = `"00140000000000000000000000000000000000000000"`;
+
+exports[`Scripts should get P2WSH output script 1`] = `"00206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"`;

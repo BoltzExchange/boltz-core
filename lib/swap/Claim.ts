@@ -9,22 +9,21 @@ import { crypto, script, Transaction } from 'bitcoinjs-lib';
 import Errors from '../consts/Errors';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
-import { estimateFee, Input } from '../FeeCalculator';
-import { encodeSignature, getOutputScriptType, scriptBuffersToScript } from './SwapUtils';
+import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
 
 /**
  * Claim swaps
  *
  * @param utxos UTXOs that should be claimed or refunded
  * @param destinationScript the output script to which the funds should be sent
- * @param feePerByte how many satoshis per vbyte should be paid as fee
+ * @param fee how many satoshis should be paid as fee
  * @param isRbf whether the transaction should signal full Replace-by-Fee
  * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
  */
 export const constructClaimTransaction = (
   utxos: ClaimDetails[],
   destinationScript: Buffer,
-  feePerByte: number,
+  fee: number,
   isRbf = true,
   timeoutBlockHeight?: number,
 ): Transaction => {
@@ -44,30 +43,28 @@ export const constructClaimTransaction = (
   }
 
   // The sum of the values of all UTXOs that should be claimed or refunded
-  let utxoValueSum = 0;
-  const feeInputs: Input[] = [];
+  let utxoValueSum = BigInt(0);
 
   utxos.forEach((utxo) => {
-    utxoValueSum += utxo.value;
-    feeInputs.push({ type: utxo.type, swapDetails: utxo });
+    utxoValueSum += BigInt(utxo.value);
 
     // Add the swap as input to the transaction
-    //
     // RBF reference: https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki#summary
     tx.addInput(utxo.txHash, utxo.vout, isRbf ? 0xfffffffd : 0xffffffff);
   });
 
-  // Estimate the fee for the transaction
-  const fee = estimateFee(feePerByte, feeInputs, [getOutputScriptType(destinationScript)!]);
-
   // Send the sum of the UTXOs minus the estimated fee to the destination address
-  tx.addOutput(destinationScript, utxoValueSum - fee);
+  tx.addOutput(destinationScript, Number(utxoValueSum - BigInt(fee)));
 
   utxos.forEach((utxo, index) => {
     switch (utxo.type) {
       // Construct and sign the input scripts for P2SH inputs
       case OutputType.Legacy: {
-        const sigHash = tx.hashForSignature(index, utxo.redeemScript, Transaction.SIGHASH_ALL);
+        const sigHash = tx.hashForSignature(
+          index,
+          utxo.redeemScript,
+          Transaction.SIGHASH_ALL,
+        );
         const signature = utxo.keys.sign(sigHash);
 
         const inputScript = [
@@ -90,21 +87,25 @@ export const constructClaimTransaction = (
 
         const nested = scriptBuffersToScript(nestedScript);
 
-        tx.setInputScript(index, scriptBuffersToScript([ nested ]));
+        tx.setInputScript(index, scriptBuffersToScript([nested]));
         break;
       }
     }
 
     // Construct and sign the witness for (nested) SegWit inputs
     if (utxo.type !== OutputType.Legacy) {
-      const sigHash = tx.hashForWitnessV0(index, utxo.redeemScript, utxo.value, Transaction.SIGHASH_ALL);
-      const signature = script.signature.encode(utxo.keys.sign(sigHash), Transaction.SIGHASH_ALL);
-
-      tx.setWitness(index, [
-        signature,
-        utxo.preimage,
+      const sigHash = tx.hashForWitnessV0(
+        index,
         utxo.redeemScript,
-      ]);
+        utxo.value,
+        Transaction.SIGHASH_ALL,
+      );
+      const signature = script.signature.encode(
+        utxo.keys.sign(sigHash),
+        Transaction.SIGHASH_ALL,
+      );
+
+      tx.setWitness(index, [signature, utxo.preimage, utxo.redeemScript]);
     }
   });
 

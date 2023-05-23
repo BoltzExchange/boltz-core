@@ -1,65 +1,95 @@
 import { randomBytes } from 'crypto';
-import { constructClaimTransaction } from '../../../lib/Boltz';
-import { bitcoinClient, destinationOutput, claimSwap } from '../Utils';
-import { claimDetails, invalidPreimageLengthSwap } from './ReverseSwapScript.spec';
+import {
+  constructClaimTransaction,
+  OutputType,
+  reverseSwapScript,
+  targetFee,
+} from '../../../lib/Boltz';
+import {
+  bitcoinClient,
+  claimSwap,
+  createSwapOutput,
+  destinationOutput,
+} from '../Utils';
 
 describe('ReverseSwapScript claim', () => {
+  beforeAll(async () => {
+    await bitcoinClient.init();
+  });
+
+  afterAll(async () => {
+    await bitcoinClient.generate(1);
+  });
+
   test('should not claim reverse swaps if the preimage has an invalid length', async () => {
+    const { utxo } = await createSwapOutput(
+      OutputType.Bech32,
+      false,
+      reverseSwapScript,
+    );
+    utxo.preimage = randomBytes(31);
+
     let actualError: any;
 
     try {
-      await claimSwap(invalidPreimageLengthSwap);
+      await claimSwap(utxo);
     } catch (error) {
       // If the preimage has in invalid length the refund key is loaded and the signature is verified against it
       actualError = error;
     }
 
     expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toEqual('non-mandatory-script-verify-flag (Locktime requirement not satisfied)');
+    expect(actualError.message).toEqual(
+      'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
+    );
   });
 
   test('should not claim reverse swaps if the preimage has a valid length but an invalid hash', async () => {
+    const { utxo } = await createSwapOutput(
+      OutputType.Bech32,
+      false,
+      reverseSwapScript,
+    );
+    utxo.preimage = randomBytes(32);
+
     let actualError: any;
 
     try {
-      const toClaim = {
-        ...invalidPreimageLengthSwap,
-      };
-      toClaim.preimage = randomBytes(32);
-
-      await claimSwap(toClaim);
+      await claimSwap(utxo);
     } catch (error) {
       actualError = error;
     }
 
     expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toEqual('non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation)');
+    expect(actualError.message).toEqual(
+      'non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation)',
+    );
   });
 
-  test('should claim a P2WSH reverse swap', async () => {
-    await claimSwap(claimDetails[0]);
-  });
-
-  test('should claim a P2SH reverse swap', async () => {
-    await claimSwap(claimDetails[1]);
-  });
-
-  test('should claim a P2SH nested P2WSH reverse swap', async () => {
-    await claimSwap(claimDetails[2]);
+  test.each`
+    type                        | name
+    ${OutputType.Bech32}        | ${'P2WSH'}
+    ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
+    ${OutputType.Legacy}        | ${'P2SH'}
+  `(`should claim a $name reverse swap`, async ({ type }) => {
+    const { utxo } = await createSwapOutput(type, false, reverseSwapScript);
+    await claimSwap(utxo);
   });
 
   test('should claim multiple reverse swaps in one transaction', async () => {
-    const claimTransaction = constructClaimTransaction(
-      claimDetails.slice(3, 6),
-      destinationOutput,
-      1,
-      false,
+    const outputs = await Promise.all(
+      [OutputType.Bech32, OutputType.Compatibility, OutputType.Legacy].map(
+        (type) => {
+          return createSwapOutput(type, false, reverseSwapScript);
+        },
+      ),
+    );
+    const utxos = outputs.map((output) => output.utxo);
+
+    const claimTransaction = targetFee(1, (fee) =>
+      constructClaimTransaction(utxos, destinationOutput, fee, false),
     );
 
     await bitcoinClient.sendRawTransaction(claimTransaction.toHex());
-  });
-
-  afterAll(async () => {
-    await bitcoinClient.generate(1);
   });
 });

@@ -1,58 +1,46 @@
-import { Transaction, crypto } from 'bitcoinjs-lib';
+import { Transaction, crypto, script as bitcoinScript } from 'bitcoinjs-lib';
+import { ECPair } from './Utils';
 import swapScript from '../../../lib/swap/SwapScript';
-import { ECPair, getScriptHashFunction } from './Utils';
+import { OutputType } from '../../../lib/consts/Enums';
 import { detectSwap } from '../../../lib/swap/SwapDetector';
+import reverseSwapScript from '../../../lib/swap/ReverseSwapScript';
+import { outputFunctionForType, p2pkhOutput } from '../../../lib/swap/Scripts';
 
 describe('SwapDetector', () => {
-  let redeemScript: Buffer;
-
-  const scripts: Buffer[] = [];
-  const transactions: Transaction[] = [];
-
-  const verifyDetectSwap = (index: number) => {
-    const output = detectSwap(redeemScript, transactions[index]);
-
-    expect(output).not.toBeUndefined();
-
-    expect(output!.vout).toEqual(0);
-    expect(output!.value).toEqual(1);
-    expect(output!.type).toEqual(index);
-    expect(output!.script).toEqual(scripts[index]);
-  };
-
-  beforeAll(() => {
+  test.each`
+    type                        | scriptFunc           | name
+    ${OutputType.Bech32}        | ${swapScript}        | ${'P2WSH swap'}
+    ${OutputType.Compatibility} | ${swapScript}        | ${'P2SH nested P2WSH swap'}
+    ${OutputType.Legacy}        | ${swapScript}        | ${'P2SH swap'}
+    ${OutputType.Bech32}        | ${reverseSwapScript} | ${'P2WSH reverse swap'}
+    ${OutputType.Compatibility} | ${reverseSwapScript} | ${'P2SH nested P2WSH reverse swap'}
+    ${OutputType.Legacy}        | ${reverseSwapScript} | ${'P2SH reverse swap'}
+  `(`should detect $name`, async ({ type, scriptFunc }) => {
     const keys = ECPair.makeRandom();
-
-    // Since we don't want to claim or refund the swap we can use random arguments
-    redeemScript = swapScript(
+    const redeemScript = scriptFunc(
       crypto.sha256(keys.publicKey!),
       keys.publicKey!,
       keys.publicKey!,
       1,
     );
 
-    for (let i = 0; i < 3; i += 1) {
-      const transaction = new Transaction();
+    const expectedAmount = 42;
 
-      const scriptHashFunction = getScriptHashFunction(i);
-      const script = scriptHashFunction(redeemScript);
+    const transaction = new Transaction();
+    const script = outputFunctionForType(type)!(redeemScript);
+    transaction.addOutput(
+      p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey!)),
+      12,
+    );
+    transaction.addOutput(script, expectedAmount);
+    transaction.addOutput(bitcoinScript.fromASM('OP_RETURN'), 312);
 
-      scripts.push(script);
-      transaction.addOutput(script, 1);
+    const output = detectSwap(redeemScript, transaction);
 
-      transactions.push(transaction);
-    }
-  });
-
-  test('should detect P2WSH swaps', () => {
-    verifyDetectSwap(0);
-  });
-
-  test('should detect P2SH swaps', () => {
-    verifyDetectSwap(1);
-  });
-
-  test('should detect P2SH nested P2WSH swaps', () => {
-    verifyDetectSwap(2);
+    expect(output).not.toBeUndefined();
+    expect(output!.vout).toEqual(1);
+    expect(output!.value).toEqual(expectedAmount);
+    expect(output!.type).toEqual(type);
+    expect(output!.script).toEqual(script);
   });
 });

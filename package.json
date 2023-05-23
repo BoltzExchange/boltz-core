@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "0.6.2",
+  "version": "1.0.0",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -10,12 +10,15 @@
     "compile:typescript": "tsc",
     "compile:typescript:watch": "tsc --watch",
     "lint": "eslint --max-warnings 0 --ext .ts .",
+    "prettier": "npx prettier '{lib,test}/**/*.ts'",
+    "prettier:write": "npm run prettier -- --write",
+    "prettier:check": "npm run prettier -- --check",
     "docker:start": "./startRegtest.sh",
     "docker:stop": "docker stop boltz-bitcoin && docker rm boltz-bitcoin",
     "test": "npm run test:solidity && npm run test:unit && npm run test:int",
     "test:solidity": "forge test",
     "test:unit": "jest test/unit",
-    "test:int": "jest test/integration --runInBand",
+    "test:int": "jest test/integration",
     "deploy:solidity": "forge script Deploy --broadcast --rpc-url http://127.0.0.1:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "preversion": "npm run lint && npm run compile && npm run test",
@@ -26,6 +29,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BoltzExchange/boltz-core.git"
+  },
+  "engines": {
+    "node": ">=14"
   },
   "files": [
     "LICENSE",
@@ -42,7 +48,7 @@
   ],
   "dependencies": {
     "@boltz/bitcoin-ops": "^2.0.0",
-    "@openzeppelin/contracts": "^4.8.2",
+    "@openzeppelin/contracts": "^4.8.3",
     "bip32": "^4.0.0",
     "bip65": "^1.0.3",
     "bip66": "^1.1.5",
@@ -52,25 +58,26 @@
     "varuint-bitcoin": "^1.1.2"
   },
   "devDependencies": {
-    "@typechain/ethers-v6": "^0.3.0",
-    "@types/jest": "^29.4.0",
-    "@types/node": "^18.15.0",
+    "@typechain/ethers-v6": "^0.3.2",
+    "@types/jest": "^29.5.1",
+    "@types/node": "^20.2.3",
     "@types/ws": "^8.5.4",
-    "@typescript-eslint/eslint-plugin": "^5.54.1",
-    "@typescript-eslint/parser": "^5.54.1",
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7",
     "conventional-changelog-cli": "^2.2.2",
     "cross-os": "^1.5.0",
-    "eslint": "^8.36.0",
+    "eslint": "^8.41.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-jest": "^27.2.1",
     "eslint-plugin-node": "^11.1.0",
-    "ethers": "^6.1.0",
+    "ethers": "^6.4.0",
     "jest": "^29.5.0",
+    "prettier": "^2.8.8",
     "tiny-secp256k1": "^2.2.1",
-    "ts-jest": "^29.0.5",
+    "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",
-    "typescript": "^4.9.5",
+    "typescript": "^5.0.4",
     "ws": "^8.13.0"
   }
 }
