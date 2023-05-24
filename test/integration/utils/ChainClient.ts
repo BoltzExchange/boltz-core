@@ -73,10 +73,11 @@ type RawTransaction = {
 };
 
 class ChainClient {
-  private client: RpcClient;
   private miningAddress!: string;
 
   private static readonly decimals = 100000000;
+
+  protected client: RpcClient;
 
   constructor(config: ChainConfig) {
     this.client = new RpcClient(config);
@@ -108,16 +109,12 @@ class ChainClient {
     return this.client.request<string>('sendrawtransaction', [rawTransaction]);
   };
 
-  public getRawTransaction = (
-    id: string,
-    verbose = false,
-    blockhash?: string,
-  ): Promise<string | RawTransaction> => {
-    return this.client.request<string | RawTransaction>('getrawtransaction', [
-      id,
-      verbose,
-      blockhash,
-    ]);
+  public getRawTransaction = (id: string): Promise<string> => {
+    return this.client.request<string>('getrawtransaction', [id, false]);
+  };
+
+  public getRawTransactionVerbose = (id: string): Promise<RawTransaction> => {
+    return this.client.request<RawTransaction>('getrawtransaction', [id, true]);
   };
 
   public estimateFee = async (confTarget = 2): Promise<number> => {

@@ -4,6 +4,7 @@ import { address, crypto, Transaction } from 'bitcoinjs-lib';
 import { ECPair } from '../unit/swap/Utils';
 import ChainClient from './utils/ChainClient';
 import SwapScript from '../../lib/swap/SwapScript';
+import ElementsClient from './liquid/utils/ElementsClient';
 import { outputFunctionForType, p2wpkhOutput } from '../../lib/swap/Scripts';
 import {
   ClaimDetails,
@@ -54,7 +55,7 @@ export const bitcoinClient = new ChainClient({
   rpcpass: 'kek',
 });
 
-export const elementsClient = new ChainClient({
+export const elementsClient = new ElementsClient({
   host: '127.0.0.1',
   port: 18884,
   rpcuser: 'elements',

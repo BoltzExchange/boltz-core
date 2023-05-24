@@ -1,10 +1,10 @@
 import { Transaction, TxOutput } from 'liquidjs-lib';
 import { RefundDetails } from '../../consts/Types';
 
-export type LiquidRefundDetails = RefundDetails &
+export type LiquidRefundDetails = Omit<RefundDetails, 'value'> &
   TxOutput & {
     legacyTx?: Transaction;
-    blindingPrivKey?: Buffer;
+    blindingPrivateKey?: Buffer;
   };
 
 export type LiquidClaimDetails = LiquidRefundDetails & {

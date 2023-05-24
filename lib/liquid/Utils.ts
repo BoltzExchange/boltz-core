@@ -3,13 +3,15 @@ import { confidentialLiquid } from './Init';
 
 export const getOutputValue = (
   output: TxOutput & {
-    blindingPrivKey?: Buffer;
+    blindingPrivateKey?: Buffer;
   },
 ): number => {
-  return output.blindingPrivKey
+  return output.blindingPrivateKey
     ? Number(
-        confidentialLiquid.unblindOutputWithKey(output, output.blindingPrivKey)
-          .value,
+        confidentialLiquid.unblindOutputWithKey(
+          output,
+          output.blindingPrivateKey,
+        ).value,
       )
     : confidential.confidentialValueToSatoshi(output.value);
 };

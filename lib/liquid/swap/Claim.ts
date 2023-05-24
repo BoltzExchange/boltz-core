@@ -57,8 +57,8 @@ export const constructClaimTransaction = (
   if (
     !utxos.every(
       (utxo) =>
-        (utxo.blindingPrivKey === undefined) ===
-        (utxos[0].blindingPrivKey === undefined),
+        (utxo.blindingPrivateKey === undefined) ===
+        (utxos[0].blindingPrivateKey === undefined),
     )
   ) {
     throw Errors.INCONSISTENT_BLINDING;
@@ -127,7 +127,7 @@ export const constructClaimTransaction = (
     ]);
   };
 
-  if (utxos[0].blindingPrivKey !== undefined) {
+  if (utxos[0].blindingPrivateKey !== undefined) {
     // We have to have at least one blinded output if we are spending blinded coins,
     // so we add a small OP_RETURN
     if (blindingKey === undefined) {
@@ -216,7 +216,7 @@ const blindPset = (pset: Pset, utxos: LiquidClaimDetails[]) => {
   const zkpGenerator = new ZKPGenerator(
     secp,
     ZKPGenerator.WithBlindingKeysOfInputs(
-      utxos.map((utxo) => utxo.blindingPrivKey!),
+      utxos.map((utxo) => utxo.blindingPrivateKey!),
     ),
   );
   const zkpValidator = new ZKPValidator(secp);
