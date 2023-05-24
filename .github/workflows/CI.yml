@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Start Bitcoin Core container
+      - name: Start regtest containers
         run: npm run docker:start
 
       - name: Compile

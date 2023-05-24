@@ -1,4 +1,3 @@
-import { Transaction } from 'bitcoinjs-lib';
 import RpcClient from './RpcClient';
 import { OutputType } from '../../../lib/Boltz';
 
@@ -73,26 +72,6 @@ type RawTransaction = {
   blocktime: number;
 };
 
-interface ChainClient {
-  on(event: 'block', listener: (height: number) => void): this;
-  emit(event: 'block', height: number): boolean;
-
-  on(
-    event: 'transaction.relevant.mempool',
-    listener: (transaction: Transaction) => void,
-  ): this;
-  emit(
-    event: 'transaction.relevant.mempool',
-    transaction: Transaction,
-  ): boolean;
-
-  on(
-    event: 'transaction.relevant.block',
-    listener: (transaction: Transaction) => void,
-  ): this;
-  emit(event: 'transaction.relevant.block', transaction: Transaction): boolean;
-}
-
 class ChainClient {
   private client: RpcClient;
   private miningAddress!: string;
@@ -155,18 +134,10 @@ class ChainClient {
   };
 
   public getNewAddress = (type = OutputType.Bech32): Promise<string> => {
-    const outputType = (() => {
-      switch (type) {
-        case OutputType.Bech32:
-          return 'bech32';
-        case OutputType.Compatibility:
-          return 'p2sh-segwit';
-        default:
-          return 'legacy';
-      }
-    })();
-
-    return this.client.request<string>('getnewaddress', ['', outputType]);
+    return this.client.request<string>('getnewaddress', [
+      '',
+      this.getAddressType(type),
+    ]);
   };
 
   public sendToAddress = (address: string, amount: number): Promise<string> => {
@@ -181,6 +152,17 @@ class ChainClient {
       blocks,
       this.miningAddress,
     ]);
+  };
+
+  private getAddressType = (type: OutputType): string => {
+    switch (type) {
+      case OutputType.Bech32:
+        return 'bech32';
+      case OutputType.Compatibility:
+        return 'p2sh-segwit';
+      default:
+        return 'legacy';
+    }
   };
 }
 

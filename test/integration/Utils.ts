@@ -54,6 +54,13 @@ export const bitcoinClient = new ChainClient({
   rpcpass: 'kek',
 });
 
+export const elementsClient = new ChainClient({
+  host: '127.0.0.1',
+  port: 18884,
+  rpcuser: 'elements',
+  rpcpass: 'elements',
+});
+
 export const destinationOutput = p2wpkhOutput(
   crypto.hash160(generateKeys().publicKey!),
 );

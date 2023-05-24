@@ -14,7 +14,7 @@
     "prettier:write": "npm run prettier -- --write",
     "prettier:check": "npm run prettier -- --check",
     "docker:start": "./startRegtest.sh",
-    "docker:stop": "docker stop boltz-bitcoin && docker rm boltz-bitcoin",
+    "docker:stop": "docker stop boltz-bitcoin && docker rm boltz-bitcoin && docker kill boltz-elements && docker rm boltz-elements",
     "test": "npm run test:solidity && npm run test:unit && npm run test:int",
     "test:solidity": "forge test",
     "test:unit": "jest test/unit",
@@ -54,7 +54,7 @@
     "bip66": "^1.1.5",
     "bitcoinjs-lib": "^6.1.0",
     "bn.js": "^5.2.1",
-    "ecpair": "^2.1.0",
+    "ecpair": "2.0.1",
     "varuint-bitcoin": "^1.1.2"
   },
   "devDependencies": {
@@ -79,5 +79,9 @@
     "typechain": "^8.1.1",
     "typescript": "^5.0.4",
     "ws": "^8.13.0"
+  },
+  "peerDependencies": {
+    "@vulpemventures/secp256k1-zkp": "^3.1.0",
+    "liquidjs-lib": "^6.0.2-liquid.27"
   }
 }
