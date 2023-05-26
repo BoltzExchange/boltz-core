@@ -3,59 +3,50 @@
  */
 
 import { Transaction, TxOutput } from 'bitcoinjs-lib';
-import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
 import { p2shOutput, p2shP2wshOutput, p2wshOutput } from './Scripts';
 
-type DetectedSwap = ({ type: OutputType; vout: number } & TxOutput) | undefined;
+type LiquidTxOutput = Omit<TxOutput, 'value'> & {
+  value: Buffer;
+  asset: Buffer;
+  nonce: Buffer;
+  rangeProof?: Buffer;
+  surjectionProof?: Buffer;
+};
+
+type DetectedSwap<T> = {
+  type: OutputType;
+  vout: number;
+} & (T extends Transaction ? TxOutput : LiquidTxOutput);
 
 /**
  * Detects a swap output with the matching redeem script in a transaction
  */
-export const detectSwap = (
+export const detectSwap = <
+  T extends { outs: (TxOutput | LiquidTxOutput)[] } = Transaction,
+>(
   redeemScript: Buffer,
-  transaction: Transaction,
-): DetectedSwap => {
-  const scripts = [
-    p2shOutput(redeemScript),
-    p2shP2wshOutput(redeemScript),
-    p2wshOutput(redeemScript),
-  ].map((value) => getHexString(value));
+  transaction: T,
+): DetectedSwap<T> | undefined => {
+  const scripts: [OutputType, Buffer][] = [
+    [OutputType.Legacy, p2shOutput(redeemScript)],
+    [OutputType.Compatibility, p2shP2wshOutput(redeemScript)],
+    [OutputType.Bech32, p2wshOutput(redeemScript)],
+  ];
 
-  let returnValue: DetectedSwap = undefined;
+  for (const [vout, output] of transaction.outs.entries()) {
+    const scriptMatch = scripts.find(([, script]) =>
+      script.equals(output.script),
+    );
 
-  transaction.outs.forEach((output, vout) => {
-    const index = scripts.indexOf(getHexString(output.script));
-
-    const swapOutput = {
-      vout,
-      script: output.script,
-      value: output.value,
-    };
-
-    switch (index) {
-      case 0:
-        returnValue = {
-          type: OutputType.Legacy,
-          ...swapOutput,
-        };
-        break;
-
-      case 1:
-        returnValue = {
-          type: OutputType.Compatibility,
-          ...swapOutput,
-        };
-        break;
-
-      case 2:
-        returnValue = {
-          type: OutputType.Bech32,
-          ...swapOutput,
-        };
-        break;
+    if (scriptMatch) {
+      return {
+        vout,
+        type: scriptMatch[0],
+        ...output,
+      } as DetectedSwap<T>;
     }
-  });
+  }
 
-  return returnValue;
+  return;
 };

@@ -31,7 +31,7 @@ describe('Liquid TargetFee', () => {
       expect(tx.outs).toHaveLength(2);
       expect(confidential.confidentialValueToSatoshi(tx.outs[0].value)).toEqual(
         confidential.confidentialValueToSatoshi(utxo.value) -
-          Math.ceil(tx.virtualSize() * satPerVbyte + 1),
+          Math.ceil((tx.virtualSize() + 1) * satPerVbyte),
       );
     },
   );

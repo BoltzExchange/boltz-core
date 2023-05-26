@@ -1,11 +1,11 @@
-import { Transaction, script } from 'bitcoinjs-lib';
+import { script } from 'bitcoinjs-lib';
 
 /**
  * Detects the preimage from a claim transaction
  */
 export const detectPreimage = (
   vin: number,
-  claimTransaction: Transaction,
+  claimTransaction: { ins: { script: Buffer; witness: Buffer[] }[] },
 ): Buffer => {
   const input = claimTransaction.ins[vin];
 
