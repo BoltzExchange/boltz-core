@@ -1,5 +1,5 @@
 import { crypto } from 'bitcoinjs-lib';
-import { ECPair } from './Utils';
+import { ECPair } from '../Utils';
 import { getHexBuffer } from '../../../lib/Utils';
 import swapScript from '../../../lib/swap/SwapScript';
 import { OutputType } from '../../../lib/consts/Enums';

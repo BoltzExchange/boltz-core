@@ -1,6 +1,6 @@
 import { confidential, Transaction } from 'liquidjs-lib';
 import { crypto, script as bitcoinScript } from 'bitcoinjs-lib';
-import { ECPair } from '../../swap/Utils';
+import { ECPair } from '../../Utils';
 import { lbtcRegtest, nonce } from './ClaimDetails';
 import swapScript from '../../../../lib/swap/SwapScript';
 import { OutputType } from '../../../../lib/consts/Enums';

@@ -1,5 +1,5 @@
 import { crypto, script as bitcoinScript, Transaction } from 'bitcoinjs-lib';
-import { ECPair } from './Utils';
+import { ECPair } from '../Utils';
 import swapScript from '../../../lib/swap/SwapScript';
 import { OutputType } from '../../../lib/consts/Enums';
 import { detectSwap } from '../../../lib/swap/SwapDetector';

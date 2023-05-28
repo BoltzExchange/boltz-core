@@ -5,20 +5,24 @@ import { OutputType } from '../../../../lib/consts/Enums';
 import { reverseSwapScript, swapScript } from '../../../../lib/Boltz';
 import { LiquidClaimDetails } from '../../../../lib/liquid/consts/Types';
 import {
-  claimSwap,
   createSwapOutput,
   destinationOutput,
   elementsClient,
+  refundSwap,
 } from '../../Utils';
 
 describe.each`
   script               | name                   | swapName
   ${swapScript}        | ${'SwapScript'}        | ${'swap'}
   ${reverseSwapScript} | ${'ReverseSwapScript'} | ${'reverse swap'}
-`('Liquid $name claim', ({ script, swapName }) => {
+`('Liquid $name refund', ({ script, swapName }) => {
+  let bestBlockHeight: number;
+
   beforeAll(async () => {
     const [, secp] = await Promise.all([elementsClient.init(), zkp()]);
     init(secp);
+
+    bestBlockHeight = (await elementsClient.getBlockchainInfo()).blocks;
   });
 
   afterAll(async () => {
@@ -31,17 +35,18 @@ describe.each`
     ${OutputType.Bech32} | ${true}     | ${false}    | ${'P2WSH'}
     ${OutputType.Bech32} | ${true}     | ${true}     | ${'P2WSH'}
   `(
-    `should claim a confidential ($blindInputs) $name ${swapName} to a confidential ($blindOutput) output`,
+    `should refund a confidential ($blindInputs) $name ${swapName} to a confidential ($blindOutput) output`,
     async ({ type, blindInputs, blindOutput }) => {
       const { utxo } = await createSwapOutput<LiquidClaimDetails>(
         type,
         false,
         script,
-        undefined,
+        bestBlockHeight,
         blindInputs,
       );
-      await claimSwap(
+      await refundSwap(
         [utxo],
+        bestBlockHeight,
         blindOutput ? slip77.derive(destinationOutput).publicKey! : undefined,
       );
     },
@@ -53,7 +58,7 @@ describe.each`
     ${OutputType.Bech32} | ${true}     | ${false}    | ${'P2WSH'}
     ${OutputType.Bech32} | ${true}     | ${true}     | ${'P2WSH'}
   `(
-    `should claim multiple confidential ($blindInputs) $name ${swapName}s to a confidential ($blindOutput) output`,
+    `should refund multiple confidential ($blindInputs) $name ${swapName}s to a confidential ($blindOutput) output`,
     async ({ type, blindInputs, blindOutput }) => {
       const utxos: LiquidClaimDetails[] = [];
 
@@ -62,13 +67,14 @@ describe.each`
           type,
           false,
           script,
-          undefined,
+          bestBlockHeight,
           blindInputs,
         );
         utxos.push(utxo);
       }
-      await claimSwap(
+      await refundSwap(
         utxos,
+        bestBlockHeight,
         blindOutput ? slip77.derive(destinationOutput).publicKey! : undefined,
       );
     },

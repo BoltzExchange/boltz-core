@@ -1,7 +1,7 @@
 import { crypto } from 'bitcoinjs-lib';
 import { confidential } from 'liquidjs-lib';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { ECPair } from '../../swap/Utils';
+import { ECPair } from '../../Utils';
 import { lbtcRegtest, nonce } from './ClaimDetails';
 import { getHexBuffer } from '../../../../lib/Utils';
 import swapScript from '../../../../lib/swap/SwapScript';
