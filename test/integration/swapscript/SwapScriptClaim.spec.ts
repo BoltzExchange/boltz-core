@@ -1,16 +1,6 @@
 import { randomBytes } from 'crypto';
-import {
-  constructClaimTransaction,
-  OutputType,
-  swapScript,
-  targetFee,
-} from '../../../lib/Boltz';
-import {
-  bitcoinClient,
-  claimSwap,
-  createSwapOutput,
-  destinationOutput,
-} from '../Utils';
+import { OutputType, swapScript } from '../../../lib/Boltz';
+import { bitcoinClient, claimSwap, createSwapOutput } from '../Utils';
 
 describe('SwapScript claim', () => {
   beforeAll(async () => {
@@ -33,7 +23,7 @@ describe('SwapScript claim', () => {
     try {
       utxo.preimage = randomBytes(32);
 
-      await claimSwap(utxo);
+      await claimSwap([utxo]);
     } catch (error) {
       actualError = error;
     }
@@ -51,7 +41,7 @@ describe('SwapScript claim', () => {
     ${OutputType.Legacy}        | ${'P2SH'}
   `(`should claim a $name swap`, async ({ type }) => {
     const { utxo } = await createSwapOutput(type, false, swapScript);
-    await claimSwap(utxo);
+    await claimSwap([utxo]);
   });
 
   test('should claim multiple swaps in one transaction', async () => {
@@ -62,13 +52,7 @@ describe('SwapScript claim', () => {
         },
       ),
     );
-    const utxos = outputs.map((output) => output.utxo);
-
-    const claimTransaction = targetFee(1, (fee) =>
-      constructClaimTransaction(utxos, destinationOutput, fee, false),
-    );
-
-    await bitcoinClient.sendRawTransaction(claimTransaction.toHex());
+    await claimSwap(outputs.map((output) => output.utxo));
   });
 
   afterAll(async () => {

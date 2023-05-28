@@ -1,27 +1,8 @@
-import { RefundDetails } from '../../../lib/consts/Types';
-import { bitcoinClient, createSwapOutput, destinationOutput } from '../Utils';
-import {
-  constructRefundTransaction,
-  OutputType,
-  swapScript,
-  targetFee,
-} from '../../../lib/Boltz';
+import { OutputType, swapScript } from '../../../lib/Boltz';
+import { bitcoinClient, createSwapOutput, refundSwap } from '../Utils';
 
 describe('SwapScript refund', () => {
   let bestBlockHeight: number;
-
-  const refundSwaps = async (refundDetails: RefundDetails[]) => {
-    const refundTransaction = targetFee(1, (fee) =>
-      constructRefundTransaction(
-        refundDetails,
-        destinationOutput,
-        bestBlockHeight,
-        fee,
-      ),
-    );
-
-    await bitcoinClient.sendRawTransaction(refundTransaction.toHex());
-  };
 
   beforeAll(async () => {
     await bitcoinClient.init();
@@ -41,7 +22,7 @@ describe('SwapScript refund', () => {
       swapScript,
       bestBlockHeight,
     );
-    await refundSwaps([utxo]);
+    await refundSwap([utxo], bestBlockHeight);
   });
 
   test.each`
@@ -56,7 +37,7 @@ describe('SwapScript refund', () => {
       swapScript,
       bestBlockHeight + 1,
     );
-    await expect(refundSwaps([utxo])).rejects.toEqual({
+    await expect(refundSwap([utxo], bestBlockHeight)).rejects.toEqual({
       code: -26,
       message:
         'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
@@ -72,7 +53,10 @@ describe('SwapScript refund', () => {
       ),
     );
 
-    await refundSwaps(outputs.map((output) => output.utxo));
+    await refundSwap(
+      outputs.map((output) => output.utxo),
+      bestBlockHeight,
+    );
   });
 
   afterAll(async () => {

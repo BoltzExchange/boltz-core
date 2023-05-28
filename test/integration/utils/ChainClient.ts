@@ -1,4 +1,3 @@
-import { Transaction } from 'bitcoinjs-lib';
 import RpcClient from './RpcClient';
 import { OutputType } from '../../../lib/Boltz';
 
@@ -73,31 +72,12 @@ type RawTransaction = {
   blocktime: number;
 };
 
-interface ChainClient {
-  on(event: 'block', listener: (height: number) => void): this;
-  emit(event: 'block', height: number): boolean;
-
-  on(
-    event: 'transaction.relevant.mempool',
-    listener: (transaction: Transaction) => void,
-  ): this;
-  emit(
-    event: 'transaction.relevant.mempool',
-    transaction: Transaction,
-  ): boolean;
-
-  on(
-    event: 'transaction.relevant.block',
-    listener: (transaction: Transaction) => void,
-  ): this;
-  emit(event: 'transaction.relevant.block', transaction: Transaction): boolean;
-}
-
 class ChainClient {
-  private client: RpcClient;
   private miningAddress!: string;
 
   private static readonly decimals = 100000000;
+
+  protected client: RpcClient;
 
   constructor(config: ChainConfig) {
     this.client = new RpcClient(config);
@@ -129,16 +109,12 @@ class ChainClient {
     return this.client.request<string>('sendrawtransaction', [rawTransaction]);
   };
 
-  public getRawTransaction = (
-    id: string,
-    verbose = false,
-    blockhash?: string,
-  ): Promise<string | RawTransaction> => {
-    return this.client.request<string | RawTransaction>('getrawtransaction', [
-      id,
-      verbose,
-      blockhash,
-    ]);
+  public getRawTransaction = (id: string): Promise<string> => {
+    return this.client.request<string>('getrawtransaction', [id, false]);
+  };
+
+  public getRawTransactionVerbose = (id: string): Promise<RawTransaction> => {
+    return this.client.request<RawTransaction>('getrawtransaction', [id, true]);
   };
 
   public estimateFee = async (confTarget = 2): Promise<number> => {
@@ -155,18 +131,10 @@ class ChainClient {
   };
 
   public getNewAddress = (type = OutputType.Bech32): Promise<string> => {
-    const outputType = (() => {
-      switch (type) {
-        case OutputType.Bech32:
-          return 'bech32';
-        case OutputType.Compatibility:
-          return 'p2sh-segwit';
-        default:
-          return 'legacy';
-      }
-    })();
-
-    return this.client.request<string>('getnewaddress', ['', outputType]);
+    return this.client.request<string>('getnewaddress', [
+      '',
+      this.getAddressType(type),
+    ]);
   };
 
   public sendToAddress = (address: string, amount: number): Promise<string> => {
@@ -181,6 +149,17 @@ class ChainClient {
       blocks,
       this.miningAddress,
     ]);
+  };
+
+  private getAddressType = (type: OutputType): string => {
+    switch (type) {
+      case OutputType.Bech32:
+        return 'bech32';
+      case OutputType.Compatibility:
+        return 'p2sh-segwit';
+      default:
+        return 'legacy';
+    }
   };
 }
 

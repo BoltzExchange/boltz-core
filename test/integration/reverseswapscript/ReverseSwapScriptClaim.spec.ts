@@ -1,16 +1,6 @@
 import { randomBytes } from 'crypto';
-import {
-  constructClaimTransaction,
-  OutputType,
-  reverseSwapScript,
-  targetFee,
-} from '../../../lib/Boltz';
-import {
-  bitcoinClient,
-  claimSwap,
-  createSwapOutput,
-  destinationOutput,
-} from '../Utils';
+import { OutputType, reverseSwapScript } from '../../../lib/Boltz';
+import { bitcoinClient, claimSwap, createSwapOutput } from '../Utils';
 
 describe('ReverseSwapScript claim', () => {
   beforeAll(async () => {
@@ -32,7 +22,7 @@ describe('ReverseSwapScript claim', () => {
     let actualError: any;
 
     try {
-      await claimSwap(utxo);
+      await claimSwap([utxo]);
     } catch (error) {
       // If the preimage has in invalid length the refund key is loaded and the signature is verified against it
       actualError = error;
@@ -55,7 +45,7 @@ describe('ReverseSwapScript claim', () => {
     let actualError: any;
 
     try {
-      await claimSwap(utxo);
+      await claimSwap([utxo]);
     } catch (error) {
       actualError = error;
     }
@@ -73,7 +63,7 @@ describe('ReverseSwapScript claim', () => {
     ${OutputType.Legacy}        | ${'P2SH'}
   `(`should claim a $name reverse swap`, async ({ type }) => {
     const { utxo } = await createSwapOutput(type, false, reverseSwapScript);
-    await claimSwap(utxo);
+    await claimSwap([utxo]);
   });
 
   test('should claim multiple reverse swaps in one transaction', async () => {
@@ -84,12 +74,6 @@ describe('ReverseSwapScript claim', () => {
         },
       ),
     );
-    const utxos = outputs.map((output) => output.utxo);
-
-    const claimTransaction = targetFee(1, (fee) =>
-      constructClaimTransaction(utxos, destinationOutput, fee, false),
-    );
-
-    await bitcoinClient.sendRawTransaction(claimTransaction.toHex());
+    await claimSwap(outputs.map((output) => output.utxo));
   });
 });

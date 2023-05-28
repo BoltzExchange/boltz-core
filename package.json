@@ -14,7 +14,7 @@
     "prettier:write": "npm run prettier -- --write",
     "prettier:check": "npm run prettier -- --check",
     "docker:start": "./startRegtest.sh",
-    "docker:stop": "docker stop boltz-bitcoin && docker rm boltz-bitcoin",
+    "docker:stop": "docker stop boltz-bitcoin && docker rm boltz-bitcoin && docker kill boltz-elements && docker rm boltz-elements",
     "test": "npm run test:solidity && npm run test:unit && npm run test:int",
     "test:solidity": "forge test",
     "test:unit": "jest test/unit",
@@ -42,19 +42,19 @@
     "out/TestERC20.sol/TestERC20.json",
     "out/EtherSwap.sol/EtherSwap.json",
     "out/ERC20Swap.sol/ERC20Swap.json",
-    "contracts/*",
+    "contracts/*.sol",
     "typechain/*",
     "dist/**/!(tsconfig.tsbuildinfo)"
   ],
   "dependencies": {
     "@boltz/bitcoin-ops": "^2.0.0",
-    "@openzeppelin/contracts": "^4.8.3",
+    "@openzeppelin/contracts": "^4.9.0",
     "bip32": "^4.0.0",
     "bip65": "^1.0.3",
     "bip66": "^1.1.5",
     "bitcoinjs-lib": "^6.1.0",
     "bn.js": "^5.2.1",
-    "ecpair": "^2.1.0",
+    "ecpair": "2.0.1",
     "varuint-bitcoin": "^1.1.2"
   },
   "devDependencies": {
@@ -73,11 +73,16 @@
     "ethers": "^6.4.0",
     "jest": "^29.5.0",
     "prettier": "^2.8.8",
+    "slip77": "^0.2.0",
     "tiny-secp256k1": "^2.2.1",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",
     "typescript": "^5.0.4",
     "ws": "^8.13.0"
+  },
+  "peerDependencies": {
+    "@vulpemventures/secp256k1-zkp": "^3.1.0",
+    "liquidjs-lib": "^6.0.2-liquid.27"
   }
 }
