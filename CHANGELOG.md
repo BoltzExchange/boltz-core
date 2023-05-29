@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [1.0.0] - 2023-05-29
 
 ### Features
 
@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
 - Add prettier
 - Update CI badge
 - Bump major version
+- Update NPM dependencies (#92)
+- Update forge-std
 
 ### Refactor
 
