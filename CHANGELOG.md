@@ -1,197 +1,334 @@
-# [0.5.0](https://github.com/BoltzExchange/boltz-core/compare/v0.4.1...v0.5.0) (2021-11-21)
+# Changelog
 
+All notable changes to this project will be documented in this file.
 
-### Features
-
-* estimate fee of Taproot outputs ([3fb7b22](https://github.com/BoltzExchange/boltz-core/commit/3fb7b225cbc2ce2f93e251e17833ecdf3a63ecd0))
-
-
-
-## [0.4.1](https://github.com/BoltzExchange/boltz-core/compare/v0.4.0...v0.4.1) (2021-03-10)
-
+## [unreleased]
 
 ### Features
 
-* expose hashValues function of contracts ([b192fac](https://github.com/BoltzExchange/boltz-core/commit/b192fac1e9fb0d47483e91f43402728b06a5b3fd))
+- Rework fee estimation
+- Liquid Swaps (#91)
 
+### Miscellaneous Tasks
 
+- Update TypeChain target to ethers-v6 (#88)
+- Bump @openzeppelin/contracts from 4.8.2 to 4.8.3 (#89)
+- Update dependencies
+- Add prettier
+- Update CI badge
+- Bump major version
 
-# [0.4.0](https://github.com/BoltzExchange/boltz-core/compare/v0.3.5...v0.4.0) (2020-12-22)
+### Refactor
 
+- Unit tests to snapshots
+
+## [0.6.1] - 2023-03-09
+
+### Miscellaneous Tasks
+
+- Bump undici from 5.16.0 to 5.19.1 (#83)
+- Update NPM dependencies
+- Add .gitmodules to NPM package
+- Add contracts to NPM package
+
+### Testing
+
+- Switch to foundry for Solidity testing
+
+## [0.6.0] - 2023-01-29
+
+### Miscellaneous Tasks
+
+- Update dependencies (#79)
+
+## [0.5.0] - 2021-11-21
 
 ### Features
 
-* add Hardhat task to print method names and hashes ([#55](https://github.com/BoltzExchange/boltz-core/issues/55)) ([5942a6e](https://github.com/BoltzExchange/boltz-core/commit/5942a6e2191c8638732315477432d966aefa55de))
-* add prepay functionality to contracts ([a2c8050](https://github.com/BoltzExchange/boltz-core/commit/a2c805073fec46239b2cc0be4d5c57d7ab45d37e))
+- Estimate fee of Taproot outputs
 
+### Miscellaneous Tasks
 
+- Update Solidity v0.8.3 (#64)
+- Bump handlebars from 4.7.6 to 4.7.7 (#65)
+- Bump hosted-git-info from 2.8.8 to 2.8.9 (#66)
+- Bump ws from 7.4.4 to 7.4.6 (#68)
+- Dependency updates required for Taproot compatibility
+- Update Node version of CI
+- Update changelog for v0.5.0
 
-## [0.3.5](https://github.com/BoltzExchange/boltz-core/compare/v0.3.4...v0.3.5) (2020-10-30)
+## [0.4.1] - 2021-03-10
 
+### Features
+
+- Expose hashValues function of contracts
+
+### Miscellaneous Tasks
+
+- Update Bitcoin Core to v0.21.0 (#62)
+- Update Solidity version to v0.8.2
+- Update vulnerable dependencies
+- Bump version to v0.4.1
+
+## [0.4.0] - 2020-12-22
+
+### Features
+
+- Add Hardhat task to print method names and hashes (#55)
+- Add prepay functionality to contracts
+
+### Miscellaneous Tasks
+
+- Update TypeChain to v4 (#53)
+- Update Solidity to v0.7.5 (#54)
+- Update Solidity to v0.7.6
+- Bump ini from 1.3.5 to 1.3.8 (#58)
+- Bump node-notifier from 8.0.0 to 8.0.1 (#59)
+- Update dependencies
+- Update changelog for v0.4.0
+
+## [0.3.5] - 2020-10-30
 
 ### Bug Fixes
 
-* export TestERC20 ABI ([178979b](https://github.com/BoltzExchange/boltz-core/commit/178979bb126f9d3dda3a8fc93770de35b4f8fd57))
+- Export TestERC20 ABI
 
+### Miscellaneous Tasks
 
+- Run GitHub action against Node version 10, 12, 14 and 15
+- Bump version to v0.3.5
 
-## [0.3.4](https://github.com/BoltzExchange/boltz-core/compare/v0.3.3...v0.3.4) (2020-10-26)
-
-
-### Bug Fixes
-
-* remove export that requires ethers.js ([d038852](https://github.com/BoltzExchange/boltz-core/commit/d0388526f4dd8236cba38627188bf86f0757903e))
-
-
-
-## [0.3.3](https://github.com/BoltzExchange/boltz-core/compare/v0.3.2...v0.3.3) (2020-10-08)
-
-
-### Features
-
-* expose ERC20 abi ([032a6f6](https://github.com/BoltzExchange/boltz-core/commit/032a6f69e31581db026e548587684ff94031b446))
-
-
-
-## [0.3.2](https://github.com/BoltzExchange/boltz-core/compare/v0.3.1...v0.3.2) (2020-10-07)
-
+## [0.3.4] - 2020-10-26
 
 ### Bug Fixes
 
-* contract deployment scripts ([cd1f50f](https://github.com/BoltzExchange/boltz-core/commit/cd1f50fe2ecd741c294f83203e0d539456f41cdd))
+- Remove export that requires ethers.js
 
+### Miscellaneous Tasks
 
+- Update to Solidity v0.7.4 (#49)
+- Migrate from buidler to hardhat (#50)
+- Update CHANGELOG.md
 
-## [0.3.1](https://github.com/BoltzExchange/boltz-core/compare/v0.3.0...v0.3.1) (2020-10-05)
+## [0.3.3] - 2020-10-08
 
+### Features
+
+- Expose ERC20 abi
+
+### Miscellaneous Tasks
+
+- Update to Solidity v0.7.3
+- Bump version to v0.3.3
+
+## [0.3.2] - 2020-10-07
 
 ### Bug Fixes
 
-* deployment scripts on mainnet ([#44](https://github.com/BoltzExchange/boltz-core/issues/44)) ([f2cee9c](https://github.com/BoltzExchange/boltz-core/commit/f2cee9cb166e4a87ab08ca2c5bbcfb788936614c))
-* update to Solidty v0.7.2 ([#45](https://github.com/BoltzExchange/boltz-core/issues/45)) ([56fdeef](https://github.com/BoltzExchange/boltz-core/commit/56fdeef1b444d2c739a6adf9e4862bcf86b6deb2))
+- Contract deployment scripts
 
+### Miscellaneous Tasks
 
-### Features
+- Bump version to v0.3.2
 
-* make sample ERC20 contracts configurable ([58e7108](https://github.com/BoltzExchange/boltz-core/commit/58e7108d7b528d92059ba3151164e4b1b15d8b07))
-
-
-
-# [0.3.0](https://github.com/BoltzExchange/boltz-core/compare/v0.2.1...v0.3.0) (2020-09-22)
-
+## [0.3.1] - 2020-10-06
 
 ### Bug Fixes
 
-* add decimals view function to BadERC20 ([3459e38](https://github.com/BoltzExchange/boltz-core/commit/3459e38c53576831ecfbe7e2b2ae5527410f8a57))
-* minor contract fixes ([01ebf99](https://github.com/BoltzExchange/boltz-core/commit/01ebf9916c85a787101e92eec376e4be8bce38c2))
-
+- Minor contract fixes
+- Add decimals view function to BadERC20
+- Buidler deploy-verify command
+- Deployment scripts on mainnet (#44)
+- Update to Solidty v0.7.2 (#45)
 
 ### Features
 
-* make contracts more efficient ([bd6b68e](https://github.com/BoltzExchange/boltz-core/commit/bd6b68ebeafcc7b254fe49753ec4cde2c3bbd12f))
-* make swaps queryable by refund address ([a31df21](https://github.com/BoltzExchange/boltz-core/commit/a31df21ede1e0e4aa0be240a89c1e378521de47b))
+- Make contracts more efficient
+- Make swaps queryable by refund address
+- Make sample ERC20 contracts configurable
 
+### Miscellaneous Tasks
 
+- Switch Ethereum stack to buidler
+- Include artifacts in npm package
+- Update dependencies
+- Bump version to v3.0.0
+- Update contracts to Solidity 0.7.1
+- Switch to eslint
+- Update CHANGELOG.md
+- Bump version to v0.3.1
 
-## [0.2.1](https://github.com/BoltzExchange/boltz-core/compare/v0.2.0...v0.2.1) (2020-06-29)
+### Testing
 
+- Check swaps mapping
+
+## [0.2.1] - 2020-06-29
 
 ### Bug Fixes
 
-* export ERC20 ABI ([e3d5941](https://github.com/BoltzExchange/boltz-core/commit/e3d59411f56a10a819131fe621b98ec38d1dae75))
-* main pointing to non existing file ([#39](https://github.com/BoltzExchange/boltz-core/issues/39)) ([2c7b75c](https://github.com/BoltzExchange/boltz-core/commit/2c7b75cdf1f66ed4def1c3e987257342a2bc35f5))
-* NPM library install ([2b61d77](https://github.com/BoltzExchange/boltz-core/commit/2b61d77d8783bea1d7914989f5335a3edbeb5633))
-* update dependencies ([1e2de0f](https://github.com/BoltzExchange/boltz-core/commit/1e2de0f2bc3d50e84566786dfcb53d444f5f4166))
+- Main pointing to non existing file (#39)
 
-
-### Features
-
-* add Ether and ERC20 swap contracts ([146f86e](https://github.com/BoltzExchange/boltz-core/commit/146f86eec989e36e558700107f481c12bcf43782))
-* enforce length of preimage ([d0b46df](https://github.com/BoltzExchange/boltz-core/commit/d0b46df76c2f4660d882f3128d05ee8d26732d53))
-
-
-
-## [0.0.10](https://github.com/BoltzExchange/boltz-core/compare/v0.0.9...v0.0.10) (2019-12-23)
-
-
-### Features
-
-* add reverse swap script ([75a422f](https://github.com/BoltzExchange/boltz-core/commit/75a422f65e41c85c3695f4944fcbc74e7ee71c94))
-
-
-
-## [0.0.9](https://github.com/BoltzExchange/boltz-core/compare/v0.0.8...v0.0.9) (2019-10-24)
-
-
-### Features
-
-* add method to detect preimage from claim transaction ([#31](https://github.com/BoltzExchange/boltz-core/issues/31)) ([f1d0bb0](https://github.com/BoltzExchange/boltz-core/commit/f1d0bb0cdb005e8e06c803e82cbc40d190c0d171))
-
-
-
-## [0.0.8](https://github.com/BoltzExchange/boltz-core/compare/v0.0.7...v0.0.8) (2019-10-08)
-
-
-### Features
-
-* add Dogecoin network values ([#29](https://github.com/BoltzExchange/boltz-core/issues/29)) ([60e0fbe](https://github.com/BoltzExchange/boltz-core/commit/60e0fbebc425de9389d26c36f4a24f36c730eff9))
-
-
-
-## [0.0.7](https://github.com/BoltzExchange/boltz-core/compare/v0.0.6...v0.0.7) (2019-04-16)
-
-
-
-## [0.0.6](https://github.com/BoltzExchange/boltz-core/compare/v0.0.5...v0.0.6) (2019-03-02)
-
+## [0.2.0] - 2020-06-29
 
 ### Bug Fixes
 
-* network values for Litecoin regtest ([#20](https://github.com/BoltzExchange/boltz-core/issues/20)) ([d0a2400](https://github.com/BoltzExchange/boltz-core/commit/d0a2400c4d3b3daca3b41295f6a0a7647542ab98))
+- NPM library install
 
+### Miscellaneous Tasks
 
+- Update to Solidity 0.6.7 (#37)
+- Update dependencies
+- Switch to GitHub actions
 
-## [0.0.5](https://github.com/BoltzExchange/boltz-core/compare/v0.0.4...v0.0.5) (2019-01-08)
-
-
-### Bug Fixes
-
-* disallow maximal sequence for refund transactions ([#9](https://github.com/BoltzExchange/boltz-core/issues/9)) ([abed72c](https://github.com/BoltzExchange/boltz-core/commit/abed72c3a849c47de92c14bf106452d4e37c583a))
-
-
-
-## [0.0.4](https://github.com/BoltzExchange/boltz-core/compare/v0.0.3...v0.0.4) (2019-01-04)
-
+## [0.1.0] - 2020-01-22
 
 ### Bug Fixes
 
-* fee estimation for P2(W)SH inputs and outputs ([e1f9ac9](https://github.com/BoltzExchange/boltz-core/commit/e1f9ac9b5d9be7f87879abb54de1484b63e11afb))
-
+- Export ERC20 ABI
+- Update dependencies
 
 ### Features
 
-* add parameter for opt-in RBF ([e4314c3](https://github.com/BoltzExchange/boltz-core/commit/e4314c33bae6b16c89fb08bd32a09dc8f826d771))
-* claim or refund multiple UTXOs in one transaction ([3dbe106](https://github.com/BoltzExchange/boltz-core/commit/3dbe106efa89fa09f463489aa97877129028c256))
+- Add Ether and ERC20 swap contracts
+- Enforce length of preimage
+- Ether and ERC20 swap contracts (#32)
 
+### Miscellaneous Tasks
 
+- Add ropsten network
+- Update changelog
 
-## [0.0.3](https://github.com/BoltzExchange/boltz-core/compare/v0.0.2...v0.0.3) (2018-12-11)
+### Refactor
 
+- Default getter for swap maps in contracts
 
-### Bug Fixes
-
-* hardcode dummy preimage ([#4](https://github.com/BoltzExchange/boltz-core/issues/4)) ([bdd209d](https://github.com/BoltzExchange/boltz-core/commit/bdd209d5061ab0291abb2110c771900cc79309c7))
-
-
-
-## [0.0.2](https://github.com/BoltzExchange/boltz-core/compare/v0.0.1...v0.0.2) (2018-12-08)
-
+## [0.0.10] - 2019-12-23
 
 ### Features
 
-* add needed methods ([f710cf2](https://github.com/BoltzExchange/boltz-core/commit/f710cf21e17883b982d72d19224650e11c27f3be))
-* add swap scripts ([553952d](https://github.com/BoltzExchange/boltz-core/commit/553952da95cb3ae733000ede594510aec12b7737))
-* export more reusable methods and objects ([#2](https://github.com/BoltzExchange/boltz-core/issues/2)) ([2e464e6](https://github.com/BoltzExchange/boltz-core/commit/2e464e64746f686e09c2f097756d8b7437f3969a))
+- Add reverse swap script
 
+### Testing
 
+- Add tests for failing claim transactions (#34)
 
+## [0.0.9] - 2019-10-24
+
+### Features
+
+- Add method to detect preimage from claim transaction (#31)
+
+## [0.0.8] - 2019-10-08
+
+### Features
+
+- Add Dogecoin network values (#29)
+
+### Miscellaneous Tasks
+
+- Remove CircleCI build
+- Update dependencies (#28)
+- Release v0.0.8 (#30)
+
+### Refactor
+
+- Upgrade bitcoin.conf for Bitcoin Core 0.18.0
+- Switch from mocha to jest
+
+## [0.0.7] - 2019-04-16
+
+### Miscellaneous Tasks
+
+- Update dependencies (#23)
+
+## [0.0.6] - 2019-03-02
+
+### Bug Fixes
+
+- Network values for Litecoin regtest (#20)
+
+### Miscellaneous Tasks
+
+- Update dependencies
+- Integrate CircleCI (#17)
+- Release v0.0.6 (#22)
+
+### Refactor
+
+- Export estimateSize
+- Use Bitcoin Core for integration tests (#21)
+
+### Testing
+
+- Integration tests for swaps
+- Add unit tests for SwapDetector (#15)
+
+## [0.0.5] - 2019-01-08
+
+### Bug Fixes
+
+- Disallow maximal sequence for refund transactions (#9)
+
+### Miscellaneous Tasks
+
+- Move TODOs to issues (#12)
+- Add release and publish scripts
+- Release 0.0.5
+
+## [0.0.4] - 2019-01-04
+
+### Bug Fixes
+
+- Fee estimation for P2(W)SH inputs and outputs
+
+### Features
+
+- Add parameter for opt-in RBF
+- Claim or refund multiple UTXOs in one transaction
+
+### Miscellaneous Tasks
+
+- Add build and NPM badge (#5)
+- Disallow unused variables
+- Release v0.0.4 (#8)
+
+### Testing
+
+- Add tests for claiming and refunding multiple UTXOs
+- Fee estimation of refund transactions
+
+## [0.0.3] - 2018-12-11
+
+### Bug Fixes
+
+- Hardcode dummy preimage (#4)
+
+### Miscellaneous Tasks
+
+- Use @boltz/bitcoin-ops library (#3)
+
+## [0.0.2] - 2018-12-08
+
+### Features
+
+- Export more reusable methods and objects (#2)
+
+## [0.0.1] - 2018-12-08
+
+### Features
+
+- Add needed methods
+- Add swap scripts
+
+### Miscellaneous Tasks
+
+- Initial commit
+- Add TypeScript environment
+- Add Travis build file
+- Set files to be included in NPM package
+
+### Testing
+
+- Add unit tests from backend
+
+<!-- generated by git-cliff -->
