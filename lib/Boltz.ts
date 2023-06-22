@@ -10,7 +10,12 @@ import reverseSwapScript from './swap/ReverseSwapScript';
 import { constructClaimTransaction } from './swap/Claim';
 import { detectPreimage } from './swap/PreimageDetector';
 import { constructRefundTransaction } from './swap/Refund';
-import { ScriptElement, TransactionOutput } from './consts/Types';
+import {
+  ClaimDetails,
+  RefundDetails,
+  ScriptElement,
+  TransactionOutput,
+} from './consts/Types';
 import ERC20ABI from '../out/ERC20.sol/ERC20.json';
 import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json';
 import ERC20SwapABI from '../out/ERC20Swap.sol/ERC20Swap.json';
@@ -25,7 +30,9 @@ export {
   Errors,
   Networks,
   OutputType,
+  ClaimDetails,
   ScriptElement,
+  RefundDetails,
   TransactionOutput,
   Scripts,
   targetFee,
