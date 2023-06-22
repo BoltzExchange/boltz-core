@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2023-06-22
+
+### Miscellaneous Tasks
+
+- Bump @openzeppelin/contracts from 4.9.0 to 4.9.1 (#94)
+- Update vulnerable dependencies (#97)
+
 ## [1.0.0] - 2023-05-29
 
 ### Features
@@ -19,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Bump major version
 - Update NPM dependencies (#92)
 - Update forge-std
+- Update changelog for 1.0.0
 
 ### Refactor
 
