@@ -43,6 +43,7 @@
     "out/EtherSwap.sol/EtherSwap.json",
     "out/ERC20Swap.sol/ERC20Swap.json",
     "contracts/*.sol",
+    "contracts/script/*.sol",
     "typechain/*",
     "dist/**/!(tsconfig.tsbuildinfo)"
   ],
