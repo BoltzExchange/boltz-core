@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -42,6 +42,7 @@
     "out/TestERC20.sol/TestERC20.json",
     "out/EtherSwap.sol/EtherSwap.json",
     "out/ERC20Swap.sol/ERC20Swap.json",
+    "contracts/lib",
     "contracts/*.sol",
     "contracts/script/*.sol",
     "typechain/*",
