@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2023-06-23
+
+### Bug Fixes
+
+- Add missing contract Deploy script to package.json
+- Add missing exports for transaction detail types
+
+### Miscellaneous Tasks
+
+- Update changelog for v1.0.1 (#98)
+- Bump boltz-core version to v1.0.2
+
 ## [1.0.1] - 2023-06-22
 
 ### Miscellaneous Tasks
