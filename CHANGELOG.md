@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2023-06-23
+
+### Bug Fixes
+
+- Include Solidity libraries in npm package
+
+### Miscellaneous Tasks
+
+- Update changelog for v1.0.2
+
 ## [1.0.2] - 2023-06-23
 
 ### Bug Fixes
