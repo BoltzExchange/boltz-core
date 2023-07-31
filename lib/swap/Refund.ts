@@ -16,7 +16,7 @@ const dummyPreimage = getHexBuffer('0x00');
  * @param destinationScript the output script to which the funds should be sent
  * @param timeoutBlockHeight locktime of the transaction
  * @param fee how many satoshis should be paid as fee
- * @param isRbf whether the transaction should signal full Replace-by-Fee
+ * @param isRbf whether the transaction should signal Replace-by-Fee
  */
 export const constructRefundTransaction = (
   utxos: RefundDetails[],
