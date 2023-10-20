@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2023-10-20
+
+### Miscellaneous Tasks
+
+- Update changelog for v1.0.3
+- Bump word-wrap from 1.2.3 to 1.2.4 (#100)
+- Bump @openzeppelin/contracts from 4.9.2 to 4.9.3 (#102)
+- Update dependencies (#104)
+- Bump @babel/traverse from 7.20.13 to 7.23.2 (#105)
+- Update dependencies
+- Update Bitcion Core regtest v25.1
+
 ## [1.0.3] - 2023-06-23
 
 ### Bug Fixes
@@ -28,7 +40,6 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous Tasks
 
-- Bump @openzeppelin/contracts from 4.9.0 to 4.9.1 (#94)
 - Update vulnerable dependencies (#97)
 
 ## [1.0.0] - 2023-05-29
@@ -41,7 +52,6 @@ All notable changes to this project will be documented in this file.
 ### Miscellaneous Tasks
 
 - Update TypeChain target to ethers-v6 (#88)
-- Bump @openzeppelin/contracts from 4.8.2 to 4.8.3 (#89)
 - Update dependencies
 - Add prettier
 - Update CI badge
@@ -58,7 +68,6 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous Tasks
 
-- Bump undici from 5.16.0 to 5.19.1 (#83)
 - Update NPM dependencies
 - Add .gitmodules to NPM package
 - Add contracts to NPM package
@@ -82,8 +91,6 @@ All notable changes to this project will be documented in this file.
 ### Miscellaneous Tasks
 
 - Update Solidity v0.8.3 (#64)
-- Bump handlebars from 4.7.6 to 4.7.7 (#65)
-- Bump hosted-git-info from 2.8.8 to 2.8.9 (#66)
 - Bump ws from 7.4.4 to 7.4.6 (#68)
 - Dependency updates required for Taproot compatibility
 - Update Node version of CI
@@ -114,8 +121,6 @@ All notable changes to this project will be documented in this file.
 - Update TypeChain to v4 (#53)
 - Update Solidity to v0.7.5 (#54)
 - Update Solidity to v0.7.6
-- Bump ini from 1.3.5 to 1.3.8 (#58)
-- Bump node-notifier from 8.0.0 to 8.0.1 (#59)
 - Update dependencies
 - Update changelog for v0.4.0
 
