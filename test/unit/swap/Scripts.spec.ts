@@ -1,16 +1,23 @@
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { OutputType } from '../../../lib/consts/Enums';
+import { getHexBuffer, getHexString } from '../../../lib/Utils';
 import {
   outputFunctionForType,
   p2pkhOutput,
   p2shOutput,
   p2shP2wpkhOutput,
   p2shP2wshOutput,
+  p2trOutput,
   p2wpkhOutput,
   p2wshOutput,
 } from '../../../lib/swap/Scripts';
-import { OutputType } from '../../../lib/consts/Enums';
-import { getHexBuffer, getHexString } from '../../../lib/Utils';
 
 describe('Scripts', () => {
+  const key = toXOnly(
+    getHexBuffer(
+      '75cba84f97d7af95da496b15b34c205003aea7f0daf6b6762beec29dae5e466c',
+    ),
+  );
   const publicKeyHash = getHexBuffer(
     '0000000000000000000000000000000000000000',
   );
@@ -23,6 +30,7 @@ describe('Scripts', () => {
     ${p2pkhOutput}     | ${publicKeyHash} | ${'P2PKH'}
     ${p2shOutput}      | ${redeemScript}  | ${'P2SH'}
     ${p2shP2wshOutput} | ${redeemScript}  | ${'P2SH nested P2WSH'}
+    ${p2trOutput}      | ${key}           | ${'P2TR'}
   `(`should get $name output script`, async ({ scriptFunc, input }) => {
     expect(getHexString(scriptFunc(input))).toMatchSnapshot();
   });
@@ -35,11 +43,11 @@ describe('Scripts', () => {
     [OutputType.Bech32, p2wshOutput],
     [OutputType.Compatibility, p2shP2wshOutput],
     [OutputType.Legacy, p2shOutput],
-    [OutputType.Taproot, undefined],
+    [OutputType.Taproot, p2trOutput],
     [42 as OutputType, undefined],
   ])(
     'should get correct SH function for output type %s',
-    (type: OutputType, expectedFunc: typeof p2shOutput | undefined) => {
+    (type: OutputType, expectedFunc: any) => {
       expect(outputFunctionForType(type)).toEqual(expectedFunc);
     },
   );

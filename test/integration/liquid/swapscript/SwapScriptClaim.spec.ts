@@ -3,7 +3,7 @@ import { slip77 } from '../../../unit/Utils';
 import { init } from '../../../../lib/liquid';
 import { OutputType } from '../../../../lib/consts/Enums';
 import { reverseSwapScript, swapScript } from '../../../../lib/Boltz';
-import { LiquidClaimDetails } from '../../../../lib/liquid/consts/Types';
+import { LiquidClaimDetails } from '../../../../lib/liquid';
 import {
   claimSwap,
   createSwapOutput,

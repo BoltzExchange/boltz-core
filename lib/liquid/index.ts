@@ -1,4 +1,4 @@
-import { init } from './Init';
+import { init } from './init';
 import Errors from './consts/Errors';
 import Networks from './consts/Networks';
 import { getOutputValue } from './Utils';

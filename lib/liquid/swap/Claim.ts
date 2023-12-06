@@ -18,7 +18,7 @@ import {
   witnessStackToScriptWitness,
 } from 'liquidjs-lib';
 import Errors from '../consts/Errors';
-import { ecpair, secp } from '../Init';
+import { ecpair, secp } from '../init';
 import Networks from '../consts/Networks';
 import { getOutputValue } from '../Utils';
 import { getHexString } from '../../Utils';
@@ -214,12 +214,12 @@ export const constructClaimTransaction = (
 
 const blindPset = (pset: Pset, utxos: LiquidClaimDetails[]) => {
   const zkpGenerator = new ZKPGenerator(
-    secp,
+    secp as any,
     ZKPGenerator.WithBlindingKeysOfInputs(
       utxos.map((utxo) => utxo.blindingPrivateKey!),
     ),
   );
-  const zkpValidator = new ZKPValidator(secp);
+  const zkpValidator = new ZKPValidator(secp as any);
   const outputBlindingArgs = zkpGenerator.blindOutputs(
     pset,
     Pset.ECCKeysGenerator(secp.ecc),
