@@ -1,13 +1,19 @@
+import swapTree from '../../../lib/swap/SwapTree';
 import { OutputType, swapScript } from '../../../lib/Boltz';
-import { bitcoinClient, createSwapOutput, refundSwap } from '../Utils';
+import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils';
 
 describe('SwapScript refund', () => {
   let bestBlockHeight: number;
 
   beforeAll(async () => {
-    await bitcoinClient.init();
+    await Promise.all([init(), bitcoinClient.init()]);
+
     const { blocks } = await bitcoinClient.getBlockchainInfo();
     bestBlockHeight = blocks;
+  });
+
+  afterAll(async () => {
+    await bitcoinClient.generate(1);
   });
 
   test.each`
@@ -46,20 +52,24 @@ describe('SwapScript refund', () => {
 
   test('should refund multiple swaps in one transaction', async () => {
     const outputs = await Promise.all(
-      [OutputType.Bech32, OutputType.Compatibility, OutputType.Legacy].map(
-        (type) => {
-          return createSwapOutput(type, true, swapScript, bestBlockHeight);
-        },
-      ),
+      [
+        OutputType.Taproot,
+        OutputType.Bech32,
+        OutputType.Compatibility,
+        OutputType.Legacy,
+      ].map((type) => {
+        return createSwapOutput(
+          type,
+          true,
+          type === OutputType.Taproot ? swapTree : swapScript,
+          bestBlockHeight,
+        );
+      }),
     );
 
     await refundSwap(
       outputs.map((output) => output.utxo),
       bestBlockHeight,
     );
-  });
-
-  afterAll(async () => {
-    await bitcoinClient.generate(1);
   });
 });

@@ -28,7 +28,7 @@ elements_config='--conf=/config/elements.conf'
 print_header "Elements Core"
 
 echo "Creating container"
-docker run -v `pwd`/docker:/config -d --name $elements_container -p 18884:18884 ghcr.io/vulpemventures/elements:22.1.1 $elements_config > /dev/null
+docker run -v `pwd`/docker:/config -d --name $elements_container -p 18884:18884 ghcr.io/vulpemventures/elements:23.2.1 $elements_config > /dev/null
 
 sleep 1
 

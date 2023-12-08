@@ -88,7 +88,7 @@ export const constructClaimTransaction = (
 
     if (utxo.type === OutputType.Legacy) {
       updater.addInNonWitnessUtxo(i, utxo.legacyTx!);
-      updater.addInRedeemScript(i, utxo.redeemScript);
+      updater.addInRedeemScript(i, utxo.redeemScript!);
     } else if (utxo.type === OutputType.Compatibility) {
       updater.addInNonWitnessUtxo(i, utxo.legacyTx!);
       updater.addInRedeemScript(
@@ -96,7 +96,7 @@ export const constructClaimTransaction = (
         scriptBuffersToScript([
           scriptBuffersToScript([
             varuint.encode(ops.OP_0).toString('hex'),
-            crypto.sha256(utxo.redeemScript),
+            crypto.sha256(utxo.redeemScript!),
           ]),
         ]),
       );
@@ -104,7 +104,7 @@ export const constructClaimTransaction = (
 
     if (utxo.type !== OutputType.Legacy) {
       updater.addInWitnessUtxo(i, utxo);
-      updater.addInWitnessScript(i, utxo.redeemScript);
+      updater.addInWitnessScript(i, utxo.redeemScript!);
     }
   }
 
@@ -186,13 +186,13 @@ export const constructClaimTransaction = (
           signatures[i],
           utxo.preimage,
           ops.OP_PUSHDATA1,
-          utxo.redeemScript,
+          utxo.redeemScript!,
         ]);
       } else if (utxo.type === OutputType.Compatibility) {
         finals.finalScriptSig = scriptBuffersToScript([
           scriptBuffersToScript([
             varuint.encode(ops.OP_0).toString('hex'),
-            crypto.sha256(utxo.redeemScript),
+            crypto.sha256(utxo.redeemScript!),
           ]),
         ]);
       }
@@ -201,7 +201,7 @@ export const constructClaimTransaction = (
         finals.finalScriptWitness = witnessStackToScriptWitness([
           signatures[i],
           utxo.preimage,
-          utxo.redeemScript,
+          utxo.redeemScript!,
         ]);
       }
 

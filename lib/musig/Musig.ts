@@ -1,6 +1,6 @@
 import { ECPairInterface } from 'ecpair';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
 
 class Musig {
   private readonly pubkeyAgg: {
@@ -53,6 +53,16 @@ class Musig {
 
   public getPublicNonce = (): Uint8Array => {
     return this.nonce.pubNonce;
+  };
+
+  public tweakKey = (tweak: Uint8Array): Buffer => {
+    const tweaked = this.secp.musig.pubkeyXonlyTweakAdd(
+      this.pubkeyAgg.keyaggCache,
+      tweak,
+      true,
+    );
+    this.pubkeyAgg.keyaggCache = tweaked.keyaggCache;
+    return Buffer.from(tweaked.pubkey);
   };
 
   public aggregateNoncesOrdered = (nonces: Uint8Array[]) => {

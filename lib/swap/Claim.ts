@@ -6,10 +6,14 @@ import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
 import * as varuint from 'varuint-bitcoin';
 import { crypto, script, Transaction } from 'bitcoinjs-lib';
-import Errors from '../consts/Errors';
+import { tapleafHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
 import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
+import { createControlBlock, hashForWitnessV1 } from './TaprootUtils';
+
+const isRelevantTaprootOutput = (utxo: ClaimDetails) =>
+  utxo.type === OutputType.Taproot && utxo.cooperative !== true;
 
 /**
  * Claim swaps
@@ -19,6 +23,7 @@ import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
  * @param fee how many satoshis should be paid as fee
  * @param isRbf whether the transaction should signal full Replace-by-Fee
  * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
+ * @param isRefund whether the transaction is a refund or claim
  */
 export const constructClaimTransaction = (
   utxos: ClaimDetails[],
@@ -26,11 +31,30 @@ export const constructClaimTransaction = (
   fee: number,
   isRbf = true,
   timeoutBlockHeight?: number,
+  isRefund = false,
 ): Transaction => {
-  for (const input of utxos) {
-    if (input.type === OutputType.Taproot) {
-      throw Errors.TAPROOT_NOT_SUPPORTED;
-    }
+  if (
+    utxos
+      .filter((utxo) => utxo.type !== OutputType.Taproot)
+      .some((utxo) => utxo.redeemScript === undefined)
+  ) {
+    throw 'not all non Taproot outputs have a redeem script';
+  }
+
+  if (
+    utxos
+      .filter(isRelevantTaprootOutput)
+      .some((utxo) => utxo.swapTree === undefined)
+  ) {
+    throw 'not all Taproot outputs have a swap tree';
+  }
+
+  if (
+    utxos
+      .filter(isRelevantTaprootOutput)
+      .some((utxo) => utxo.internalKey === undefined)
+  ) {
+    throw 'not all Taproot outputs have an internal key';
   }
 
   const tx = new Transaction();
@@ -62,7 +86,7 @@ export const constructClaimTransaction = (
       case OutputType.Legacy: {
         const sigHash = tx.hashForSignature(
           index,
-          utxo.redeemScript,
+          utxo.redeemScript!,
           Transaction.SIGHASH_ALL,
         );
         const signature = utxo.keys.sign(sigHash);
@@ -71,7 +95,7 @@ export const constructClaimTransaction = (
           encodeSignature(Transaction.SIGHASH_ALL, signature),
           utxo.preimage,
           ops.OP_PUSHDATA1,
-          utxo.redeemScript,
+          utxo.redeemScript!,
         ];
 
         tx.setInputScript(index, scriptBuffersToScript(inputScript));
@@ -82,7 +106,7 @@ export const constructClaimTransaction = (
       case OutputType.Compatibility: {
         const nestedScript = [
           varuint.encode(ops.OP_0).toString('hex'),
-          crypto.sha256(utxo.redeemScript),
+          crypto.sha256(utxo.redeemScript!),
         ];
 
         const nested = scriptBuffersToScript(nestedScript);
@@ -93,10 +117,40 @@ export const constructClaimTransaction = (
     }
 
     // Construct and sign the witness for (nested) SegWit inputs
-    if (utxo.type !== OutputType.Legacy) {
+    // When the Taproot output is spent cooperatively, we leave it empty
+    if (utxo.type === OutputType.Taproot && utxo.cooperative !== true) {
+      const tapLeaf = isRefund
+        ? utxo.swapTree.refundLeaf
+        : utxo.swapTree.claimLeaf;
+      const sigHash = hashForWitnessV1(
+        utxos,
+        tx,
+        index,
+        tapleafHash(tapLeaf),
+        Transaction.SIGHASH_DEFAULT,
+      );
+
+      const signature = utxo.keys.signSchnorr(sigHash);
+      const witness = isRefund ? [signature] : [signature, utxo.preimage];
+
+      tx.setWitness(
+        index,
+        witness.concat([
+          tapLeaf.output,
+          createControlBlock(
+            toHashTree(utxo.swapTree!.tree),
+            tapLeaf,
+            utxo.internalKey!,
+          ),
+        ]),
+      );
+    } else if (
+      utxo.type === OutputType.Bech32 ||
+      utxo.type === OutputType.Compatibility
+    ) {
       const sigHash = tx.hashForWitnessV0(
         index,
-        utxo.redeemScript,
+        utxo.redeemScript!,
         utxo.value,
         Transaction.SIGHASH_ALL,
       );
@@ -105,7 +159,7 @@ export const constructClaimTransaction = (
         Transaction.SIGHASH_ALL,
       );
 
-      tx.setWitness(index, [signature, utxo.preimage, utxo.redeemScript]);
+      tx.setWitness(index, [signature, utxo.preimage, utxo.redeemScript!]);
     }
   });
 

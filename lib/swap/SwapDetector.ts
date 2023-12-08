@@ -4,7 +4,12 @@
 
 import { Transaction, TxOutput } from 'bitcoinjs-lib';
 import { OutputType } from '../consts/Enums';
-import { p2shOutput, p2shP2wshOutput, p2wshOutput } from './Scripts';
+import {
+  p2shOutput,
+  p2shP2wshOutput,
+  p2trOutput,
+  p2wshOutput,
+} from './Scripts';
 
 type LiquidTxOutput = Omit<TxOutput, 'value'> & {
   value: Buffer;
@@ -20,18 +25,19 @@ type DetectedSwap<T> = {
 } & (T extends Transaction ? TxOutput : LiquidTxOutput);
 
 /**
- * Detects a swap output with the matching redeem script in a transaction
+ * Detects a swap output with the matching redeem script or tweaked key in a transaction
  */
 export const detectSwap = <
   T extends { outs: (TxOutput | LiquidTxOutput)[] } = Transaction,
 >(
-  redeemScript: Buffer,
+  redeemScriptOrTweakedKey: Buffer,
   transaction: T,
 ): DetectedSwap<T> | undefined => {
   const scripts: [OutputType, Buffer][] = [
-    [OutputType.Legacy, p2shOutput(redeemScript)],
-    [OutputType.Compatibility, p2shP2wshOutput(redeemScript)],
-    [OutputType.Bech32, p2wshOutput(redeemScript)],
+    [OutputType.Legacy, p2shOutput(redeemScriptOrTweakedKey)],
+    [OutputType.Compatibility, p2shP2wshOutput(redeemScriptOrTweakedKey)],
+    [OutputType.Bech32, p2wshOutput(redeemScriptOrTweakedKey)],
+    [OutputType.Taproot, p2trOutput(redeemScriptOrTweakedKey)],
   ];
 
   for (const [vout, output] of transaction.outs.entries()) {

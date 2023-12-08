@@ -1,9 +1,8 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
+import zkp from '@michael1011/secp256k1-zkp';
 import { slip77 } from '../../../unit/Utils';
-import { init } from '../../../../lib/liquid';
 import { OutputType } from '../../../../lib/consts/Enums';
+import { init, LiquidClaimDetails } from '../../../../lib/liquid';
 import { reverseSwapScript, swapScript } from '../../../../lib/Boltz';
-import { LiquidClaimDetails } from '../../../../lib/liquid';
 import {
   claimSwap,
   createSwapOutput,
@@ -21,7 +20,7 @@ describe.each`
     init(secp);
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await elementsClient.generate(1);
   });
 

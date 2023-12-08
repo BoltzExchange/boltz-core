@@ -8,19 +8,6 @@ type ChainConfig = {
   rpcpass: string;
 };
 
-type NetworkInfo = {
-  version: number;
-  subversion: string;
-  protocolversion: number;
-  localservices: number;
-  localrelay: boolean;
-  timeoffset: number;
-  networkactive: boolean;
-  connections: number;
-  relayfee: number;
-  incrementalfee: number;
-};
-
 type BlockchainInfo = {
   chain: string;
   blocks: number;
@@ -55,23 +42,6 @@ type Block = {
   previousblockhash: string;
 };
 
-type RawTransaction = {
-  txid: string;
-  hash: string;
-  version: number;
-  size: number;
-  vsize: number;
-  weight: number;
-  locktime: number;
-  vin: any[];
-  vout: any[];
-  hex: string;
-  blockhash?: string;
-  confirmations: number;
-  time: number;
-  blocktime: number;
-};
-
 class ChainClient {
   private miningAddress!: string;
 
@@ -79,7 +49,10 @@ class ChainClient {
 
   protected client: RpcClient;
 
-  constructor(config: ChainConfig) {
+  constructor(
+    private readonly isLiquid: boolean,
+    config: ChainConfig,
+  ) {
     this.client = new RpcClient(config);
   }
 
@@ -91,10 +64,6 @@ class ChainClient {
     if (blocks < 101) {
       await this.generate(101 - blocks);
     }
-  };
-
-  public getNetworkInfo = (): Promise<NetworkInfo> => {
-    return this.client.request<NetworkInfo>('getnetworkinfo');
   };
 
   public getBlockchainInfo = (): Promise<BlockchainInfo> => {
@@ -109,31 +78,30 @@ class ChainClient {
     return this.client.request<string>('sendrawtransaction', [rawTransaction]);
   };
 
-  public getRawTransaction = (id: string): Promise<string> => {
-    return this.client.request<string>('getrawtransaction', [id, false]);
-  };
+  public getRawTransaction = async (id: string): Promise<string> => {
+    try {
+      return await this.client.request<string>('getrawtransaction', [
+        id,
+        false,
+      ]);
+    } catch (e: any) {
+      if (
+        e.message !== undefined &&
+        e.message ===
+          'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return this.getRawTransaction(id);
+      }
 
-  public getRawTransactionVerbose = (id: string): Promise<RawTransaction> => {
-    return this.client.request<RawTransaction>('getrawtransaction', [id, true]);
-  };
-
-  public estimateFee = async (confTarget = 2): Promise<number> => {
-    const response = await this.client.request<any>('estimatesmartfee', [
-      confTarget,
-    ]);
-
-    if (response.feerate) {
-      const feePerKb = response.feerate * ChainClient.decimals;
-      return Math.max(Math.round(feePerKb / 1000), 2);
+      throw e;
     }
-
-    return 2;
   };
 
   public getNewAddress = (type = OutputType.Bech32): Promise<string> => {
     return this.client.request<string>('getnewaddress', [
       '',
-      this.getAddressType(type),
+      this.isLiquid ? 'blech32' : this.getAddressType(type),
     ]);
   };
 
@@ -164,4 +132,4 @@ class ChainClient {
 }
 
 export default ChainClient;
-export { ChainConfig, RawTransaction };
+export { ChainConfig };

@@ -1,11 +1,11 @@
 import { confidential } from 'liquidjs-lib';
-import zkp from '@vulpemventures/secp256k1-zkp';
+import zkp from '@michael1011/secp256k1-zkp';
 import { ECPair } from '../../Utils';
 import { lbtcRegtest, nonce } from './ClaimDetails';
 import { getHexBuffer } from '../../../../lib/Utils';
 import { OutputType } from '../../../../lib/consts/Enums';
+import { LiquidRefundDetails } from '../../../../lib/liquid';
 import { constructRefundTransaction, init } from '../../../../lib/liquid';
-import { LiquidRefundDetails } from '../../../../lib/liquid/consts/Types';
 
 describe('Liquid Refund', () => {
   const utxo = {

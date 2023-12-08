@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';
 import { address, initEccLib, Transaction } from 'bitcoinjs-lib';
-import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
 import { serializeTaprootSignature } from 'bitcoinjs-lib/src/psbt/bip371';
 import { bitcoinClient } from '../Utils';
 import { ECPair } from '../../unit/Utils';
@@ -43,7 +43,7 @@ describe('Musig', () => {
     ).toMatchSnapshot();
   });
 
-  test('should be able to spend Musig P2TR outputs', async () => {
+  test('should spend Musig P2TR outputs', async () => {
     const ourKey = ECPair.makeRandom();
     const theirKey = ECPair.makeRandom();
 
@@ -101,7 +101,7 @@ describe('Musig', () => {
     );
 
     // Finalize and broadcast
-    tx.setWitness(0, [serializeTaprootSignature(musig.aggregatePartials())]);
+    tx.setWitness(0, [musig.aggregatePartials()]);
 
     await bitcoinClient.sendRawTransaction(tx.toHex());
   });

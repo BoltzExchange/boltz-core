@@ -50,6 +50,7 @@
   ],
   "dependencies": {
     "@boltz/bitcoin-ops": "^2.0.0",
+    "@michael1011/secp256k1-zkp": "^3.1.0",
     "@openzeppelin/contracts": "^5.0.0",
     "bip32": "^4.0.0",
     "bip65": "^1.0.3",
@@ -66,6 +67,7 @@
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
+    "bip174": "^2.1.1",
     "cross-os": "^1.5.0",
     "eslint": "^8.55.0",
     "eslint-plugin-import": "^2.29.0",
@@ -84,7 +86,6 @@
     "ws": "^8.14.2"
   },
   "peerDependencies": {
-    "@vulpemventures/secp256k1-zkp": "^3.1.0",
     "liquidjs-lib": "^6.0.2-liquid.31"
   }
 }
