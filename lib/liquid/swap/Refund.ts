@@ -2,6 +2,8 @@ import { Transaction } from 'liquidjs-lib';
 import { getHexBuffer } from '../../Utils';
 import { constructClaimTransaction } from './Claim';
 import { LiquidClaimDetails, LiquidRefundDetails } from '../consts/Types';
+import { Network } from 'liquidjs-lib/src/networks';
+import Networks from '../consts/Networks';
 
 const dummyPreimage = getHexBuffer('0x00');
 
@@ -13,7 +15,7 @@ const dummyPreimage = getHexBuffer('0x00');
  * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
  * @param fee how many satoshis should be paid as fee
  * @param isRbf whether the transaction should signal full Replace-by-Fee
- * @param assetHash asset hash of Liquid asset
+ * @param network network of the transaction
  * @param blindingKey blinding public key for the output; undefined if the output should not be blinded
  */
 export const constructRefundTransaction = (
@@ -22,7 +24,7 @@ export const constructRefundTransaction = (
   timeoutBlockHeight: number,
   fee: number,
   isRbf = true,
-  assetHash?: string,
+  network: Network = Networks.liquidMainnet,
   blindingKey?: Buffer,
 ): Transaction => {
   const claimUtxos: LiquidClaimDetails[] = utxos.map((utxo) => ({
@@ -35,8 +37,9 @@ export const constructRefundTransaction = (
     destinationScript,
     fee,
     isRbf,
-    assetHash,
+    network,
     blindingKey,
     timeoutBlockHeight,
+    true,
   );
 };

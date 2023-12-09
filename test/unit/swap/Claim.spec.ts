@@ -1,4 +1,3 @@
-import { Errors } from '../../../lib/Boltz';
 import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
 import { ClaimDetails } from '../../../lib/consts/Types';
@@ -28,18 +27,5 @@ describe('Claim', () => {
 
   test('should claim multiple swaps in one transaction', () => {
     expect(testClaim(claimDetails, 490).toHex()).toMatchSnapshot();
-  });
-
-  test('should throw with Taproot inputs', () => {
-    expect(() =>
-      testClaim(
-        [
-          {
-            type: OutputType.Taproot,
-          } as any,
-        ],
-        1,
-      ),
-    ).toThrow(Errors.TAPROOT_NOT_SUPPORTED);
   });
 });

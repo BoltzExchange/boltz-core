@@ -49,10 +49,7 @@ class ChainClient {
 
   protected client: RpcClient;
 
-  constructor(
-    private readonly isLiquid: boolean,
-    config: ChainConfig,
-  ) {
+  constructor(config: ChainConfig) {
     this.client = new RpcClient(config);
   }
 
@@ -101,7 +98,7 @@ class ChainClient {
   public getNewAddress = (type = OutputType.Bech32): Promise<string> => {
     return this.client.request<string>('getnewaddress', [
       '',
-      this.isLiquid ? 'blech32' : this.getAddressType(type),
+      this.getAddressType(type),
     ]);
   };
 

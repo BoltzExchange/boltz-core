@@ -2,7 +2,6 @@ import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';
 import { address, initEccLib, Transaction } from 'bitcoinjs-lib';
 import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
-import { serializeTaprootSignature } from 'bitcoinjs-lib/src/psbt/bip371';
 import { bitcoinClient } from '../Utils';
 import { ECPair } from '../../unit/Utils';
 import Musig from '../../../lib/musig/Musig';

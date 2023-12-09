@@ -12,27 +12,10 @@ import { ClaimDetails } from '../consts/Types';
 import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
 import { createControlBlock, hashForWitnessV1 } from './TaprootUtils';
 
-const isRelevantTaprootOutput = (utxo: ClaimDetails) =>
+const isRelevantTaprootOutput = (utxo: Omit<ClaimDetails, 'value'>) =>
   utxo.type === OutputType.Taproot && utxo.cooperative !== true;
 
-/**
- * Claim swaps
- *
- * @param utxos UTXOs that should be claimed or refunded
- * @param destinationScript the output script to which the funds should be sent
- * @param fee how many satoshis should be paid as fee
- * @param isRbf whether the transaction should signal full Replace-by-Fee
- * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
- * @param isRefund whether the transaction is a refund or claim
- */
-export const constructClaimTransaction = (
-  utxos: ClaimDetails[],
-  destinationScript: Buffer,
-  fee: number,
-  isRbf = true,
-  timeoutBlockHeight?: number,
-  isRefund = false,
-): Transaction => {
+export const validateInputs = (utxos: Omit<ClaimDetails, 'value'>[]) => {
   if (
     utxos
       .filter((utxo) => utxo.type !== OutputType.Taproot)
@@ -56,6 +39,27 @@ export const constructClaimTransaction = (
   ) {
     throw 'not all Taproot outputs have an internal key';
   }
+};
+
+/**
+ * Claim swaps
+ *
+ * @param utxos UTXOs that should be claimed or refunded
+ * @param destinationScript the output script to which the funds should be sent
+ * @param fee how many satoshis should be paid as fee
+ * @param isRbf whether the transaction should signal full Replace-by-Fee
+ * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
+ * @param isRefund whether the transaction is a refund or claim
+ */
+export const constructClaimTransaction = (
+  utxos: ClaimDetails[],
+  destinationScript: Buffer,
+  fee: number,
+  isRbf = true,
+  timeoutBlockHeight?: number,
+  isRefund = false,
+): Transaction => {
+  validateInputs(utxos);
 
   const tx = new Transaction();
 
@@ -120,8 +124,8 @@ export const constructClaimTransaction = (
     // When the Taproot output is spent cooperatively, we leave it empty
     if (utxo.type === OutputType.Taproot && utxo.cooperative !== true) {
       const tapLeaf = isRefund
-        ? utxo.swapTree.refundLeaf
-        : utxo.swapTree.claimLeaf;
+        ? utxo.swapTree!.refundLeaf
+        : utxo.swapTree!.claimLeaf;
       const sigHash = hashForWitnessV1(
         utxos,
         tx,

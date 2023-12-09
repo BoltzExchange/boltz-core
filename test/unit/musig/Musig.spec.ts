@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
 import { ECPair } from '../Utils';
 import Musig from '../../../lib/musig/Musig';
@@ -28,9 +29,7 @@ describe('Musig', () => {
       ],
     ).toEqual(2);
     expect(musig['pubkeyAgg']).toEqual(
-      secp.musig.pubkeyAgg(
-        [ourKey.publicKey, ...otherKeys].map((key) => key.subarray(1)),
-      ),
+      secp.musig.pubkeyAgg([ourKey.publicKey, ...otherKeys].map(toXOnly)),
     );
     expect(musig['nonce']).toEqual(secp.musig.nonceGen(sessionId));
     expect(musig['partialSignatures']).toHaveLength(3);
@@ -68,6 +67,27 @@ describe('Musig', () => {
         ECPair.makeRandom().publicKey,
       ]).numParticipants(),
     ).toEqual(4);
+  });
+
+  test('should tweak', () => {
+    const ourKey = ECPair.makeRandom();
+    const musig = new Musig(secp, ourKey, randomBytes(32), [
+      ourKey.publicKey,
+      ECPair.makeRandom().publicKey,
+      ECPair.makeRandom().publicKey,
+    ]);
+
+    const tweak = randomBytes(32);
+    const tweakedKey = musig.tweakKey(tweak);
+
+    expect(toXOnly(tweakedKey)).toEqual(
+      Buffer.from(
+        secp.ecc.xOnlyPointAddTweak(
+          toXOnly(musig.getAggregatedPublicKey()),
+          tweak,
+        )!.xOnlyPubkey,
+      ),
+    );
   });
 
   test('should aggregate ordered nonces', () => {
@@ -486,15 +506,7 @@ describe('Musig', () => {
     );
   });
 
-  test.each`
-    count
-    ${1}
-    ${2}
-    ${3}
-    ${4}
-    ${5}
-    ${6}
-  `('full example with $count counterparties', ({ count }) => {
+  const fullExample = (count: number, toSign: Buffer, tweak?: Buffer) => {
     const ourKey = ECPair.makeRandom();
 
     const counterparties = Array(count)
@@ -510,6 +522,10 @@ describe('Musig', () => {
     ].map((key) => key.publicKey);
     const musig = new Musig(secp, ourKey, randomBytes(32), publicKeys);
 
+    if (tweak) {
+      musig.tweakKey(tweak);
+    }
+
     musig.aggregateNonces(
       new Map<Uint8Array, Uint8Array>(
         counterparties.map((party) => [
@@ -519,15 +535,20 @@ describe('Musig', () => {
       ),
     );
 
-    const toSign = randomBytes(32);
-
     musig.initializeSession(toSign);
     musig.signPartial();
 
     counterparties.forEach((party) => {
-      const pubkeyAgg = secp.musig.pubkeyAgg(
-        publicKeys.map((key) => key.subarray(1)),
-      );
+      const pubkeyAgg = secp.musig.pubkeyAgg(publicKeys.map(toXOnly));
+
+      if (tweak) {
+        pubkeyAgg.keyaggCache = secp.musig.pubkeyXonlyTweakAdd(
+          pubkeyAgg.keyaggCache,
+          tweak,
+          true,
+        ).keyaggCache;
+      }
+
       const session = secp.musig.nonceProcess(
         secp.musig.nonceAgg([
           musig.getPublicNonce(),
@@ -548,10 +569,51 @@ describe('Musig', () => {
       );
     });
 
+    return musig;
+  };
+
+  test.each`
+    count
+    ${1}
+    ${2}
+    ${3}
+    ${4}
+    ${5}
+    ${6}
+  `('full example with $count counterparties', ({ count }) => {
+    const toSign = randomBytes(32);
+    const musig = fullExample(count, toSign);
+
     expect(
       secp.ecc.verifySchnorr(
         toSign,
         musig.getAggregatedPublicKey(),
+        musig.aggregatePartials(),
+      ),
+    ).toEqual(true);
+  });
+
+  test.each`
+    count
+    ${1}
+    ${2}
+    ${3}
+    ${4}
+    ${5}
+    ${6}
+  `('full tweaked example with $count counterparties', ({ count }) => {
+    const toSign = randomBytes(32);
+    const tweak = randomBytes(32);
+
+    const musig = fullExample(count, toSign, tweak);
+
+    expect(
+      secp.ecc.verifySchnorr(
+        toSign,
+        secp.ecc.xOnlyPointAddTweak(
+          toXOnly(musig.getAggregatedPublicKey()),
+          tweak,
+        )!.xOnlyPubkey,
         musig.aggregatePartials(),
       ),
     ).toEqual(true);

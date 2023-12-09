@@ -4,13 +4,17 @@ import {
   LEAF_VERSION_TAPSCRIPT,
   tapleafHash,
   tapTweakHash,
+  toHashTree,
   tweakKey,
 } from 'bitcoinjs-lib/src/payments/bip341';
 import { Transaction } from 'bitcoinjs-lib';
+import { Taptree } from 'bitcoinjs-lib/src/types';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import Musig from '../musig/Musig';
 import { toPushdataScript } from './SwapUtils';
 import { RefundDetails, ScriptElement, Tapleaf } from '../consts/Types';
+
+const leafVersionLiquid = 196;
 
 export const createControlBlock = (
   hashTree: HashTree,
@@ -29,8 +33,11 @@ export const createControlBlock = (
   );
 };
 
-export const createLeaf = (script: ScriptElement[]): Tapleaf => ({
-  version: LEAF_VERSION_TAPSCRIPT,
+export const createLeaf = (
+  isLiquid: boolean,
+  script: ScriptElement[],
+): Tapleaf => ({
+  version: isLiquid ? leafVersionLiquid : LEAF_VERSION_TAPSCRIPT,
   output: toPushdataScript(script),
 });
 
@@ -50,8 +57,9 @@ export const hashForWitnessV1 = (
   );
 };
 
-export const tweakMusig = (musig: Musig, tweak: Buffer): Buffer => {
-  return toXOnly(
-    musig.tweakKey(tapTweakHash(musig.getAggregatedPublicKey(), tweak)),
+export const tweakMusig = (musig: Musig, tree: Taptree): Buffer =>
+  toXOnly(
+    musig.tweakKey(
+      tapTweakHash(musig.getAggregatedPublicKey(), toHashTree(tree).hash),
+    ),
   );
-};

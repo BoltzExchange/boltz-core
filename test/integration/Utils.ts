@@ -1,9 +1,7 @@
 import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';
 import { ECPairInterface } from 'ecpair';
-import { toHashTree } from 'bitcoinjs-lib/src/payments/bip341';
 import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
-import { Network as LiquidNetwork } from 'liquidjs-lib/src/networks';
 import {
   address,
   crypto,
@@ -12,7 +10,7 @@ import {
   TxOutput,
 } from 'bitcoinjs-lib';
 import {
-  payments as liquidPayments,
+  address as liquidAddress,
   Transaction as LiquidTransaction,
   TxOutput as LiquidTxOutput,
 } from 'liquidjs-lib';
@@ -23,6 +21,7 @@ import swapTree from '../../lib/swap/SwapTree';
 import swapScript from '../../lib/swap/SwapScript';
 import ElementsClient from './liquid/utils/ElementsClient';
 import { tweakMusig } from '../../lib/swap/TaprootUtils';
+import { tweakMusig as liquidTweakMusig } from '../../lib/liquid/swap/TaprooUtils';
 import { ClaimDetails, RefundDetails, SwapTree } from '../../lib/consts/Types';
 import {
   constructClaimTransaction as liquidConstructClaimTransaction,
@@ -75,11 +74,14 @@ const sendFundsToOutput = async <
   if (confidential) {
     const slip = slip77.derive(outputScript);
     blindingPrivateKey = slip.privateKey;
-    swapAddress = liquidPayments.p2wsh({
-      network: network as LiquidNetwork,
-      output: outputScript,
-      blindkey: slip.publicKey,
-    }).confidentialAddress!;
+
+    const dec = liquidAddress.fromBech32(swapAddress);
+    swapAddress = liquidAddress.toBlech32(
+      Buffer.concat([Buffer.from([dec.version, dec.data.length]), dec.data]),
+      slip.publicKey!,
+      LiquidNetworks.liquidRegtest.blech32,
+      outputType === OutputType.Bech32 ? 0 : 1,
+    );
   }
 
   const chainClient = isBitcoin ? bitcoinClient : elementsClient;
@@ -96,14 +98,14 @@ const sendFundsToOutput = async <
   } as unknown as T;
 };
 
-export const bitcoinClient = new ChainClient(false, {
+export const bitcoinClient = new ChainClient({
   host: '127.0.0.1',
   port: 18443,
   rpcuser: 'kek',
   rpcpass: 'kek',
 });
 
-export const elementsClient = new ElementsClient(true, {
+export const elementsClient = new ElementsClient({
   host: '127.0.0.1',
   port: 18884,
   rpcuser: 'elements',
@@ -139,7 +141,7 @@ export const claimSwap = async (
         destinationOutput,
         fee,
         true,
-        LiquidNetworks.liquidRegtest.assetHash,
+        LiquidNetworks.liquidRegtest,
         outputBlindingKey,
       );
     }
@@ -172,7 +174,7 @@ export const refundSwap = async (
         blockHeight,
         fee,
         true,
-        LiquidNetworks.liquidRegtest.assetHash,
+        LiquidNetworks.liquidRegtest,
         outputBlindingKey,
       );
     }
@@ -203,7 +205,9 @@ export const createSwapOutput = async <
 
   preimage = preimage || randomBytes(32);
 
-  const { blocks } = await (confidential === undefined
+  const isBitcoin = confidential === undefined;
+
+  const { blocks } = await (isBitcoin
     ? bitcoinClient
     : elementsClient
   ).getBlockchainInfo();
@@ -214,7 +218,8 @@ export const createSwapOutput = async <
   let musig: Musig | undefined;
 
   if (outputType === OutputType.Taproot) {
-    const tree = generateScript(
+    const tree = (generateScript as typeof swapTree)(
+      !isBitcoin,
       crypto.sha256(preimage),
       claimKeys.publicKey,
       refundKeys.publicKey,
@@ -228,7 +233,10 @@ export const createSwapOutput = async <
       [claimKeys.publicKey, refundKeys.publicKey],
     );
 
-    const tweakedKey = tweakMusig(musig, toHashTree(tree.tree).hash);
+    const tweakedKey = (isBitcoin ? tweakMusig : liquidTweakMusig)(
+      musig,
+      tree.tree,
+    );
 
     utxo = {
       ...(await sendFundsToOutput(
@@ -243,7 +251,7 @@ export const createSwapOutput = async <
       internalKey: musig.getAggregatedPublicKey(),
     };
   } else {
-    const redeemScript = generateScript(
+    const redeemScript = (generateScript as typeof swapScript)(
       crypto.sha256(preimage),
       claimKeys.publicKey,
       refundKeys.publicKey,

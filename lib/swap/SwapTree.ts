@@ -7,10 +7,11 @@ import { SwapTree } from '../consts/Types';
 import { createLeaf } from './TaprootUtils';
 
 const createRefundLeaf = (
+  isLiquid: boolean,
   refundPublicKey: Buffer,
   timeoutBlockHeight: number,
 ) =>
-  createLeaf([
+  createLeaf(isLiquid, [
     toXOnly(refundPublicKey),
     ops.OP_CHECKSIGVERIFY,
     encodeCltv(timeoutBlockHeight),
@@ -18,19 +19,24 @@ const createRefundLeaf = (
   ]);
 
 const swapTree = (
+  isLiquid: boolean,
   preimageHash: Buffer,
   claimPublicKey: Buffer,
   refundPublicKey: Buffer,
   timeoutBlockHeight: number,
 ): SwapTree => {
-  const claimLeaf = createLeaf([
+  const claimLeaf = createLeaf(isLiquid, [
     ops.OP_HASH160,
     crypto.ripemd160(preimageHash),
     ops.OP_EQUALVERIFY,
     toXOnly(claimPublicKey),
     ops.OP_CHECKSIG,
   ]);
-  const refundLeaf = createRefundLeaf(refundPublicKey, timeoutBlockHeight);
+  const refundLeaf = createRefundLeaf(
+    isLiquid,
+    refundPublicKey,
+    timeoutBlockHeight,
+  );
 
   const tree: Taptree = [claimLeaf, refundLeaf];
 

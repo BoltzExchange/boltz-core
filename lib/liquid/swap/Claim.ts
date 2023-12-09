@@ -1,32 +1,40 @@
 import ops from '@boltz/bitcoin-ops';
-import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
 import {
-  Pset,
-  Signer,
-  crypto,
-  script,
   Blinder,
   Creator,
-  Updater,
-  Extractor,
-  Finalizer,
   CreatorInput,
   CreatorOutput,
+  crypto,
+  Extractor,
+  Finalizer,
+  Pset,
+  script,
+  Signer,
   Transaction,
+  Updater,
+  witnessStackToScriptWitness,
   ZKPGenerator,
   ZKPValidator,
-  witnessStackToScriptWitness,
 } from 'liquidjs-lib';
-import Errors from '../consts/Errors';
+import { Network } from 'liquidjs-lib/src/networks';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
 import { ecpair, secp } from '../init';
 import Networks from '../consts/Networks';
 import { getOutputValue } from '../Utils';
 import { getHexString } from '../../Utils';
 import { OutputType } from '../../consts/Enums';
+import { validateInputs } from '../../swap/Claim';
 import { LiquidClaimDetails } from '../consts/Types';
 import { scriptBuffersToScript } from '../../swap/SwapUtils';
+import { createControlBlock, tapLeafHash, toHashTree } from './TaprooUtils';
 
-const sighashType = Transaction.SIGHASH_ALL;
+const dummyWitness = Buffer.from('0x21', 'hex');
+
+const getSighashType = (type: OutputType) =>
+  type === OutputType.Taproot
+    ? Transaction.SIGHASH_DEFAULT
+    : Transaction.SIGHASH_ALL;
 
 /**
  * Claim swaps
@@ -35,33 +43,40 @@ const sighashType = Transaction.SIGHASH_ALL;
  * @param destinationScript the output script to which the funds should be sent
  * @param fee how many satoshis should be paid as fee
  * @param isRbf whether the transaction should signal full Replace-by-Fee
- * @param assetHash asset hash of Liquid asset
+ * @param network network of the transaction
  * @param blindingKey blinding public key for the output; undefined if the output should not be blinded
  * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
+ * @param isRefund whether the transaction is a refund or claim
  */
 export const constructClaimTransaction = (
   utxos: LiquidClaimDetails[],
   destinationScript: Buffer,
   fee: number,
   isRbf = true,
-  assetHash: string = Networks.liquidMainnet.assetHash,
+  network: Network = Networks.liquidMainnet,
   blindingKey?: Buffer,
   timeoutBlockHeight?: number,
+  isRefund = false,
 ): Transaction => {
-  for (const input of utxos) {
-    if (input.type !== OutputType.Bech32) {
-      throw Errors.ONLY_NATIVE_SEGWIT_INPUTS;
-    }
-  }
+  validateInputs(utxos);
 
   if (
-    !utxos.every(
+    utxos.some(
       (utxo) =>
-        (utxo.blindingPrivateKey === undefined) ===
+        (utxo.blindingPrivateKey === undefined) !==
         (utxos[0].blindingPrivateKey === undefined),
     )
   ) {
-    throw Errors.INCONSISTENT_BLINDING;
+    throw 'all or none inputs have to be blinded';
+  }
+
+  if (
+    utxos.some(
+      (utxo) =>
+        utxo.type !== OutputType.Taproot && utxo.type !== OutputType.Bech32,
+    )
+  ) {
+    throw 'only Taproot or native SegWit inputs supported';
   }
 
   const pset = Creator.newPset();
@@ -84,7 +99,7 @@ export const constructClaimTransaction = (
         i == 0 ? timeoutBlockHeight : undefined,
       ).toPartialInput(),
     );
-    updater.addInSighashType(i, sighashType);
+    updater.addInSighashType(i, getSighashType(utxo.type));
 
     if (utxo.type === OutputType.Legacy) {
       updater.addInNonWitnessUtxo(i, utxo.legacyTx!);
@@ -112,7 +127,7 @@ export const constructClaimTransaction = (
     {
       script: destinationScript,
       blindingPublicKey: blindingKey,
-      asset: assetHash,
+      asset: network.assetHash,
       amount: Number(utxoValueSum - BigInt(fee)),
       blinderIndex: blindingKey !== undefined ? 0 : undefined,
     },
@@ -122,7 +137,7 @@ export const constructClaimTransaction = (
     updater.addOutputs([
       {
         amount: fee,
-        asset: assetHash,
+        asset: network.assetHash,
       },
     ]);
   };
@@ -133,7 +148,7 @@ export const constructClaimTransaction = (
     if (blindingKey === undefined) {
       pset.addOutput(
         new CreatorOutput(
-          assetHash,
+          network.assetHash,
           0,
           Buffer.of(ops.OP_RETURN),
           ecpair.makeRandom().publicKey,
@@ -154,22 +169,56 @@ export const constructClaimTransaction = (
   const signatures: Buffer[] = [];
 
   for (const [i, utxo] of utxos.entries()) {
-    const signature = script.signature.encode(
-      utxo.keys.sign(pset.getInputPreimage(i, sighashType)),
-      sighashType,
-    );
-    signatures.push(signature);
+    if (utxo.type === OutputType.Taproot) {
+      if (utxo.cooperative) {
+        signatures.push(dummyWitness);
+        continue;
+      }
 
-    signer.addSignature(
-      i,
-      {
-        partialSig: {
-          pubkey: utxo.keys.publicKey,
-          signature,
+      const leafHash = tapLeafHash(
+        isRefund ? utxo.swapTree!.refundLeaf : utxo.swapTree!.claimLeaf,
+      );
+      const signature = utxo.keys.signSchnorr(
+        pset.getInputPreimage(
+          i,
+          getSighashType(utxo.type),
+          network.genesisBlockHash,
+          leafHash,
+        ),
+      );
+      signatures.push(signature);
+      signer.addSignature(
+        i,
+        {
+          genesisBlockHash: network.genesisBlockHash,
+          tapScriptSigs: [
+            {
+              signature: signature,
+              pubkey: toXOnly(utxo.keys.publicKey),
+              leafHash,
+            },
+          ],
         },
-      },
-      Pset.ECDSASigValidator(secp.ecc),
-    );
+        Pset.SchnorrSigValidator(secp.ecc),
+      );
+    } else {
+      const signature = script.signature.encode(
+        utxo.keys.sign(pset.getInputPreimage(i, getSighashType(utxo.type))),
+        getSighashType(utxo.type),
+      );
+      signatures.push(signature);
+
+      signer.addSignature(
+        i,
+        {
+          partialSig: {
+            pubkey: utxo.keys.publicKey,
+            signature,
+          },
+        },
+        Pset.ECDSASigValidator(secp.ecc),
+      );
+    }
   }
 
   const finalizer = new Finalizer(pset);
@@ -197,7 +246,33 @@ export const constructClaimTransaction = (
         ]);
       }
 
-      if (utxo.type !== OutputType.Legacy) {
+      if (utxo.type === OutputType.Taproot) {
+        if (utxo.cooperative) {
+          // Add a dummy to allow for extraction
+          finals.finalScriptWitness = witnessStackToScriptWitness([
+            dummyWitness,
+          ]);
+        } else {
+          const tapleaf = isRefund
+            ? utxo.swapTree!.refundLeaf
+            : utxo.swapTree!.claimLeaf;
+
+          const witness = isRefund
+            ? [signatures[i]]
+            : [signatures[i], utxo.preimage];
+
+          finals.finalScriptWitness = witnessStackToScriptWitness(
+            witness.concat([
+              tapleaf.output,
+              createControlBlock(
+                toHashTree(utxo.swapTree!.tree),
+                tapleaf,
+                utxo.internalKey!,
+              ),
+            ]),
+          );
+        }
+      } else if (utxo.type !== OutputType.Legacy) {
         finals.finalScriptWitness = witnessStackToScriptWitness([
           signatures[i],
           utxo.preimage,

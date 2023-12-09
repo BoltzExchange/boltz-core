@@ -24,7 +24,7 @@ export type RefundDetails = TransactionOutput & {
   redeemScript?: Buffer;
 
   // Set for type Taproot
-  swapTree: SwapTree;
+  swapTree?: SwapTree;
 
   // Set for type Taproot
   internalKey?: Buffer;
