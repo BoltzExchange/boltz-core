@@ -22,14 +22,14 @@ import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
 import { ecpair, secp } from '../init';
 import Networks from '../consts/Networks';
 import { getOutputValue } from '../Utils';
-import { getHexString } from '../../Utils';
 import { OutputType } from '../../consts/Enums';
 import { validateInputs } from '../../swap/Claim';
 import { LiquidClaimDetails } from '../consts/Types';
+import { getHexBuffer, getHexString } from '../../Utils';
 import { scriptBuffersToScript } from '../../swap/SwapUtils';
 import { createControlBlock, tapLeafHash, toHashTree } from './TaprooUtils';
 
-const dummyWitness = Buffer.from('0x21', 'hex');
+const dummyWitness = getHexBuffer('0x21');
 
 const getSighashType = (type: OutputType) =>
   type === OutputType.Taproot
@@ -110,7 +110,7 @@ export const constructClaimTransaction = (
         i,
         scriptBuffersToScript([
           scriptBuffersToScript([
-            varuint.encode(ops.OP_0).toString('hex'),
+            getHexString(varuint.encode(ops.OP_0)),
             crypto.sha256(utxo.redeemScript!),
           ]),
         ]),
@@ -240,7 +240,7 @@ export const constructClaimTransaction = (
       } else if (utxo.type === OutputType.Compatibility) {
         finals.finalScriptSig = scriptBuffersToScript([
           scriptBuffersToScript([
-            varuint.encode(ops.OP_0).toString('hex'),
+            getHexString(varuint.encode(ops.OP_0)),
             crypto.sha256(utxo.redeemScript!),
           ]),
         ]);

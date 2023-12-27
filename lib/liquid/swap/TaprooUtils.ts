@@ -12,12 +12,13 @@ import {
 } from 'liquidjs-lib/src/bip341';
 import { secp } from '../init';
 import Musig from '../../musig/Musig';
+import { getHexString } from '../../Utils';
 import { Tapleaf } from '../../consts/Types';
 import { LiquidRefundDetails } from '../consts/Types';
 
 const convertLeaf = (leaf: Tapleaf) => ({
   version: leaf.version,
-  scriptHex: leaf.output.toString('hex'),
+  scriptHex: getHexString(leaf.output),
 });
 
 export const hashForWitnessV1 = (
@@ -76,7 +77,7 @@ export const createControlBlock = (
   internalKey: Buffer,
 ): Buffer => {
   const path = liquidFindScriptPath(hashTree, tapLeafHash(leaf));
-  if (path === undefined) {
+  if (path === undefined || path.length === 0) {
     throw 'leaf not in tree';
   }
 

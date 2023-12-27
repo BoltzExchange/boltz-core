@@ -46,7 +46,7 @@ describe('SwapScript refund', () => {
     await expect(refundSwap([utxo], bestBlockHeight)).rejects.toEqual({
       code: -26,
       message:
-        'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
+        'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
     });
   });
 

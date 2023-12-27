@@ -7,6 +7,7 @@ import {
   p2shOutput,
   p2shP2wpkhOutput,
   p2shP2wshOutput,
+  p2trOutput,
   p2wpkhOutput,
   p2wshOutput,
 } from '../../../lib/swap/Scripts';
@@ -49,15 +50,16 @@ describe('SwapUtils', () => {
   });
 
   test.each`
-    output                             | expected                                    | name
-    ${p2wpkhOutput(publicKeyHash)}     | ${{ type: OutputType.Bech32, isSh: false }} | ${'P2WKH'}
-    ${p2pkhOutput(publicKeyHash)}      | ${{ type: OutputType.Legacy, isSh: false }} | ${'P2PKH'}
-    ${p2wshOutput(publicKeyHash)}      | ${{ type: OutputType.Bech32, isSh: true }}  | ${'P2WSH'}
-    ${p2shOutput(publicKeyHash)}       | ${{ type: OutputType.Legacy, isSh: true }}  | ${'P2SH'}
-    ${p2shP2wpkhOutput(publicKeyHash)} | ${{ type: OutputType.Legacy, isSh: true }}  | ${'P2SH nested P2WPKH'}
-    ${p2shP2wshOutput(publicKeyHash)}  | ${{ type: OutputType.Legacy, isSh: true }}  | ${'P2SH nested P2WSH'}
-    ${[ops.OP_INVALIDOPCODE]}          | ${undefined}                                | ${'OP_INVALIDOPCODE'}
-    ${[ops.OP_RETURN]}                 | ${undefined}                                | ${'OP_RETURN'}
+    output                             | expected                                     | name
+    ${p2wpkhOutput(publicKeyHash)}     | ${{ type: OutputType.Bech32, isSh: false }}  | ${'P2WKH'}
+    ${p2pkhOutput(publicKeyHash)}      | ${{ type: OutputType.Legacy, isSh: false }}  | ${'P2PKH'}
+    ${p2wshOutput(publicKeyHash)}      | ${{ type: OutputType.Bech32, isSh: true }}   | ${'P2WSH'}
+    ${p2shOutput(publicKeyHash)}       | ${{ type: OutputType.Legacy, isSh: true }}   | ${'P2SH'}
+    ${p2shP2wpkhOutput(publicKeyHash)} | ${{ type: OutputType.Legacy, isSh: true }}   | ${'P2SH nested P2WPKH'}
+    ${p2shP2wshOutput(publicKeyHash)}  | ${{ type: OutputType.Legacy, isSh: true }}   | ${'P2SH nested P2WSH'}
+    ${p2trOutput(publicKeyHash)}       | ${{ type: OutputType.Taproot, isSh: false }} | ${'P2TR'}
+    ${[ops.OP_INVALIDOPCODE]}          | ${undefined}                                 | ${'OP_INVALIDOPCODE'}
+    ${[ops.OP_RETURN]}                 | ${undefined}                                 | ${'OP_RETURN'}
   `(
     'should get the correct output type of $name output scripts',
     ({ output, expected }) => {

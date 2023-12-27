@@ -7,6 +7,7 @@ import ops from '@boltz/bitcoin-ops';
 import * as varuint from 'varuint-bitcoin';
 import { crypto, script, Transaction } from 'bitcoinjs-lib';
 import { tapleafHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341';
+import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';
 import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
@@ -21,23 +22,17 @@ export const validateInputs = (utxos: Omit<ClaimDetails, 'value'>[]) => {
       .filter((utxo) => utxo.type !== OutputType.Taproot)
       .some((utxo) => utxo.redeemScript === undefined)
   ) {
-    throw 'not all non Taproot outputs have a redeem script';
+    throw 'not all non Taproot inputs have a redeem script';
   }
 
-  if (
-    utxos
-      .filter(isRelevantTaprootOutput)
-      .some((utxo) => utxo.swapTree === undefined)
-  ) {
-    throw 'not all Taproot outputs have a swap tree';
+  const relevantTaprootOutputs = utxos.filter(isRelevantTaprootOutput);
+
+  if (relevantTaprootOutputs.some((utxo) => utxo.swapTree === undefined)) {
+    throw 'not all Taproot inputs have a swap tree';
   }
 
-  if (
-    utxos
-      .filter(isRelevantTaprootOutput)
-      .some((utxo) => utxo.internalKey === undefined)
-  ) {
-    throw 'not all Taproot outputs have an internal key';
+  if (relevantTaprootOutputs.some((utxo) => utxo.internalKey === undefined)) {
+    throw 'not all Taproot inputs have an internal key';
   }
 };
 
@@ -109,7 +104,7 @@ export const constructClaimTransaction = (
       // Construct the nested redeem script for nested SegWit inputs
       case OutputType.Compatibility: {
         const nestedScript = [
-          varuint.encode(ops.OP_0).toString('hex'),
+          getHexString(varuint.encode(ops.OP_0)),
           crypto.sha256(utxo.redeemScript!),
         ];
 

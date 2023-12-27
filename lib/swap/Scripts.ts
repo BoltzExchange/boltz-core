@@ -4,10 +4,11 @@
 
 import ops from '@boltz/bitcoin-ops';
 import { crypto, script } from 'bitcoinjs-lib';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { OutputType } from '../consts/Enums';
 
 export const p2trOutput = (publicKey: Buffer): Buffer => {
-  return script.compile([ops.OP_1, publicKey]);
+  return script.compile([ops.OP_1, toXOnly(publicKey)]);
 };
 
 /**

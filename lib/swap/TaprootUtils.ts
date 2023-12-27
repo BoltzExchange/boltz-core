@@ -14,7 +14,7 @@ import Musig from '../musig/Musig';
 import { toPushdataScript } from './SwapUtils';
 import { RefundDetails, ScriptElement, Tapleaf } from '../consts/Types';
 
-const leafVersionLiquid = 196;
+export const leafVersionLiquid = 196;
 
 export const createControlBlock = (
   hashTree: HashTree,

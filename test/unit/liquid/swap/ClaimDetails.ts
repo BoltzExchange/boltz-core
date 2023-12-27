@@ -2,7 +2,7 @@ import { confidential } from 'liquidjs-lib';
 import { Networks } from '../../../../lib/liquid';
 import { claimDetails } from '../../swap/ClaimDetails';
 import { OutputType } from '../../../../lib/consts/Enums';
-import { LiquidClaimDetails } from '../../../../lib/liquid/consts/Types';
+import { LiquidClaimDetails } from '../../../../lib/liquid';
 
 export const nonce = Buffer.from('00', 'hex');
 

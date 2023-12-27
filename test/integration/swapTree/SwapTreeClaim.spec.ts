@@ -80,7 +80,7 @@ describe.each`
     await expect(claimSwap([utxo])).rejects.toEqual({
       code: -26,
       message:
-        'non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation)',
+        'mandatory-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
     });
   });
 
@@ -94,7 +94,8 @@ describe.each`
 
     await expect(claimSwap([utxo])).rejects.toEqual({
       code: -26,
-      message: 'non-mandatory-script-verify-flag (Invalid Schnorr signature)',
+      message:
+        'mandatory-script-verify-flag-failed (Invalid Schnorr signature)',
     });
   });
 });

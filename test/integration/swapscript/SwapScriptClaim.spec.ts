@@ -31,7 +31,7 @@ describe('SwapScript claim', () => {
 
     expect(actualError.code).toEqual(-26);
     expect(actualError.message).toEqual(
-      'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
+      'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
     );
   });
 

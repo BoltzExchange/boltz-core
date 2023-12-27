@@ -13,7 +13,7 @@ print_header() {
 print_header "Bitcoin Core"
 
 echo "Creating container"
-docker run -v `pwd`/docker:/config -d --name $bitcoin_container -p 18443:18443 boltz/bitcoin-core:25.1 $bitcoin_config > /dev/null
+docker run -v `pwd`/docker:/config -d --name $bitcoin_container -p 18443:18443 boltz/bitcoin-core:26.0 $bitcoin_config > /dev/null
 
 sleep 1
 
@@ -40,3 +40,9 @@ docker exec $elements_container elements-cli $elements_config -generate 1 > /dev
 
 echo "Rescanning the chain"
 docker exec $elements_container elements-cli $elements_config rescanblockchain > /dev/null
+
+echo "Creating output"
+
+address=$(docker exec $elements_container elements-cli $elements_config getnewaddress "" blech32)
+docker exec $elements_container elements-cli $elements_config sendtoaddress $address 1 > /dev/null
+docker exec $elements_container elements-cli $elements_config -generate 1 > /dev/null

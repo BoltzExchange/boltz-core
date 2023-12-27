@@ -1,6 +1,7 @@
 import { ECPairInterface } from 'ecpair';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
+import { getHexString } from '../Utils';
 
 class Musig {
   private readonly pubkeyAgg: {
@@ -95,7 +96,7 @@ class Musig {
     for (const key of this.publicKeys) {
       const nonce = nonces.get(key);
       if (nonce === undefined) {
-        throw `could not find nonce for public key ${key.toString('hex')}`;
+        throw `could not find nonce for public key ${getHexString(key)}`;
       }
 
       ordered.push(nonce);
@@ -207,9 +208,9 @@ class Musig {
         : this.publicKeys.findIndex((key) => publicKeyOrIndex.equals(key));
 
     if (index === -1) {
-      throw `could not find index of public key ${Buffer.from(
-        publicKeyOrIndex as Uint8Array,
-      ).toString('hex')}`;
+      throw `could not find index of public key ${getHexString(
+        Buffer.from(publicKeyOrIndex as Uint8Array),
+      )}`;
     }
 
     if (index > this.publicKeys.length - 1) {
