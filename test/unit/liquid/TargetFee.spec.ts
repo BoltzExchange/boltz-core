@@ -1,4 +1,4 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
+import zkp from '@michael1011/secp256k1-zkp';
 import { confidential, Transaction } from 'liquidjs-lib';
 import { getHexBuffer } from '../../../lib/Utils';
 import { targetFee } from '../../../lib/TargetFee';

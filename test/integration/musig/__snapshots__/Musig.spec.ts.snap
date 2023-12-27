@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Musig should create P2TR addresses 1`] = `"bcrt1pn8rm287f57grctmr3xwt8lrsu2xf4pg5a0zaexjznp89v6me88pq5rut2m"`;

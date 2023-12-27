@@ -119,20 +119,15 @@ export const getOutputScriptType = (
         // If the second entry of the script array has the length of 20 it is a
         // PKH output if not it is a SH output
         const secondEntry = rawScript[1] as Buffer;
-        let isSh = false;
-
-        if (secondEntry.length !== 20) {
-          isSh = true;
-        }
 
         return {
-          isSh,
+          isSh: secondEntry.length !== 20,
           type: OutputType.Bech32,
         };
       }
 
       case ops.OP_1:
-        return { isSh: false, type: OutputType.Taproot };
+        return { type: OutputType.Taproot, isSh: false };
 
       case ops.OP_HASH160:
         // The FeeCalculator treats legacy SH outputs the same way as compatibility PKH ones

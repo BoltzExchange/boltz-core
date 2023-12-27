@@ -1,13 +1,9 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
+import zkp from '@michael1011/secp256k1-zkp';
 import { getHexBuffer } from '../../../../lib/Utils';
 import { liquidClaimDetailsMap } from './ClaimDetails';
 import { OutputType } from '../../../../lib/consts/Enums';
-import { LiquidClaimDetails } from '../../../../lib/liquid/consts/Types';
-import {
-  constructClaimTransaction,
-  Errors,
-  init,
-} from '../../../../lib/liquid';
+import { LiquidClaimDetails } from '../../../../lib/liquid';
+import { constructClaimTransaction, init } from '../../../../lib/liquid';
 
 describe('Liquid Claim', () => {
   const testClaim = (utxos: LiquidClaimDetails[], fee: number) => {
@@ -52,7 +48,6 @@ describe('Liquid Claim', () => {
 
   test.each`
     type                        | name
-    ${OutputType.Taproot}       | ${'P2TR'}
     ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
     ${OutputType.Legacy}        | ${'P2SH'}
   `(`should throw with $name inputs`, ({ type }) => {
@@ -61,11 +56,12 @@ describe('Liquid Claim', () => {
         [
           {
             type,
+            redeemScript: Buffer.alloc(0),
           } as LiquidClaimDetails,
         ],
         1,
       ),
-    ).toThrow(Errors.ONLY_NATIVE_SEGWIT_INPUTS);
+    ).toThrow('only Taproot or native SegWit inputs supported');
   });
 
   test('should throw with inconsistently blinded inputs', () => {
@@ -74,14 +70,16 @@ describe('Liquid Claim', () => {
         [
           {
             type: OutputType.Bech32,
+            redeemScript: Buffer.alloc(0),
             blindingPrivateKey: Buffer.alloc(1),
           },
           {
             type: OutputType.Bech32,
+            redeemScript: Buffer.alloc(0),
           },
         ] as LiquidClaimDetails[],
         1,
       ),
-    ).toThrow(Errors.INCONSISTENT_BLINDING);
+    ).toThrow('all or none inputs have to be blinded');
   });
 });

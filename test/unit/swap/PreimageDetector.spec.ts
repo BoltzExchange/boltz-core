@@ -1,14 +1,27 @@
-import { crypto } from 'bitcoinjs-lib';
+import { randomBytes } from 'crypto';
+import * as ecc from 'tiny-secp256k1';
+import { crypto, initEccLib } from 'bitcoinjs-lib';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { ECPair } from '../Utils';
 import { getHexBuffer } from '../../../lib/Utils';
+import swapTree from '../../../lib/swap/SwapTree';
 import swapScript from '../../../lib/swap/SwapScript';
 import { OutputType } from '../../../lib/consts/Enums';
+import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
 import { detectPreimage } from '../../../lib/swap/PreimageDetector';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import reverseSwapScript from '../../../lib/swap/ReverseSwapScript';
-import { outputFunctionForType, p2wpkhOutput } from '../../../lib/swap/Scripts';
+import {
+  outputFunctionForType,
+  p2trOutput,
+  p2wpkhOutput,
+} from '../../../lib/swap/Scripts';
 
 describe('PreimageDetector', () => {
+  beforeAll(() => {
+    initEccLib(ecc);
+  });
+
   const claimKeys = ECPair.makeRandom();
   const refundKeys = ECPair.makeRandom();
 
@@ -24,9 +37,9 @@ describe('PreimageDetector', () => {
     ${OutputType.Bech32}        | ${reverseSwapScript} | ${'P2WSH reverse swap'}
     ${OutputType.Compatibility} | ${reverseSwapScript} | ${'P2SH nested P2WSH reverse swap'}
     ${OutputType.Legacy}        | ${reverseSwapScript} | ${'P2SH reverse swap'}
-  `(`should detect preimage of $name input`, async ({ type, scriptFunc }) => {
+  `('should detect preimage of $name input', ({ type, scriptFunc }) => {
     const redeemScript = scriptFunc(
-      crypto.hash160(preimage),
+      crypto.sha256(preimage),
       claimKeys.publicKey,
       refundKeys.publicKey,
       1,
@@ -51,7 +64,40 @@ describe('PreimageDetector', () => {
       false,
     );
 
-    const foundPreimage = detectPreimage(0, claimTransaction);
-    expect(foundPreimage).toEqual(preimage);
+    expect(detectPreimage(0, claimTransaction)).toEqual(preimage);
+  });
+
+  test.each`
+    treeFunc           | name
+    ${swapTree}        | ${'SwapTree'}
+    ${reverseSwapTree} | ${'ReverseSwapTree'}
+  `('should detect preimage of P2TR $name input', ({ treeFunc }) => {
+    const claimTransaction = constructClaimTransaction(
+      [
+        {
+          preimage,
+          type: OutputType.Taproot,
+          value: 123,
+          vout: 0,
+          txHash: randomBytes(32),
+          cooperative: false,
+          swapTree: treeFunc(
+            false,
+            crypto.sha256(preimage),
+            claimKeys.publicKey,
+            refundKeys.publicKey,
+            1,
+          ),
+          internalKey: toXOnly(claimKeys.publicKey),
+          keys: claimKeys,
+          script: p2trOutput(claimKeys.publicKey),
+        },
+      ],
+      p2wpkhOutput(crypto.hash160(claimKeys.publicKey)),
+      2,
+      false,
+    );
+
+    expect(detectPreimage(0, claimTransaction)).toEqual(preimage);
   });
 });

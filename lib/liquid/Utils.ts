@@ -1,5 +1,5 @@
 import { confidential, TxOutput } from 'liquidjs-lib';
-import { confidentialLiquid } from './Init';
+import { confidentialLiquid } from './init';
 
 export const getOutputValue = (
   output: TxOutput & {

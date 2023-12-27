@@ -3,8 +3,13 @@
  */
 
 import ops from '@boltz/bitcoin-ops';
-import { script, crypto } from 'bitcoinjs-lib';
+import { crypto, script } from 'bitcoinjs-lib';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { OutputType } from '../consts/Enums';
+
+export const p2trOutput = (publicKey: Buffer): Buffer => {
+  return script.compile([ops.OP_1, toXOnly(publicKey)]);
+};
 
 /**
  * Get a P2WPKH output script
@@ -89,8 +94,10 @@ export const p2shP2wshOutput = (scriptHex: Buffer): Buffer => {
 
 export const outputFunctionForType = (
   type: OutputType,
-): typeof p2shOutput | undefined => {
+): ((input: Buffer) => Buffer) => {
   switch (type) {
+    case OutputType.Taproot:
+      return p2trOutput;
     case OutputType.Bech32:
       return p2wshOutput;
     case OutputType.Compatibility:
@@ -98,6 +105,4 @@ export const outputFunctionForType = (
     case OutputType.Legacy:
       return p2shOutput;
   }
-
-  return;
 };

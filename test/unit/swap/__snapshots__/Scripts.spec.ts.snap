@@ -66,6 +66,8 @@ exports[`Scripts should get P2SH nested P2WSH output script 1`] = `"a91466a823e1
 
 exports[`Scripts should get P2SH output script 1`] = `"a9149f7fd096d37ed2c0e3f7f0cfc924beef4ffceb6887"`;
 
+exports[`Scripts should get P2TR output script 1`] = `"512075cba84f97d7af95da496b15b34c205003aea7f0daf6b6762beec29dae5e466c"`;
+
 exports[`Scripts should get P2WPKH output script 1`] = `"00140000000000000000000000000000000000000000"`;
 
 exports[`Scripts should get P2WSH output script 1`] = `"00206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"`;

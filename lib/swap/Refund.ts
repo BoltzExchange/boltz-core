@@ -40,5 +40,6 @@ export const constructRefundTransaction = (
     fee,
     isRbf,
     timeoutBlockHeight,
+    true,
   );
 };

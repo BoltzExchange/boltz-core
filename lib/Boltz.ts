@@ -1,4 +1,3 @@
-import Errors from './consts/Errors';
 import { targetFee } from './TargetFee';
 import Networks from './consts/Networks';
 import * as Scripts from './swap/Scripts';
@@ -27,7 +26,6 @@ const ContractABIs = {
 };
 
 export {
-  Errors,
   Networks,
   OutputType,
   ClaimDetails,

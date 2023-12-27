@@ -1,10 +1,16 @@
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { crypto, script as bitcoinScript, Transaction } from 'bitcoinjs-lib';
 import { ECPair } from '../Utils';
 import swapScript from '../../../lib/swap/SwapScript';
 import { OutputType } from '../../../lib/consts/Enums';
 import { detectSwap } from '../../../lib/swap/SwapDetector';
 import reverseSwapScript from '../../../lib/swap/ReverseSwapScript';
-import { outputFunctionForType, p2pkhOutput } from '../../../lib/swap/Scripts';
+import {
+  outputFunctionForType,
+  p2pkhOutput,
+  p2trOutput,
+} from '../../../lib/swap/Scripts';
+import { randomBytes } from 'crypto';
 
 describe('SwapDetector', () => {
   test.each`
@@ -25,9 +31,9 @@ describe('SwapDetector', () => {
     );
 
     const expectedAmount = 42;
+    const script = outputFunctionForType(type)!(redeemScript);
 
     const transaction = new Transaction();
-    const script = outputFunctionForType(type)!(redeemScript);
     transaction.addOutput(
       p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey!)),
       12,
@@ -42,5 +48,39 @@ describe('SwapDetector', () => {
     expect(output!.value).toEqual(expectedAmount);
     expect(output!.type).toEqual(type);
     expect(output!.script).toEqual(script);
+  });
+
+  test('should detect tweaked Taproot keys', () => {
+    const keys = ECPair.makeRandom();
+    const tweakedKeys = toXOnly(keys.publicKey);
+
+    const transaction = new Transaction();
+    transaction.addOutput(
+      p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey!)),
+      12,
+    );
+    transaction.addOutput(p2trOutput(tweakedKeys), 21);
+    transaction.addOutput(bitcoinScript.fromASM('OP_RETURN'), 312);
+
+    const output = detectSwap(tweakedKeys, transaction);
+
+    expect(output).not.toBeUndefined();
+    expect(output!.vout).toEqual(1);
+    expect(output!.value).toEqual(21);
+    expect(output!.type).toEqual(OutputType.Taproot);
+    expect(output!.script).toEqual(p2trOutput(tweakedKeys));
+  });
+
+  test('should return undefined no swap can be found', () => {
+    const transaction = new Transaction();
+    transaction.addOutput(
+      p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey!)),
+      12,
+    );
+    transaction.addOutput(bitcoinScript.fromASM('OP_RETURN'), 312);
+
+    const output = detectSwap(randomBytes(32), transaction);
+
+    expect(output).toBeUndefined();
   });
 });

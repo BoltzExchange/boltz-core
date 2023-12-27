@@ -1,10 +1,11 @@
 import { randomBytes } from 'crypto';
+import swapTree from '../../../lib/swap/SwapTree';
 import { OutputType, swapScript } from '../../../lib/Boltz';
-import { bitcoinClient, claimSwap, createSwapOutput } from '../Utils';
+import { bitcoinClient, claimSwap, createSwapOutput, init } from '../Utils';
 
 describe('SwapScript claim', () => {
   beforeAll(async () => {
-    await bitcoinClient.init();
+    await Promise.all([init(), bitcoinClient.init()]);
   });
 
   afterAll(async () => {
@@ -30,7 +31,7 @@ describe('SwapScript claim', () => {
 
     expect(actualError.code).toEqual(-26);
     expect(actualError.message).toEqual(
-      'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
+      'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
     );
   });
 
@@ -46,16 +47,19 @@ describe('SwapScript claim', () => {
 
   test('should claim multiple swaps in one transaction', async () => {
     const outputs = await Promise.all(
-      [OutputType.Bech32, OutputType.Compatibility, OutputType.Legacy].map(
-        (type) => {
-          return createSwapOutput(type, false, swapScript);
-        },
-      ),
+      [
+        OutputType.Taproot,
+        OutputType.Bech32,
+        OutputType.Compatibility,
+        OutputType.Legacy,
+      ].map((type) => {
+        return createSwapOutput(
+          type,
+          false,
+          type === OutputType.Taproot ? swapTree : swapScript,
+        );
+      }),
     );
     await claimSwap(outputs.map((output) => output.utxo));
-  });
-
-  afterAll(async () => {
-    await bitcoinClient.generate(1);
   });
 });

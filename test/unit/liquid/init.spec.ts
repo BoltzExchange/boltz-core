@@ -1,14 +1,14 @@
 import { confidential } from 'liquidjs-lib';
-import zkp, { ZKP } from '@vulpemventures/secp256k1-zkp';
+import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
 import {
   confidentialLiquid,
   ecpair,
   init,
   secp,
-} from '../../../lib/liquid/Init';
+} from '../../../lib/liquid/init';
 
 describe('Liquid init', () => {
-  let ourSecp: ZKP;
+  let ourSecp: Secp256k1ZKP;
 
   beforeAll(async () => {
     ourSecp = await zkp();
