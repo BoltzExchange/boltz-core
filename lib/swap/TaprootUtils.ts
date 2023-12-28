@@ -16,6 +16,11 @@ import { RefundDetails, ScriptElement, Tapleaf } from '../consts/Types';
 
 export const leafVersionLiquid = 196;
 
+export const swapLeafsToTree = (
+  claimLeaf: Tapleaf,
+  refundLeaf: Tapleaf,
+): Taptree => [claimLeaf, refundLeaf];
+
 export const createControlBlock = (
   hashTree: HashTree,
   leaf: Tapleaf,
