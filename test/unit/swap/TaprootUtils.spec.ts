@@ -23,6 +23,7 @@ import {
   createLeaf,
   hashForWitnessV1,
   leafVersionLiquid,
+  swapLeafsToTree,
   tweakMusig,
 } from '../../../lib/swap/TaprootUtils';
 
@@ -31,6 +32,17 @@ describe('TaprootUtils', () => {
     createLeaf(false, [ops.OP_SHA256, randomBytes(32), ops.OP_EQUALVERIFY]),
     createLeaf(false, [ECPair.makeRandom().publicKey, ops.OP_CHECKSIGVERIFY]),
   ];
+
+  test('should convert swap leafs to a tree', () => {
+    const tree = swapLeafsToTree(
+      taptree[0] as Tapleaf,
+      taptree[1] as Tapleaf,
+    ) as [Tapleaf, Tapleaf];
+
+    expect(tree.length).toEqual(2);
+    expect(tree[0]).toEqual(taptree[0]);
+    expect(tree[1]).toEqual(taptree[1]);
+  });
 
   test.each`
     isLiquid | version
