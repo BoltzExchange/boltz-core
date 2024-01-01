@@ -13,6 +13,8 @@ import { ClaimDetails } from '../consts/Types';
 import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
 import { createControlBlock, hashForWitnessV1 } from './TaprootUtils';
 
+const dummyTaprootSignature = Buffer.alloc(64);
+
 const isRelevantTaprootOutput = (utxo: Omit<ClaimDetails, 'value'>) =>
   utxo.type === OutputType.Taproot && utxo.cooperative !== true;
 
@@ -117,32 +119,37 @@ export const constructClaimTransaction = (
 
     // Construct and sign the witness for (nested) SegWit inputs
     // When the Taproot output is spent cooperatively, we leave it empty
-    if (utxo.type === OutputType.Taproot && utxo.cooperative !== true) {
-      const tapLeaf = isRefund
-        ? utxo.swapTree!.refundLeaf
-        : utxo.swapTree!.claimLeaf;
-      const sigHash = hashForWitnessV1(
-        utxos,
-        tx,
-        index,
-        tapleafHash(tapLeaf),
-        Transaction.SIGHASH_DEFAULT,
-      );
+    if (utxo.type === OutputType.Taproot) {
+      if (utxo.cooperative !== true) {
+        const tapLeaf = isRefund
+          ? utxo.swapTree!.refundLeaf
+          : utxo.swapTree!.claimLeaf;
+        const sigHash = hashForWitnessV1(
+          utxos,
+          tx,
+          index,
+          tapleafHash(tapLeaf),
+          Transaction.SIGHASH_DEFAULT,
+        );
 
-      const signature = utxo.keys.signSchnorr(sigHash);
-      const witness = isRefund ? [signature] : [signature, utxo.preimage];
+        const signature = utxo.keys.signSchnorr(sigHash);
+        const witness = isRefund ? [signature] : [signature, utxo.preimage];
 
-      tx.setWitness(
-        index,
-        witness.concat([
-          tapLeaf.output,
-          createControlBlock(
-            toHashTree(utxo.swapTree!.tree),
-            tapLeaf,
-            utxo.internalKey!,
-          ),
-        ]),
-      );
+        tx.setWitness(
+          index,
+          witness.concat([
+            tapLeaf.output,
+            createControlBlock(
+              toHashTree(utxo.swapTree!.tree),
+              tapLeaf,
+              utxo.internalKey!,
+            ),
+          ]),
+        );
+      } else {
+        // Stub the signature to allow for accurate fee estimations
+        tx.setWitness(index, [dummyTaprootSignature]);
+      }
     } else if (
       utxo.type === OutputType.Bech32 ||
       utxo.type === OutputType.Compatibility

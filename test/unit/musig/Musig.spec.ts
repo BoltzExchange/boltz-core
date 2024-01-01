@@ -170,7 +170,7 @@ describe('Musig', () => {
       [pubKeys[1], secp.musig.nonceGen(randomBytes(32)).pubNonce],
       [pubKeys[2], secp.musig.nonceGen(randomBytes(32)).pubNonce],
     ]);
-    musig.aggregateNonces(nonces);
+    musig.aggregateNonces(Array.from(nonces.entries()));
 
     expect(musig['pubNonces']).toEqual([
       musig.getPublicNonce(),
@@ -192,7 +192,7 @@ describe('Musig', () => {
       ourKey.publicKey,
       ECPair.makeRandom().publicKey,
     ]);
-    expect(() => musig.aggregateNonces(new Map())).toThrow(
+    expect(() => musig.aggregateNonces([])).toThrow(
       'number of nonces != number of public keys',
     );
   });
@@ -205,15 +205,13 @@ describe('Musig', () => {
     ]);
 
     expect(() =>
-      musig.aggregateNonces(
-        new Map([
-          [ourKey.publicKey, musig.getPublicNonce()],
-          [
-            ECPair.makeRandom().publicKey,
-            secp.musig.nonceGen(randomBytes(32)).pubNonce,
-          ],
-        ]),
-      ),
+      musig.aggregateNonces([
+        [ourKey.publicKey, musig.getPublicNonce()],
+        [
+          ECPair.makeRandom().publicKey,
+          secp.musig.nonceGen(randomBytes(32)).pubNonce,
+        ],
+      ]),
     ).toThrow(
       `could not find nonce for public key ${Buffer.from(
         musig['publicKeys'][1],
@@ -527,12 +525,10 @@ describe('Musig', () => {
     }
 
     musig.aggregateNonces(
-      new Map<Uint8Array, Uint8Array>(
-        counterparties.map((party) => [
-          party.key.publicKey,
-          party.nonce.pubNonce,
-        ]),
-      ),
+      counterparties.map((party) => [
+        party.key.publicKey,
+        party.nonce.pubNonce,
+      ]),
     );
 
     musig.initializeSession(toSign);

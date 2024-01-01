@@ -1,5 +1,7 @@
+import { init } from './init';
 import Musig from './musig/Musig';
 import swapTree from './swap/SwapTree';
+import * as Types from './consts/Types';
 import { targetFee } from './TargetFee';
 import Networks from './consts/Networks';
 import * as Scripts from './swap/Scripts';
@@ -32,6 +34,7 @@ const ContractABIs = {
 
 export {
   Musig,
+  Types,
   Networks,
   OutputType,
   ContractABIs,
@@ -43,6 +46,7 @@ export {
   SwapUtils,
   TaprootUtils,
   SwapTreeSerializer,
+  init,
   swapTree,
   targetFee,
   swapScript,

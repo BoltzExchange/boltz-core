@@ -68,10 +68,12 @@ describe.each`
         blindingKey,
       );
 
+      // Check the dummy signature
+      expect(tx.ins[0].witness).toHaveLength(1);
+      expect(tx.ins[0].witness[0].equals(Buffer.alloc(64))).toEqual(true);
+
       const theirNonce = secp.musig.nonceGen(randomBytes(32));
-      musig!.aggregateNonces(
-        new Map([[refundKeys.publicKey, theirNonce.pubNonce]]),
-      );
+      musig!.aggregateNonces([[refundKeys.publicKey, theirNonce.pubNonce]]);
       musig!.initializeSession(
         hashForWitnessV1(Networks.liquidRegtest, [utxo], tx, 0),
       );

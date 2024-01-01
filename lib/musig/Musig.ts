@@ -82,24 +82,26 @@ class Musig {
     this.nonceAgg = this.secp.musig.nonceAgg(nonces);
   };
 
-  public aggregateNonces = (nonces: Map<Uint8Array, Uint8Array>) => {
-    const ordered: Uint8Array[] = [];
-
-    if (!nonces.has(this.key.publicKey)) {
-      nonces.set(this.key.publicKey, this.getPublicNonce());
+  public aggregateNonces = (nonces: [Uint8Array, Uint8Array][]) => {
+    if (
+      nonces.find(([keyCmp]) => this.key.publicKey.equals(keyCmp)) === undefined
+    ) {
+      nonces.push([this.key.publicKey, this.getPublicNonce()]);
     }
 
-    if (this.publicKeys.length !== nonces.size) {
+    if (this.publicKeys.length !== nonces.length) {
       throw 'number of nonces != number of public keys';
     }
 
+    const ordered: Uint8Array[] = [];
+
     for (const key of this.publicKeys) {
-      const nonce = nonces.get(key);
+      const nonce = nonces.find(([keyCmp]) => key.equals(keyCmp));
       if (nonce === undefined) {
         throw `could not find nonce for public key ${getHexString(key)}`;
       }
 
-      ordered.push(nonce);
+      ordered.push(nonce[1]);
     }
 
     this.aggregateNoncesOrdered(ordered);

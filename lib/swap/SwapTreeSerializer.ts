@@ -7,6 +7,11 @@ type SerializedLeaf = {
   output: string;
 };
 
+type SerializedTree = {
+  claimLeaf: SerializedLeaf;
+  refundLeaf: SerializedLeaf;
+};
+
 const serializeLeaf = (leaf: Tapleaf): SerializedLeaf => ({
   version: leaf.version,
   output: getHexString(leaf.output),
@@ -17,14 +22,15 @@ const deserializeLeaf = (leaf: SerializedLeaf): Tapleaf => ({
   output: getHexBuffer(leaf.output),
 });
 
-export const serializeSwapTree = (tree: SwapTree): string =>
-  JSON.stringify({
-    claimLeaf: serializeLeaf(tree.claimLeaf),
-    refundLeaf: serializeLeaf(tree.refundLeaf),
-  });
+export const serializeSwapTree = (tree: SwapTree): SerializedTree => ({
+  claimLeaf: serializeLeaf(tree.claimLeaf),
+  refundLeaf: serializeLeaf(tree.refundLeaf),
+});
 
-export const deserializeSwapTree = (tree: string): SwapTree => {
-  const parsed = JSON.parse(tree);
+export const deserializeSwapTree = (
+  tree: string | SerializedTree,
+): SwapTree => {
+  const parsed = typeof tree === 'string' ? JSON.parse(tree) : tree;
 
   const res = {
     claimLeaf: deserializeLeaf(parsed.claimLeaf),
@@ -36,3 +42,5 @@ export const deserializeSwapTree = (tree: string): SwapTree => {
     tree: swapLeafsToTree(res.claimLeaf, res.refundLeaf),
   };
 };
+
+export { SerializedLeaf, SerializedTree };

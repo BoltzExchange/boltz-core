@@ -22,14 +22,14 @@ import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
 import { ecpair, secp } from '../init';
 import Networks from '../consts/Networks';
 import { getOutputValue } from '../Utils';
+import { getHexString } from '../../Utils';
 import { OutputType } from '../../consts/Enums';
 import { validateInputs } from '../../swap/Claim';
 import { LiquidClaimDetails } from '../consts/Types';
-import { getHexBuffer, getHexString } from '../../Utils';
 import { scriptBuffersToScript } from '../../swap/SwapUtils';
 import { createControlBlock, tapLeafHash, toHashTree } from './TaprooUtils';
 
-const dummyWitness = getHexBuffer('0x21');
+const dummyTaprootSignature = Buffer.alloc(64);
 
 const getSighashType = (type: OutputType) =>
   type === OutputType.Taproot
@@ -171,7 +171,7 @@ export const constructClaimTransaction = (
   for (const [i, utxo] of utxos.entries()) {
     if (utxo.type === OutputType.Taproot) {
       if (utxo.cooperative) {
-        signatures.push(dummyWitness);
+        signatures.push(dummyTaprootSignature);
         continue;
       }
 
@@ -248,9 +248,9 @@ export const constructClaimTransaction = (
 
       if (utxo.type === OutputType.Taproot) {
         if (utxo.cooperative) {
-          // Add a dummy to allow for extraction
+          // Add a dummy to allow for extraction and an accurate fee estimation
           finals.finalScriptWitness = witnessStackToScriptWitness([
-            dummyWitness,
+            dummyTaprootSignature,
           ]);
         } else {
           const tapleaf = isRefund

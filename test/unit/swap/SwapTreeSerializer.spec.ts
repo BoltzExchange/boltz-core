@@ -45,4 +45,18 @@ describe('SwapTreeSerializer', () => {
     const serialized = serializeSwapTree(tree);
     expect(deserializeSwapTree(serialized)).toEqual(tree);
   });
+
+  test.each`
+    isLiquid
+    ${false}
+    ${true}
+  `(
+    'should deserialize stringified swap trees (isLiquid: $isLiquid)',
+    ({ isLiquid }) => {
+      const tree = createTree(isLiquid);
+
+      const serialized = JSON.stringify(serializeSwapTree(tree));
+      expect(deserializeSwapTree(serialized)).toEqual(tree);
+    },
+  );
 });

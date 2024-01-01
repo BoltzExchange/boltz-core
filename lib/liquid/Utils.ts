@@ -6,7 +6,9 @@ export const getOutputValue = (
     blindingPrivateKey?: Buffer;
   },
 ): number => {
-  return output.blindingPrivateKey
+  return output.blindingPrivateKey &&
+    output.rangeProof !== undefined &&
+    output.rangeProof.length > 0
     ? Number(
         confidentialLiquid.unblindOutputWithKey(
           output,

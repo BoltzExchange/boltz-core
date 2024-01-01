@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { ECPair } from '../Utils';
 import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
@@ -5,7 +6,6 @@ import { p2trOutput } from '../../../lib/swap/Scripts';
 import { ClaimDetails } from '../../../lib/consts/Types';
 import { claimDetails, claimDetailsMap } from './ClaimDetails';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
-import { randomBytes } from 'crypto';
 
 describe('Claim', () => {
   const testClaim = (utxos: ClaimDetails[], fee: number) => {
