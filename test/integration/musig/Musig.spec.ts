@@ -86,7 +86,7 @@ describe('Musig', () => {
 
     // Create signature
     const theirNonce = secp.musig.nonceGen(randomBytes(32));
-    musig.aggregateNonces(new Map([[theirKey.publicKey, theirNonce.pubNonce]]));
+    musig.aggregateNonces([[theirKey.publicKey, theirNonce.pubNonce]]);
     musig.initializeSession(sigHash);
     musig.signPartial();
     musig.addPartial(

@@ -31,6 +31,30 @@ describe('Liquid Utils', () => {
     ).toEqual(amount);
   });
 
+  test('should decode unconfidential outputs when a blinding key is provided', async () => {
+    const addr = await elementsClient.getNewAddress();
+    const { scriptPubKey, unconfidentialAddress } =
+      address.fromConfidential(addr);
+
+    const blindingKey = getHexBuffer(
+      await elementsClient.dumpBlindingKey(addr),
+    );
+
+    const amount = 123_321;
+    const tx = Transaction.fromHex(
+      await elementsClient.getRawTransaction(
+        await elementsClient.sendToAddress(unconfidentialAddress, amount),
+      ),
+    );
+
+    expect(
+      getOutputValue({
+        ...tx.outs.find((out) => out.script.equals(scriptPubKey!))!,
+        blindingPrivateKey: blindingKey,
+      }),
+    ).toEqual(amount);
+  });
+
   test('should decode confidential outputs', async () => {
     const addr = await elementsClient.getNewAddress();
     expect(addr.startsWith('el1')).toBeTruthy();
