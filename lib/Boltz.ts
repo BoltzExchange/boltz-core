@@ -1,6 +1,5 @@
 import { init } from './init';
 import Musig from './musig/Musig';
-import swapTree from './swap/SwapTree';
 import * as Types from './consts/Types';
 import { targetFee } from './TargetFee';
 import Networks from './consts/Networks';
@@ -10,12 +9,19 @@ import { OutputType } from './consts/Enums';
 import * as SwapUtils from './swap/SwapUtils';
 import { detectSwap } from './swap/SwapDetector';
 import * as TaprootUtils from './swap/TaprootUtils';
-import reverseSwapTree from './swap/ReverseSwapTree';
 import reverseSwapScript from './swap/ReverseSwapScript';
 import { constructClaimTransaction } from './swap/Claim';
 import { detectPreimage } from './swap/PreimageDetector';
 import { constructRefundTransaction } from './swap/Refund';
 import * as SwapTreeSerializer from './swap/SwapTreeSerializer';
+import swapTree, {
+  extractClaimPublicKeyFromSwapTree,
+  extractRefundPublicKeyFromSwapTree,
+} from './swap/SwapTree';
+import reverseSwapTree, {
+  extractClaimPublicKeyFromReverseSwapTree,
+  extractRefundPublicKeyFromReverseSwapTree,
+} from './swap/ReverseSwapTree';
 import {
   ClaimDetails,
   RefundDetails,
@@ -56,4 +62,8 @@ export {
   reverseSwapScript,
   constructClaimTransaction,
   constructRefundTransaction,
+  extractClaimPublicKeyFromSwapTree,
+  extractRefundPublicKeyFromSwapTree,
+  extractClaimPublicKeyFromReverseSwapTree,
+  extractRefundPublicKeyFromReverseSwapTree,
 };

@@ -1,11 +1,11 @@
 import ops from '@boltz/bitcoin-ops';
-import { crypto } from 'bitcoinjs-lib';
+import { crypto, script } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { encodeCltv } from './SwapUtils';
 import { SwapTree } from '../consts/Types';
 import { createLeaf, swapLeafsToTree } from './TaprootUtils';
 
-const createRefundLeaf = (
+export const createRefundLeaf = (
   isLiquid: boolean,
   refundPublicKey: Buffer,
   timeoutBlockHeight: number,
@@ -16,6 +16,13 @@ const createRefundLeaf = (
     encodeCltv(timeoutBlockHeight),
     ops.OP_CHECKLOCKTIMEVERIFY,
   ]);
+
+export const extractClaimPublicKeyFromSwapTree = (swapTree: SwapTree): Buffer =>
+  script.decompile(swapTree.claimLeaf.output)![3] as Buffer;
+
+export const extractRefundPublicKeyFromSwapTree = (
+  swapTree: SwapTree,
+): Buffer => script.decompile(swapTree.refundLeaf.output)![0] as Buffer;
 
 const swapTree = (
   isLiquid: boolean,
@@ -45,4 +52,3 @@ const swapTree = (
 };
 
 export default swapTree;
-export { createRefundLeaf };
