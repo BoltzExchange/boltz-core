@@ -1,6 +1,5 @@
 import { ECPairInterface } from 'ecpair';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
+import { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { getHexString } from '../Utils';
 
 class Musig {
@@ -39,8 +38,8 @@ class Musig {
       throw 'our key is not publicKeys';
     }
 
-    this.pubkeyAgg = this.secp.musig.pubkeyAgg(publicKeys.map(toXOnly));
-    this.nonce = this.secp.musig.nonceGen(sessionId);
+    this.pubkeyAgg = this.secp.musig.pubkeyAgg(publicKeys);
+    this.nonce = this.secp.musig.nonceGen(sessionId, this.key.publicKey);
     this.partialSignatures = Array(publicKeys.length).fill(null);
   }
 
@@ -163,7 +162,7 @@ class Musig {
     return this.secp.musig.partialVerify(
       signature,
       this.pubNonces[index],
-      toXOnly(publicKey),
+      publicKey,
       this.pubkeyAgg.keyaggCache,
       this.session,
     );

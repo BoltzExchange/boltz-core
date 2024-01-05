@@ -1,4 +1,4 @@
-import zkp from '@michael1011/secp256k1-zkp';
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { getHexBuffer } from '../../../../lib/Utils';
 import { liquidClaimDetailsMap } from './ClaimDetails';
 import { OutputType } from '../../../../lib/consts/Enums';

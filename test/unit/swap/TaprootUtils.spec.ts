@@ -1,7 +1,7 @@
 import ops from '@boltz/bitcoin-ops';
 import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';
-import zkp from '@michael1011/secp256k1-zkp';
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { Taptree } from 'bitcoinjs-lib/src/types';
 import { initEccLib, Transaction } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';

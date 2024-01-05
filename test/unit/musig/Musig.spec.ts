@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
+import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { ECPair } from '../Utils';
 import Musig from '../../../lib/musig/Musig';
 
@@ -29,9 +29,11 @@ describe('Musig', () => {
       ],
     ).toEqual(2);
     expect(musig['pubkeyAgg']).toEqual(
-      secp.musig.pubkeyAgg([ourKey.publicKey, ...otherKeys].map(toXOnly)),
+      secp.musig.pubkeyAgg([ourKey.publicKey, ...otherKeys]),
     );
-    expect(musig['nonce']).toEqual(secp.musig.nonceGen(sessionId));
+    expect(musig['nonce']).toEqual(
+      secp.musig.nonceGen(sessionId, ourKey.publicKey),
+    );
     expect(musig['partialSignatures']).toHaveLength(3);
     expect(musig['partialSignatures']).toEqual([null, null, null]);
   });
@@ -100,8 +102,8 @@ describe('Musig', () => {
 
     const nonces = [
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
     ];
     musig.aggregateNoncesOrdered(nonces);
 
@@ -143,16 +145,16 @@ describe('Musig', () => {
 
     expect(() =>
       musig.aggregateNoncesOrdered([
-        secp.musig.nonceGen(randomBytes(32)).pubNonce,
+        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
         musig.getPublicNonce(),
-        secp.musig.nonceGen(randomBytes(32)).pubNonce,
+        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
       ]),
     ).toThrow('our nonce is at incorrect index');
     expect(() =>
       musig.aggregateNoncesOrdered([
-        secp.musig.nonceGen(randomBytes(32)).pubNonce,
-        secp.musig.nonceGen(randomBytes(32)).pubNonce,
-        secp.musig.nonceGen(randomBytes(32)).pubNonce,
+        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
       ]),
     ).toThrow('our nonce is at incorrect index');
   });
@@ -167,8 +169,8 @@ describe('Musig', () => {
     const musig = new Musig(secp, ourKey, randomBytes(32), pubKeys);
 
     const nonces = new Map([
-      [pubKeys[1], secp.musig.nonceGen(randomBytes(32)).pubNonce],
-      [pubKeys[2], secp.musig.nonceGen(randomBytes(32)).pubNonce],
+      [pubKeys[1], secp.musig.nonceGen(randomBytes(32), pubKeys[1]).pubNonce],
+      [pubKeys[2], secp.musig.nonceGen(randomBytes(32), pubKeys[2]).pubNonce],
     ]);
     musig.aggregateNonces(Array.from(nonces.entries()));
 
@@ -209,7 +211,7 @@ describe('Musig', () => {
         [ourKey.publicKey, musig.getPublicNonce()],
         [
           ECPair.makeRandom().publicKey,
-          secp.musig.nonceGen(randomBytes(32)).pubNonce,
+          secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
         ],
       ]),
     ).toThrow(
@@ -229,8 +231,8 @@ describe('Musig', () => {
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
     ]);
     musig.initializeSession(randomBytes(32));
 
@@ -260,8 +262,8 @@ describe('Musig', () => {
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
     ]);
 
     musig.initializeSession(randomBytes(32));
@@ -280,8 +282,8 @@ describe('Musig', () => {
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
     ]);
 
     musig.initializeSession(randomBytes(32));
@@ -311,8 +313,8 @@ describe('Musig', () => {
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
     ]);
 
     musig.initializeSession(randomBytes(32));
@@ -348,8 +350,8 @@ describe('Musig', () => {
     ]);
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
     ]);
 
     expect(() =>
@@ -367,11 +369,11 @@ describe('Musig', () => {
       ECPair.makeRandom().publicKey,
     ]);
 
-    const otherNonce = secp.musig.nonceGen(randomBytes(32));
+    const otherNonce = secp.musig.nonceGen(randomBytes(32), otherKey.publicKey);
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
       otherNonce.pubNonce,
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
     ]);
 
     musig.initializeSession(randomBytes(32));
@@ -404,8 +406,8 @@ describe('Musig', () => {
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
     ]);
 
     musig.initializeSession(randomBytes(32));
@@ -423,7 +425,7 @@ describe('Musig', () => {
       otherKey.publicKey,
     ]);
 
-    const otherNonce = secp.musig.nonceGen(randomBytes(32));
+    const otherNonce = secp.musig.nonceGen(randomBytes(32), otherKey.publicKey);
     musig.aggregateNoncesOrdered([musig.getPublicNonce(), otherNonce.pubNonce]);
 
     const msg = randomBytes(32);
@@ -469,7 +471,7 @@ describe('Musig', () => {
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32)).pubNonce,
+      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
     ]);
     musig.initializeSession(randomBytes(32));
     musig.signPartial();
@@ -509,10 +511,13 @@ describe('Musig', () => {
 
     const counterparties = Array(count)
       .fill(null)
-      .map(() => ({
-        key: ECPair.makeRandom(),
-        nonce: secp.musig.nonceGen(randomBytes(32)),
-      }));
+      .map(() => {
+        const key = ECPair.makeRandom();
+        return {
+          key,
+          nonce: secp.musig.nonceGen(randomBytes(32), key.publicKey),
+        };
+      });
 
     const publicKeys = [
       ourKey,
@@ -535,7 +540,7 @@ describe('Musig', () => {
     musig.signPartial();
 
     counterparties.forEach((party) => {
-      const pubkeyAgg = secp.musig.pubkeyAgg(publicKeys.map(toXOnly));
+      const pubkeyAgg = secp.musig.pubkeyAgg(publicKeys);
 
       if (tweak) {
         pubkeyAgg.keyaggCache = secp.musig.pubkeyXonlyTweakAdd(
