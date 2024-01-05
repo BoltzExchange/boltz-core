@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
+import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { slip77 } from '../../../unit/Utils';
 import { OutputType } from '../../../../lib/Boltz';
 import swapTree from '../../../../lib/swap/SwapTree';
@@ -72,7 +72,10 @@ describe.each`
       expect(tx.ins[0].witness).toHaveLength(1);
       expect(tx.ins[0].witness[0].equals(Buffer.alloc(64))).toEqual(true);
 
-      const theirNonce = secp.musig.nonceGen(randomBytes(32));
+      const theirNonce = secp.musig.nonceGen(
+        randomBytes(32),
+        refundKeys.publicKey,
+      );
       musig!.aggregateNonces([[refundKeys.publicKey, theirNonce.pubNonce]]);
       musig!.initializeSession(
         hashForWitnessV1(Networks.liquidRegtest, [utxo], tx, 0),

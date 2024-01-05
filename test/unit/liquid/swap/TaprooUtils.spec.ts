@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto';
 import ops from '@boltz/bitcoin-ops';
 import * as ecc from 'tiny-secp256k1';
 import { initEccLib } from 'bitcoinjs-lib';
-import zkp from '@michael1011/secp256k1-zkp';
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { Taptree } from 'bitcoinjs-lib/src/types';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341';

@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';
 import { ECPairInterface } from 'ecpair';
-import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
+import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import {
   address,
   crypto,

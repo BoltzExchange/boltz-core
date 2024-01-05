@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';
 import { address, initEccLib, Transaction } from 'bitcoinjs-lib';
-import zkp, { Secp256k1ZKP } from '@michael1011/secp256k1-zkp';
+import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { bitcoinClient } from '../Utils';
 import { ECPair } from '../../unit/Utils';
 import Musig from '../../../lib/musig/Musig';
@@ -85,7 +85,7 @@ describe('Musig', () => {
     );
 
     // Create signature
-    const theirNonce = secp.musig.nonceGen(randomBytes(32));
+    const theirNonce = secp.musig.nonceGen(randomBytes(32), theirKey.publicKey);
     musig.aggregateNonces([[theirKey.publicKey, theirNonce.pubNonce]]);
     musig.initializeSession(sigHash);
     musig.signPartial();

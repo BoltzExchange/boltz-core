@@ -1,4 +1,4 @@
-import zkp from '@michael1011/secp256k1-zkp';
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { slip77 } from '../../../unit/Utils';
 import { init } from '../../../../lib/liquid';
 import { OutputType } from '../../../../lib/consts/Enums';
