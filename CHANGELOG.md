@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2024-01-06
+
+### Features
+
+- Add Musig wrapper class
+- Bitcoin Taproot swaps
+- Liquid Taproot swaps
+- Swap tree serializer (#109)
+- Public key extraction functions for swap tree
+
+### Miscellaneous Tasks
+
+- Update changelog for v1.0.4
+- Bump dependencies
+- Miscellaneous fixes (#110)
+- Use prettier import sort
+
+### Refactor
+
+- Update musig bindings (#111)
+
+### Testing
+
+- Unit tests for Taproot swaps
+
 ## [1.0.4] - 2023-10-20
 
 ### Miscellaneous Tasks
