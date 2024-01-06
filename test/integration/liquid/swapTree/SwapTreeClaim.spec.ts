@@ -1,16 +1,16 @@
-import { randomBytes } from 'crypto';
 import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { slip77 } from '../../../unit/Utils';
+import { randomBytes } from 'crypto';
 import { OutputType } from '../../../../lib/Boltz';
-import swapTree from '../../../../lib/swap/SwapTree';
-import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
-import { hashForWitnessV1 } from '../../../../lib/liquid/swap/TaprooUtils';
 import {
-  constructClaimTransaction,
-  init,
   LiquidClaimDetails,
   Networks,
+  constructClaimTransaction,
+  init,
 } from '../../../../lib/liquid';
+import { hashForWitnessV1 } from '../../../../lib/liquid/swap/TaprooUtils';
+import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
+import swapTree from '../../../../lib/swap/SwapTree';
+import { slip77 } from '../../../unit/Utils';
 import {
   claimSwap,
   createSwapOutput,

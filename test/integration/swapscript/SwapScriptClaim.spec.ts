@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
-import swapTree from '../../../lib/swap/SwapTree';
 import { OutputType, swapScript } from '../../../lib/Boltz';
+import swapTree from '../../../lib/swap/SwapTree';
 import { bitcoinClient, claimSwap, createSwapOutput, init } from '../Utils';
 
 describe('SwapScript claim', () => {

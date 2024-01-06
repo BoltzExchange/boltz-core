@@ -1,5 +1,5 @@
-import { confidential } from 'liquidjs-lib';
 import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import { confidential } from 'liquidjs-lib';
 import {
   confidentialLiquid,
   ecpair,

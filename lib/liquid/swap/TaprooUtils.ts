@@ -1,20 +1,20 @@
-import { Transaction } from 'liquidjs-lib';
-import { Network } from 'liquidjs-lib/src/networks';
-import { taggedHash } from 'liquidjs-lib/src/crypto';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { isTapleaf, Taptree } from 'bitcoinjs-lib/src/types';
+import { Taptree, isTapleaf } from 'bitcoinjs-lib/src/types';
+import { Transaction } from 'liquidjs-lib';
 import {
   HashTree,
   TaprootLeaf,
-  toHashTree as liquidToHashTree,
-  tapLeafHash as liquidTapLeafHash,
   findScriptPath as liquidFindScriptPath,
+  tapLeafHash as liquidTapLeafHash,
+  toHashTree as liquidToHashTree,
 } from 'liquidjs-lib/src/bip341';
-import { secp } from '../init';
-import Musig from '../../musig/Musig';
+import { taggedHash } from 'liquidjs-lib/src/crypto';
+import { Network } from 'liquidjs-lib/src/networks';
 import { getHexString } from '../../Utils';
 import { Tapleaf } from '../../consts/Types';
+import Musig from '../../musig/Musig';
 import { LiquidRefundDetails } from '../consts/Types';
+import { secp } from '../init';
 
 const convertLeaf = (leaf: Tapleaf) => ({
   version: leaf.version,

@@ -2,11 +2,11 @@ import ops from '@boltz/bitcoin-ops';
 import { crypto, script } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { SwapTree } from '../consts/Types';
-import { createLeaf, swapLeafsToTree } from './TaprootUtils';
 import {
   createRefundLeaf,
   extractRefundPublicKeyFromSwapTree,
 } from './SwapTree';
+import { createLeaf, swapLeafsToTree } from './TaprootUtils';
 
 export const extractClaimPublicKeyFromReverseSwapTree = (
   swapTree: SwapTree,

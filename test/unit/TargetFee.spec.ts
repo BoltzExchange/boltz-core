@@ -1,6 +1,6 @@
+import { constructClaimTransaction, targetFee } from '../../lib/Boltz';
 import { getHexBuffer } from '../../lib/Utils';
 import { claimDetails } from './swap/ClaimDetails';
-import { constructClaimTransaction, targetFee } from '../../lib/Boltz';
 
 describe('TargetFee', () => {
   test.each([1, 3, 12, 42, 32, 123])(

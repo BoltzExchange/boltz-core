@@ -1,5 +1,5 @@
-import { ECPairInterface } from 'ecpair';
 import { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import { ECPairInterface } from 'ecpair';
 import { getHexString } from '../Utils';
 
 class Musig {

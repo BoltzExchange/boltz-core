@@ -61,12 +61,13 @@
     "varuint-bitcoin": "^1.1.2"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/jest": "^29.5.11",
     "@types/node": "^20.10.6",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^6.17.0",
-    "@typescript-eslint/parser": "^6.17.0",
+    "@typescript-eslint/eslint-plugin": "^6.18.0",
+    "@typescript-eslint/parser": "^6.18.0",
     "bip174": "^2.1.1",
     "cross-os": "^1.5.0",
     "eslint": "^8.56.0",

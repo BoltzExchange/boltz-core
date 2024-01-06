@@ -1,15 +1,15 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { slip77 } from '../../../unit/Utils';
-import { init } from '../../../../lib/liquid';
-import swapTree from '../../../../lib/swap/SwapTree';
 import { OutputType } from '../../../../lib/consts/Enums';
+import { init } from '../../../../lib/liquid';
 import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
+import swapTree from '../../../../lib/swap/SwapTree';
+import { slip77 } from '../../../unit/Utils';
 import {
   createSwapOutput,
   destinationOutput,
   elementsClient,
-  init as utilsInit,
   refundSwap,
+  init as utilsInit,
 } from '../../Utils';
 
 describe.each`

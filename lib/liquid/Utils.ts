@@ -1,4 +1,4 @@
-import { confidential, TxOutput } from 'liquidjs-lib';
+import { TxOutput, confidential } from 'liquidjs-lib';
 import { confidentialLiquid } from './init';
 
 export const getOutputValue = (

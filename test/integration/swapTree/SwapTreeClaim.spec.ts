@@ -1,5 +1,10 @@
-import { randomBytes } from 'crypto';
 import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import { randomBytes } from 'crypto';
+import { OutputType, constructClaimTransaction } from '../../../lib/Boltz';
+import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
+import swapTree from '../../../lib/swap/SwapTree';
+import { hashForWitnessV1 } from '../../../lib/swap/TaprootUtils';
+import { ECPair } from '../../unit/Utils';
 import {
   bitcoinClient,
   claimSwap,
@@ -7,11 +12,6 @@ import {
   destinationOutput,
   init,
 } from '../Utils';
-import { ECPair } from '../../unit/Utils';
-import swapTree from '../../../lib/swap/SwapTree';
-import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
-import { hashForWitnessV1 } from '../../../lib/swap/TaprootUtils';
-import { constructClaimTransaction, OutputType } from '../../../lib/Boltz';
 
 describe.each`
   name                 | treeFunc

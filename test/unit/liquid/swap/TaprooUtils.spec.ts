@@ -1,18 +1,15 @@
-import { randomBytes } from 'crypto';
 import ops from '@boltz/bitcoin-ops';
-import * as ecc from 'tiny-secp256k1';
-import { initEccLib } from 'bitcoinjs-lib';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { Taptree } from 'bitcoinjs-lib/src/types';
+import { initEccLib } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { Taptree } from 'bitcoinjs-lib/src/types';
+import { randomBytes } from 'crypto';
 import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341';
-import { ECPair } from '../../Utils';
-import { init } from '../../../../lib/liquid';
-import Musig from '../../../../lib/musig/Musig';
-import { secp } from '../../../../lib/liquid/init';
+import * as ecc from 'tiny-secp256k1';
 import { getHexBuffer } from '../../../../lib/Utils';
 import { Tapleaf } from '../../../../lib/consts/Types';
-import { createLeaf } from '../../../../lib/swap/TaprootUtils';
+import { init } from '../../../../lib/liquid';
+import { secp } from '../../../../lib/liquid/init';
 import {
   createControlBlock,
   tapLeafHash,
@@ -20,6 +17,9 @@ import {
   toHashTree,
   tweakMusig,
 } from '../../../../lib/liquid/swap/TaprooUtils';
+import Musig from '../../../../lib/musig/Musig';
+import { createLeaf } from '../../../../lib/swap/TaprootUtils';
+import { ECPair } from '../../Utils';
 
 describe('TaprootUtils', () => {
   const key = ECPair.fromPrivateKey(

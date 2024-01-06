@@ -1,21 +1,21 @@
-import { randomBytes } from 'crypto';
-import * as ecc from 'tiny-secp256k1';
 import { crypto, initEccLib } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { ECPair } from '../Utils';
+import { randomBytes } from 'crypto';
+import * as ecc from 'tiny-secp256k1';
 import { getHexBuffer } from '../../../lib/Utils';
-import swapTree from '../../../lib/swap/SwapTree';
-import swapScript from '../../../lib/swap/SwapScript';
 import { OutputType } from '../../../lib/consts/Enums';
-import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
-import { detectPreimage } from '../../../lib/swap/PreimageDetector';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
+import { detectPreimage } from '../../../lib/swap/PreimageDetector';
 import reverseSwapScript from '../../../lib/swap/ReverseSwapScript';
+import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
 import {
   outputFunctionForType,
   p2trOutput,
   p2wpkhOutput,
 } from '../../../lib/swap/Scripts';
+import swapScript from '../../../lib/swap/SwapScript';
+import swapTree from '../../../lib/swap/SwapTree';
+import { ECPair } from '../Utils';
 
 describe('PreimageDetector', () => {
   beforeAll(() => {

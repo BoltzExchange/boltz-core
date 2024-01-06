@@ -1,36 +1,36 @@
-import { init } from './init';
-import Musig from './musig/Musig';
-import * as Types from './consts/Types';
+import ERC20ABI from '../out/ERC20.sol/ERC20.json';
+import ERC20SwapABI from '../out/ERC20Swap.sol/ERC20Swap.json';
+import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json';
 import { targetFee } from './TargetFee';
-import Networks from './consts/Networks';
-import * as Scripts from './swap/Scripts';
-import swapScript from './swap/SwapScript';
 import { OutputType } from './consts/Enums';
-import * as SwapUtils from './swap/SwapUtils';
-import { detectSwap } from './swap/SwapDetector';
-import * as TaprootUtils from './swap/TaprootUtils';
-import reverseSwapScript from './swap/ReverseSwapScript';
-import { constructClaimTransaction } from './swap/Claim';
-import { detectPreimage } from './swap/PreimageDetector';
-import { constructRefundTransaction } from './swap/Refund';
-import * as SwapTreeSerializer from './swap/SwapTreeSerializer';
-import swapTree, {
-  extractClaimPublicKeyFromSwapTree,
-  extractRefundPublicKeyFromSwapTree,
-} from './swap/SwapTree';
-import reverseSwapTree, {
-  extractClaimPublicKeyFromReverseSwapTree,
-  extractRefundPublicKeyFromReverseSwapTree,
-} from './swap/ReverseSwapTree';
+import Networks from './consts/Networks';
+import * as Types from './consts/Types';
 import {
   ClaimDetails,
   RefundDetails,
   ScriptElement,
   TransactionOutput,
 } from './consts/Types';
-import ERC20ABI from '../out/ERC20.sol/ERC20.json';
-import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json';
-import ERC20SwapABI from '../out/ERC20Swap.sol/ERC20Swap.json';
+import { init } from './init';
+import Musig from './musig/Musig';
+import { constructClaimTransaction } from './swap/Claim';
+import { detectPreimage } from './swap/PreimageDetector';
+import { constructRefundTransaction } from './swap/Refund';
+import reverseSwapScript from './swap/ReverseSwapScript';
+import reverseSwapTree, {
+  extractClaimPublicKeyFromReverseSwapTree,
+  extractRefundPublicKeyFromReverseSwapTree,
+} from './swap/ReverseSwapTree';
+import * as Scripts from './swap/Scripts';
+import { detectSwap } from './swap/SwapDetector';
+import swapScript from './swap/SwapScript';
+import swapTree, {
+  extractClaimPublicKeyFromSwapTree,
+  extractRefundPublicKeyFromSwapTree,
+} from './swap/SwapTree';
+import * as SwapTreeSerializer from './swap/SwapTreeSerializer';
+import * as SwapUtils from './swap/SwapUtils';
+import * as TaprootUtils from './swap/TaprootUtils';
 
 const ContractABIs = {
   ERC20: ERC20ABI.abi,

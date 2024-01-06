@@ -1,7 +1,7 @@
 import ops from '@boltz/bitcoin-ops';
-import { crypto, Transaction } from 'bitcoinjs-lib';
-import { OutputType } from '../../../lib/consts/Enums';
+import { Transaction, crypto } from 'bitcoinjs-lib';
 import { getHexBuffer, getHexString } from '../../../lib/Utils';
+import { OutputType } from '../../../lib/consts/Enums';
 import {
   p2pkhOutput,
   p2shOutput,

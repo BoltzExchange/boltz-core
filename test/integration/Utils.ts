@@ -1,48 +1,48 @@
-import { randomBytes } from 'crypto';
-import * as ecc from 'tiny-secp256k1';
-import { ECPairInterface } from 'ecpair';
 import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import {
+  Transaction,
+  TxOutput,
   address,
   crypto,
   initEccLib,
-  Transaction,
-  TxOutput,
 } from 'bitcoinjs-lib';
+import { randomBytes } from 'crypto';
+import { ECPairInterface } from 'ecpair';
 import {
-  address as liquidAddress,
   Transaction as LiquidTransaction,
   TxOutput as LiquidTxOutput,
+  address as liquidAddress,
 } from 'liquidjs-lib';
-import ChainClient from './utils/ChainClient';
-import Musig from '../../lib/musig/Musig';
-import { ECPair, slip77 } from '../unit/Utils';
-import swapTree from '../../lib/swap/SwapTree';
-import swapScript from '../../lib/swap/SwapScript';
-import ElementsClient from './liquid/utils/ElementsClient';
-import { tweakMusig } from '../../lib/swap/TaprootUtils';
-import { tweakMusig as liquidTweakMusig } from '../../lib/liquid/swap/TaprooUtils';
+import * as ecc from 'tiny-secp256k1';
+import {
+  Networks,
+  OutputType,
+  constructClaimTransaction,
+  constructRefundTransaction,
+  detectSwap,
+  targetFee,
+} from '../../lib/Boltz';
 import { ClaimDetails, RefundDetails, SwapTree } from '../../lib/consts/Types';
 import {
+  LiquidClaimDetails,
+  Networks as LiquidNetworks,
+  LiquidRefundDetails,
   constructClaimTransaction as liquidConstructClaimTransaction,
   constructRefundTransaction as liquidConstructRefundTransaction,
-  LiquidClaimDetails,
-  LiquidRefundDetails,
-  Networks as LiquidNetworks,
 } from '../../lib/liquid';
+import { tweakMusig as liquidTweakMusig } from '../../lib/liquid/swap/TaprooUtils';
+import Musig from '../../lib/musig/Musig';
 import {
   outputFunctionForType,
   p2trOutput,
   p2wpkhOutput,
 } from '../../lib/swap/Scripts';
-import {
-  constructClaimTransaction,
-  constructRefundTransaction,
-  detectSwap,
-  Networks,
-  OutputType,
-  targetFee,
-} from '../../lib/Boltz';
+import swapScript from '../../lib/swap/SwapScript';
+import swapTree from '../../lib/swap/SwapTree';
+import { tweakMusig } from '../../lib/swap/TaprootUtils';
+import { ECPair, slip77 } from '../unit/Utils';
+import ElementsClient from './liquid/utils/ElementsClient';
+import ChainClient from './utils/ChainClient';
 
 let secp: Secp256k1ZKP;
 

@@ -1,9 +1,9 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { getHexBuffer } from '../../../../lib/Utils';
-import { liquidClaimDetailsMap } from './ClaimDetails';
 import { OutputType } from '../../../../lib/consts/Enums';
 import { LiquidClaimDetails } from '../../../../lib/liquid';
 import { constructClaimTransaction, init } from '../../../../lib/liquid';
+import { liquidClaimDetailsMap } from './ClaimDetails';
 
 describe('Liquid Claim', () => {
   const testClaim = (utxos: LiquidClaimDetails[], fee: number) => {

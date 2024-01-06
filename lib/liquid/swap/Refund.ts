@@ -1,9 +1,9 @@
 import { Transaction } from 'liquidjs-lib';
-import { getHexBuffer } from '../../Utils';
-import { constructClaimTransaction } from './Claim';
-import { LiquidClaimDetails, LiquidRefundDetails } from '../consts/Types';
 import { Network } from 'liquidjs-lib/src/networks';
+import { getHexBuffer } from '../../Utils';
 import Networks from '../consts/Networks';
+import { LiquidClaimDetails, LiquidRefundDetails } from '../consts/Types';
+import { constructClaimTransaction } from './Claim';
 
 const dummyPreimage = getHexBuffer('0x00');
 

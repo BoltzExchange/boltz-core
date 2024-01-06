@@ -1,8 +1,8 @@
-import { ECPair } from '../../unit/Utils';
-import swapTree from '../../../lib/swap/SwapTree';
 import { OutputType } from '../../../lib/consts/Enums';
-import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils';
 import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
+import swapTree from '../../../lib/swap/SwapTree';
+import { ECPair } from '../../unit/Utils';
+import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils';
 
 describe.each`
   name                 | treeFunc

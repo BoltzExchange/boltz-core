@@ -1,11 +1,11 @@
-import { randomBytes } from 'crypto';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { ECPair } from '../Utils';
+import { randomBytes } from 'crypto';
 import {
   extractClaimPublicKeyFromReverseSwapTree,
   extractRefundPublicKeyFromReverseSwapTree,
   reverseSwapTree,
 } from '../../../lib/Boltz';
+import { ECPair } from '../Utils';
 
 describe('ReverseSwapTree', () => {
   test('should extract claim public key from swap tree', () => {

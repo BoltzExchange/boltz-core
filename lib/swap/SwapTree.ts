@@ -1,8 +1,8 @@
 import ops from '@boltz/bitcoin-ops';
 import { crypto, script } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { encodeCltv } from './SwapUtils';
 import { SwapTree } from '../consts/Types';
+import { encodeCltv } from './SwapUtils';
 import { createLeaf, swapLeafsToTree } from './TaprootUtils';
 
 export const createRefundLeaf = (

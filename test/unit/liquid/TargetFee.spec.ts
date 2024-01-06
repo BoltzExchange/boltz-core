@@ -1,9 +1,9 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { confidential, Transaction } from 'liquidjs-lib';
-import { getHexBuffer } from '../../../lib/Utils';
+import { Transaction, confidential } from 'liquidjs-lib';
 import { targetFee } from '../../../lib/TargetFee';
-import { liquidClaimDetails } from './swap/ClaimDetails';
+import { getHexBuffer } from '../../../lib/Utils';
 import { constructClaimTransaction, init } from '../../../lib/liquid';
+import { liquidClaimDetails } from './swap/ClaimDetails';
 
 describe('Liquid TargetFee', () => {
   beforeAll(async () => {

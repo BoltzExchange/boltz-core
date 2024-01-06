@@ -1,13 +1,13 @@
+import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import { Transaction, address, initEccLib } from 'bitcoinjs-lib';
 import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';
-import { address, initEccLib, Transaction } from 'bitcoinjs-lib';
-import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { bitcoinClient } from '../Utils';
-import { ECPair } from '../../unit/Utils';
-import Musig from '../../../lib/musig/Musig';
 import { Networks } from '../../../lib/Boltz';
 import { getHexBuffer } from '../../../lib/Utils';
+import Musig from '../../../lib/musig/Musig';
 import { p2trOutput } from '../../../lib/swap/Scripts';
+import { ECPair } from '../../unit/Utils';
+import { bitcoinClient } from '../Utils';
 
 describe('Musig', () => {
   let secp: Secp256k1ZKP;

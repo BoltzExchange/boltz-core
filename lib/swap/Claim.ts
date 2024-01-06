@@ -1,12 +1,11 @@
 /**
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
-
-import * as bip65 from 'bip65';
 import ops from '@boltz/bitcoin-ops';
-import * as varuint from 'varuint-bitcoin';
-import { crypto, script, Transaction } from 'bitcoinjs-lib';
+import * as bip65 from 'bip65';
+import { Transaction, crypto, script } from 'bitcoinjs-lib';
 import { tapleafHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341';
+import * as varuint from 'varuint-bitcoin';
 import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
 import { ClaimDetails } from '../consts/Types';

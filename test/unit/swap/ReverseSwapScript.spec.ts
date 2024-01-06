@@ -1,4 +1,4 @@
-import { getHexString, getHexBuffer } from '../../../lib/Utils';
+import { getHexBuffer, getHexString } from '../../../lib/Utils';
 import reverseSwapScript from '../../../lib/swap/ReverseSwapScript';
 
 describe('ReverseSwapScript', () => {

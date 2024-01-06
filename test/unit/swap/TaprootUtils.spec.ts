@@ -1,23 +1,22 @@
 import ops from '@boltz/bitcoin-ops';
-import { randomBytes } from 'crypto';
-import * as ecc from 'tiny-secp256k1';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { Taptree } from 'bitcoinjs-lib/src/types';
-import { initEccLib, Transaction } from 'bitcoinjs-lib';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { Transaction, initEccLib } from 'bitcoinjs-lib';
 import {
-  findScriptPath,
   LEAF_VERSION_TAPSCRIPT,
-  tapleafHash,
+  findScriptPath,
   tapTweakHash,
+  tapleafHash,
   toHashTree,
   tweakKey,
 } from 'bitcoinjs-lib/src/payments/bip341';
-import { ECPair } from '../Utils';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { Taptree } from 'bitcoinjs-lib/src/types';
+import { randomBytes } from 'crypto';
+import * as ecc from 'tiny-secp256k1';
+import { RefundDetails, Tapleaf } from '../../../lib/consts/Types';
 import Musig from '../../../lib/musig/Musig';
 import { p2trOutput } from '../../../lib/swap/Scripts';
 import { toPushdataScript } from '../../../lib/swap/SwapUtils';
-import { RefundDetails, Tapleaf } from '../../../lib/consts/Types';
 import {
   createControlBlock,
   createLeaf,
@@ -26,6 +25,7 @@ import {
   swapLeafsToTree,
   tweakMusig,
 } from '../../../lib/swap/TaprootUtils';
+import { ECPair } from '../Utils';
 
 describe('TaprootUtils', () => {
   const taptree: Taptree = [

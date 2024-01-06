@@ -1,18 +1,18 @@
+import { Transaction } from 'bitcoinjs-lib';
 import {
-  findScriptPath,
   HashTree,
   LEAF_VERSION_TAPSCRIPT,
-  tapleafHash,
+  findScriptPath,
   tapTweakHash,
+  tapleafHash,
   toHashTree,
   tweakKey,
 } from 'bitcoinjs-lib/src/payments/bip341';
-import { Transaction } from 'bitcoinjs-lib';
-import { Taptree } from 'bitcoinjs-lib/src/types';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { Taptree } from 'bitcoinjs-lib/src/types';
+import { RefundDetails, ScriptElement, Tapleaf } from '../consts/Types';
 import Musig from '../musig/Musig';
 import { toPushdataScript } from './SwapUtils';
-import { RefundDetails, ScriptElement, Tapleaf } from '../consts/Types';
 
 export const leafVersionLiquid = 196;
 

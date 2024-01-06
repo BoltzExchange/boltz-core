@@ -1,10 +1,9 @@
 /**
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
-
 import ops from '@boltz/bitcoin-ops';
 import { crypto } from 'bitcoinjs-lib';
-import { toPushdataScript, encodeCltv } from './SwapUtils';
+import { encodeCltv, toPushdataScript } from './SwapUtils';
 
 /**
  * Generate a swap redeem script

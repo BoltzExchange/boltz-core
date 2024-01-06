@@ -1,9 +1,9 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { slip77 } from '../../../unit/Utils';
-import { init } from '../../../../lib/liquid';
-import { OutputType } from '../../../../lib/consts/Enums';
-import { LiquidClaimDetails } from '../../../../lib/liquid';
 import { reverseSwapScript, swapScript } from '../../../../lib/Boltz';
+import { OutputType } from '../../../../lib/consts/Enums';
+import { init } from '../../../../lib/liquid';
+import { LiquidClaimDetails } from '../../../../lib/liquid';
+import { slip77 } from '../../../unit/Utils';
 import {
   createSwapOutput,
   destinationOutput,

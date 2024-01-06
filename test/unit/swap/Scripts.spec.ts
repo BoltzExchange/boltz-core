@@ -1,6 +1,6 @@
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { OutputType } from '../../../lib/consts/Enums';
 import { getHexBuffer, getHexString } from '../../../lib/Utils';
+import { OutputType } from '../../../lib/consts/Enums';
 import {
   outputFunctionForType,
   p2pkhOutput,

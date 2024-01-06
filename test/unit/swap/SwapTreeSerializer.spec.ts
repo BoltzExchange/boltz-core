@@ -1,10 +1,10 @@
-import { ECPair } from '../Utils';
-import swapTree from '../../../lib/swap/SwapTree';
 import { getHexBuffer } from '../../../lib/Utils';
+import swapTree from '../../../lib/swap/SwapTree';
 import {
   deserializeSwapTree,
   serializeSwapTree,
 } from '../../../lib/swap/SwapTreeSerializer';
+import { ECPair } from '../Utils';
 
 describe('SwapTreeSerializer', () => {
   const createTree = (isLiquid: boolean) =>

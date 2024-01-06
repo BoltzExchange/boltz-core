@@ -1,18 +1,18 @@
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { crypto } from 'bitcoinjs-lib';
 import { confidential } from 'liquidjs-lib';
-import zkp from '@vulpemventures/secp256k1-zkp';
-import { ECPair } from '../../Utils';
-import { lbtcRegtest, nonce } from './ClaimDetails';
 import { getHexBuffer } from '../../../../lib/Utils';
-import swapScript from '../../../../lib/swap/SwapScript';
 import { OutputType } from '../../../../lib/consts/Enums';
+import { constructClaimTransaction, init } from '../../../../lib/liquid';
 import { detectPreimage } from '../../../../lib/swap/PreimageDetector';
 import reverseSwapScript from '../../../../lib/swap/ReverseSwapScript';
-import { constructClaimTransaction, init } from '../../../../lib/liquid';
 import {
-  p2wpkhOutput,
   outputFunctionForType,
+  p2wpkhOutput,
 } from '../../../../lib/swap/Scripts';
+import swapScript from '../../../../lib/swap/SwapScript';
+import { ECPair } from '../../Utils';
+import { lbtcRegtest, nonce } from './ClaimDetails';
 
 describe('Liquid PreimageDetector', () => {
   const claimKeys = ECPair.makeRandom();

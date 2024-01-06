@@ -1,32 +1,32 @@
 import ops from '@boltz/bitcoin-ops';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import {
   Blinder,
   Creator,
   CreatorInput,
   CreatorOutput,
-  crypto,
   Extractor,
   Finalizer,
   Pset,
-  script,
   Signer,
   Transaction,
   Updater,
-  witnessStackToScriptWitness,
   ZKPGenerator,
   ZKPValidator,
+  crypto,
+  script,
+  witnessStackToScriptWitness,
 } from 'liquidjs-lib';
-import { Network } from 'liquidjs-lib/src/networks';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
-import { ecpair, secp } from '../init';
-import Networks from '../consts/Networks';
-import { getOutputValue } from '../Utils';
+import { Network } from 'liquidjs-lib/src/networks';
 import { getHexString } from '../../Utils';
 import { OutputType } from '../../consts/Enums';
 import { validateInputs } from '../../swap/Claim';
-import { LiquidClaimDetails } from '../consts/Types';
 import { scriptBuffersToScript } from '../../swap/SwapUtils';
+import { getOutputValue } from '../Utils';
+import Networks from '../consts/Networks';
+import { LiquidClaimDetails } from '../consts/Types';
+import { ecpair, secp } from '../init';
 import { createControlBlock, tapLeafHash, toHashTree } from './TaprooUtils';
 
 const dummyTaprootSignature = Buffer.alloc(64);

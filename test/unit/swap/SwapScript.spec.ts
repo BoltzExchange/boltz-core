@@ -1,5 +1,5 @@
+import { getHexBuffer, getHexString } from '../../../lib/Utils';
 import swapScript from '../../../lib/swap/SwapScript';
-import { getHexString, getHexBuffer } from '../../../lib/Utils';
 
 describe('SwapScript', () => {
   test('should get a swap script', () => {

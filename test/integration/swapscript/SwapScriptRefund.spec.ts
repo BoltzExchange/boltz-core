@@ -1,5 +1,5 @@
-import swapTree from '../../../lib/swap/SwapTree';
 import { OutputType, swapScript } from '../../../lib/Boltz';
+import swapTree from '../../../lib/swap/SwapTree';
 import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils';
 
 describe('SwapScript refund', () => {

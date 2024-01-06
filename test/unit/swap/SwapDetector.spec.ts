@@ -1,16 +1,16 @@
+import { Transaction, script as bitcoinScript, crypto } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { crypto, script as bitcoinScript, Transaction } from 'bitcoinjs-lib';
-import { ECPair } from '../Utils';
-import swapScript from '../../../lib/swap/SwapScript';
+import { randomBytes } from 'crypto';
 import { OutputType } from '../../../lib/consts/Enums';
-import { detectSwap } from '../../../lib/swap/SwapDetector';
 import reverseSwapScript from '../../../lib/swap/ReverseSwapScript';
 import {
   outputFunctionForType,
   p2pkhOutput,
   p2trOutput,
 } from '../../../lib/swap/Scripts';
-import { randomBytes } from 'crypto';
+import { detectSwap } from '../../../lib/swap/SwapDetector';
+import swapScript from '../../../lib/swap/SwapScript';
+import { ECPair } from '../Utils';
 
 describe('SwapDetector', () => {
   test.each`

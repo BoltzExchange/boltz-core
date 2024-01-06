@@ -1,8 +1,8 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address } from 'liquidjs-lib';
-import { elementsClient } from '../Utils';
 import { getHexBuffer } from '../../../lib/Utils';
 import { getOutputValue, init } from '../../../lib/liquid';
+import { elementsClient } from '../Utils';
 
 describe('Liquid Utils', () => {
   beforeAll(async () => {

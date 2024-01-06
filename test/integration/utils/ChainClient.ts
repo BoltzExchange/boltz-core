@@ -1,5 +1,5 @@
-import RpcClient from './RpcClient';
 import { OutputType } from '../../../lib/Boltz';
+import RpcClient from './RpcClient';
 
 type ChainConfig = {
   host: string;

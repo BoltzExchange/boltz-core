@@ -1,15 +1,15 @@
-import { confidential, Transaction } from 'liquidjs-lib';
-import { crypto, script as bitcoinScript } from 'bitcoinjs-lib';
-import { ECPair } from '../../Utils';
-import { lbtcRegtest, nonce } from './ClaimDetails';
-import swapScript from '../../../../lib/swap/SwapScript';
+import { script as bitcoinScript, crypto } from 'bitcoinjs-lib';
+import { Transaction, confidential } from 'liquidjs-lib';
 import { OutputType } from '../../../../lib/consts/Enums';
-import { detectSwap } from '../../../../lib/swap/SwapDetector';
 import reverseSwapScript from '../../../../lib/swap/ReverseSwapScript';
 import {
   outputFunctionForType,
   p2pkhOutput,
 } from '../../../../lib/swap/Scripts';
+import { detectSwap } from '../../../../lib/swap/SwapDetector';
+import swapScript from '../../../../lib/swap/SwapScript';
+import { ECPair } from '../../Utils';
+import { lbtcRegtest, nonce } from './ClaimDetails';
 
 describe('Liquid SwapDetector', () => {
   test.each`

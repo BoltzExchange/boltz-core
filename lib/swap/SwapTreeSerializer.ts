@@ -1,6 +1,6 @@
-import { swapLeafsToTree } from './TaprootUtils';
-import { SwapTree, Tapleaf } from '../consts/Types';
 import { getHexBuffer, getHexString } from '../Utils';
+import { SwapTree, Tapleaf } from '../consts/Types';
+import { swapLeafsToTree } from './TaprootUtils';
 
 type SerializedLeaf = {
   version: number;

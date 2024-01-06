@@ -1,8 +1,8 @@
-import { randomBytes } from 'crypto';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { ECPair } from '../Utils';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { randomBytes } from 'crypto';
 import Musig from '../../../lib/musig/Musig';
+import { ECPair } from '../Utils';
 
 describe('Musig', () => {
   let secp: Secp256k1ZKP;
