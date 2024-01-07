@@ -1,6 +1,6 @@
 import { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { ECPairInterface } from 'ecpair';
-import { getHexString } from '../Utils';
+import { getHexBuffer, getHexString } from '../Utils';
 
 class Musig {
   private readonly pubkeyAgg: {
@@ -42,6 +42,8 @@ class Musig {
     this.nonce = this.secp.musig.nonceGen(sessionId, this.key.publicKey);
     this.partialSignatures = Array(publicKeys.length).fill(null);
   }
+
+  public static parsePubNonce = (nonce: string) => getHexBuffer(nonce);
 
   public numParticipants = (): number => {
     return this.publicKeys.length;
