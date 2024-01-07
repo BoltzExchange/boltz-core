@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2024-01-07
+
+### Features
+
+- Musig nonce parser
+
+### Miscellaneous Tasks
+
+- Update CHANGELOG.md for v2.0.0
+- Bump version to v2.0.1
+
 ## [2.0.0] - 2024-01-06
 
 ### Features
