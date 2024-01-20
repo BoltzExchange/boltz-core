@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.2] - 2024-01-20
+
+### Bug Fixes
+
+- Nonce aggregation in browser
+
+### Miscellaneous Tasks
+
+- Update CHANGELOG.md for v2.0.1
+- Bump version to v2.0.2
+
 ## [2.0.1] - 2024-01-07
 
 ### Features
