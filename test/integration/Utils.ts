@@ -207,9 +207,8 @@ export const createSwapOutput = async <
 
   const isBitcoin = confidential === undefined;
 
-  const { blocks } = await (isBitcoin
-    ? bitcoinClient
-    : elementsClient
+  const { blocks } = await (
+    isBitcoin ? bitcoinClient : elementsClient
   ).getBlockchainInfo();
 
   const timeout = timeoutBlockHeight || blocks + 1;
