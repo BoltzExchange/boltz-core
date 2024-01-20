@@ -73,7 +73,7 @@ class Musig {
     }
 
     const myNonceIndex = nonces.findIndex((nonce) =>
-      Buffer.from(this.nonce.pubNonce).equals(nonce),
+      Buffer.from(this.nonce.pubNonce).equals(Buffer.from(nonce)),
     );
     if (myNonceIndex !== this.myIndex) {
       throw 'our nonce is at incorrect index';
