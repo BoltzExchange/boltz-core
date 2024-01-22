@@ -1,9 +1,9 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { OutputType } from '../../../../lib/consts/Enums';
-import { init } from '../../../../lib/liquid';
+import { LiquidClaimDetails, init } from '../../../../lib/liquid';
 import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../../lib/swap/SwapTree';
-import { slip77 } from '../../../unit/Utils';
+import { ECPair, slip77 } from '../../../unit/Utils';
 import {
   createSwapOutput,
   destinationOutput,
@@ -25,6 +25,10 @@ describe.each`
 `(
   '$name refund (inputs blinded $blindInputs; output blinded $blindOutput)',
   ({ treeFunc, blindInputs, blindOutput }) => {
+    const blindingKey = blindOutput
+      ? slip77.derive(destinationOutput).publicKey!
+      : undefined;
+
     beforeAll(async () => {
       init(await zkp());
       await Promise.all([utilsInit(), elementsClient.init()]);
@@ -36,18 +40,48 @@ describe.each`
 
     test('should refund via script path', async () => {
       const timeout = (await elementsClient.getBlockchainInfo()).blocks;
-      const { utxo } = await createSwapOutput(
+      const { utxo } = await createSwapOutput<LiquidClaimDetails>(
         OutputType.Taproot,
         true,
         treeFunc,
         timeout,
         blindInputs,
       );
-      await refundSwap(
-        [utxo],
-        timeout,
-        blindOutput ? slip77.derive(destinationOutput).publicKey! : undefined,
+      await refundSwap([utxo], timeout, blindingKey);
+    });
+
+    test('should not refund via script path when timelock is not reached', async () => {
+      const timeout = (await elementsClient.getBlockchainInfo()).blocks;
+      const { utxo } = await createSwapOutput<LiquidClaimDetails>(
+        OutputType.Taproot,
+        true,
+        treeFunc,
+        timeout + 21,
+        blindInputs,
       );
+
+      await expect(refundSwap([utxo], timeout, blindingKey)).rejects.toEqual({
+        code: -26,
+        message:
+          'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
+      });
+    });
+
+    test('should not refund via script path when refund key is invalid', async () => {
+      const timeout = (await elementsClient.getBlockchainInfo()).blocks;
+      const { utxo } = await createSwapOutput<LiquidClaimDetails>(
+        OutputType.Taproot,
+        true,
+        treeFunc,
+        timeout,
+        blindInputs,
+      );
+      utxo.keys = ECPair.makeRandom();
+
+      await expect(refundSwap([utxo], timeout, blindingKey)).rejects.toEqual({
+        code: -26,
+        message: 'non-mandatory-script-verify-flag (Invalid Schnorr signature)',
+      });
     });
   },
 );

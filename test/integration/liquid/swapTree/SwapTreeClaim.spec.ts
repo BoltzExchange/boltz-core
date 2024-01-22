@@ -10,7 +10,7 @@ import {
 import { hashForWitnessV1 } from '../../../../lib/liquid/swap/TaprooUtils';
 import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../../lib/swap/SwapTree';
-import { slip77 } from '../../../unit/Utils';
+import { ECPair, slip77 } from '../../../unit/Utils';
 import {
   claimSwap,
   createSwapOutput,
@@ -105,6 +105,39 @@ describe.each`
         blindInputs,
       );
       await claimSwap([utxo], blindingKey);
+    });
+
+    test('should not claim via script path when preimage is invalid', async () => {
+      const { utxo } = await createSwapOutput<LiquidClaimDetails>(
+        OutputType.Taproot,
+        false,
+        treeFunc,
+        undefined,
+        blindInputs,
+      );
+      utxo.preimage = randomBytes(32);
+
+      await expect(claimSwap([utxo], blindingKey)).rejects.toEqual({
+        code: -26,
+        message:
+          'non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation)',
+      });
+    });
+
+    test('should not claim via script path when claim key is invalid', async () => {
+      const { utxo } = await createSwapOutput<LiquidClaimDetails>(
+        OutputType.Taproot,
+        false,
+        treeFunc,
+        undefined,
+        blindInputs,
+      );
+      utxo.keys = ECPair.makeRandom();
+
+      await expect(claimSwap([utxo], blindingKey)).rejects.toEqual({
+        code: -26,
+        message: 'non-mandatory-script-verify-flag (Invalid Schnorr signature)',
+      });
     });
   },
 );
