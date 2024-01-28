@@ -72,16 +72,9 @@ const sendFundsToOutput = async <
   let blindingPrivateKey: Buffer | undefined;
 
   if (confidential) {
-    const slip = slip77.derive(outputScript);
-    blindingPrivateKey = slip.privateKey;
-
-    const dec = liquidAddress.fromBech32(swapAddress);
-    swapAddress = liquidAddress.toBlech32(
-      Buffer.concat([Buffer.from([dec.version, dec.data.length]), dec.data]),
-      slip.publicKey!,
-      LiquidNetworks.liquidRegtest.blech32,
-      outputType === OutputType.Bech32 ? 0 : 1,
-    );
+    const enc = blindWitnessAddress(swapAddress, outputType);
+    swapAddress = enc.address;
+    blindingPrivateKey = enc.blindingKey.privateKey;
   }
 
   const chainClient = isBitcoin ? bitcoinClient : elementsClient;
@@ -121,6 +114,24 @@ export const destinationOutput = p2wpkhOutput(
   crypto.hash160(generateKeys().publicKey!),
 );
 
+export const blindWitnessAddress = (
+  address: string,
+  outputType: OutputType,
+) => {
+  const slip = slip77.derive(liquidAddress.toOutputScript(address));
+  const dec = liquidAddress.fromBech32(address);
+
+  return {
+    blindingKey: slip,
+    address: liquidAddress.toBlech32(
+      Buffer.concat([Buffer.from([dec.version, dec.data.length]), dec.data]),
+      slip.publicKey!,
+      LiquidNetworks.liquidRegtest.blech32,
+      outputType === OutputType.Bech32 ? 0 : 1,
+    ),
+  };
+};
+
 export const claimSwap = async (
   claimDetails: (ClaimDetails | LiquidClaimDetails)[],
   outputBlindingKey?: Buffer,
@@ -153,7 +164,7 @@ export const claimSwap = async (
 };
 
 export const refundSwap = async (
-  refundDetails: (RefundDetails | LiquidRefundDetails)[],
+  refundDetails: (RefundDetails | Omit<LiquidRefundDetails, 'keys'>)[],
   blockHeight: number,
   outputBlindingKey?: Buffer,
 ): Promise<void> => {

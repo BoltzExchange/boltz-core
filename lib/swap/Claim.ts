@@ -14,10 +14,13 @@ import { createControlBlock, hashForWitnessV1 } from './TaprootUtils';
 
 const dummyTaprootSignature = Buffer.alloc(64);
 
-const isRelevantTaprootOutput = (utxo: Omit<ClaimDetails, 'value'>) =>
-  utxo.type === OutputType.Taproot && utxo.cooperative !== true;
+export const isRelevantTaprootOutput = (
+  utxo: Omit<ClaimDetails, 'value' | 'keys'>,
+) => utxo.type === OutputType.Taproot && utxo.cooperative !== true;
 
-export const validateInputs = (utxos: Omit<ClaimDetails, 'value'>[]) => {
+export const validateInputs = (
+  utxos: Omit<ClaimDetails, 'value' | 'keys'>[],
+) => {
   if (
     utxos
       .filter((utxo) => utxo.type !== OutputType.Taproot)
