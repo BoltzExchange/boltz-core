@@ -16,7 +16,7 @@ import {
   tapTweakHash,
   toHashTree,
   tweakMusig,
-} from '../../../../lib/liquid/swap/TaprooUtils';
+} from '../../../../lib/liquid/swap/TaprootUtils';
 import Musig from '../../../../lib/musig/Musig';
 import { createLeaf } from '../../../../lib/swap/TaprootUtils';
 import { ECPair } from '../../Utils';

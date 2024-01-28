@@ -7,7 +7,7 @@ import {
   constructClaimTransaction,
   init,
 } from '../../../../lib/liquid';
-import { hashForWitnessV1 } from '../../../../lib/liquid/swap/TaprooUtils';
+import { hashForWitnessV1 } from '../../../../lib/liquid/swap/TaprootUtils';
 import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../../lib/swap/SwapTree';
 import { ECPair, slip77 } from '../../../unit/Utils';

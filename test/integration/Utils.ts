@@ -30,7 +30,7 @@ import {
   constructClaimTransaction as liquidConstructClaimTransaction,
   constructRefundTransaction as liquidConstructRefundTransaction,
 } from '../../lib/liquid';
-import { tweakMusig as liquidTweakMusig } from '../../lib/liquid/swap/TaprooUtils';
+import { tweakMusig as liquidTweakMusig } from '../../lib/liquid/swap/TaprootUtils';
 import Musig from '../../lib/musig/Musig';
 import {
   outputFunctionForType,

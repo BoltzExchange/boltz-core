@@ -27,7 +27,7 @@ import { getOutputValue } from '../Utils';
 import Networks from '../consts/Networks';
 import { LiquidClaimDetails } from '../consts/Types';
 import { ecpair, secp } from '../init';
-import { createControlBlock, tapLeafHash, toHashTree } from './TaprooUtils';
+import { createControlBlock, tapLeafHash, toHashTree } from './TaprootUtils';
 
 const dummyTaprootSignature = Buffer.alloc(64);
 
