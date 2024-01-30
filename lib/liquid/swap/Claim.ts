@@ -194,7 +194,7 @@ export const constructClaimTransaction = (
 
   for (const [i, utxo] of utxos.entries()) {
     if (utxo.type === OutputType.Taproot) {
-      if (utxo.cooperative || (!isRefund && utxo.keys === undefined)) {
+      if (utxo.cooperative || utxo.keys === undefined) {
         signatures.push(dummyTaprootSignature);
         continue;
       }

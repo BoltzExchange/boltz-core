@@ -54,7 +54,8 @@ const createClaimCovenantLeaf = (
 
       claimCovenantOutputIndex,
       liquidOps.OP_INSPECTOUTPUTASSET,
-      ops.OP_DROP,
+      ops.OP_1,
+      ops.OP_EQUALVERIFY,
       reverseBuffer(getHexBuffer(assetHash)),
       ops.OP_EQUALVERIFY,
 
