@@ -1,6 +1,6 @@
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { Taptree, isTapleaf } from 'bitcoinjs-lib/src/types';
-import { Transaction } from 'liquidjs-lib';
+import { Transaction, TxOutput } from 'liquidjs-lib';
 import {
   HashTree,
   TaprootLeaf,
@@ -13,7 +13,6 @@ import { Network } from 'liquidjs-lib/src/networks';
 import { getHexString } from '../../Utils';
 import { Tapleaf } from '../../consts/Types';
 import Musig from '../../musig/Musig';
-import { LiquidRefundDetails } from '../consts/Types';
 import { secp } from '../init';
 
 const convertLeaf = (leaf: Tapleaf) => ({
@@ -23,7 +22,7 @@ const convertLeaf = (leaf: Tapleaf) => ({
 
 export const hashForWitnessV1 = (
   network: Network,
-  details: LiquidRefundDetails[],
+  details: TxOutput[],
   tx: Transaction,
   index: number,
   leafHash?: Buffer,

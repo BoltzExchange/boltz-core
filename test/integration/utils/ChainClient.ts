@@ -1,5 +1,11 @@
-import { OutputType } from '../../../lib/Boltz';
 import RpcClient from './RpcClient';
+
+enum AddressType {
+  Legacy = 'legacy',
+  P2shegwit = 'p2sh-segwit',
+  Bech32 = 'bech32',
+  Taproot = 'bech32m',
+}
 
 type ChainConfig = {
   host: string;
@@ -95,11 +101,8 @@ class ChainClient {
     }
   };
 
-  public getNewAddress = (type = OutputType.Bech32): Promise<string> => {
-    return this.client.request<string>('getnewaddress', [
-      '',
-      this.getAddressType(type),
-    ]);
+  public getNewAddress = (type = AddressType.Bech32): Promise<string> => {
+    return this.client.request<string>('getnewaddress', ['', type]);
   };
 
   public sendToAddress = (address: string, amount: number): Promise<string> => {
@@ -115,18 +118,7 @@ class ChainClient {
       this.miningAddress,
     ]);
   };
-
-  private getAddressType = (type: OutputType): string => {
-    switch (type) {
-      case OutputType.Bech32:
-        return 'bech32';
-      case OutputType.Compatibility:
-        return 'p2sh-segwit';
-      default:
-        return 'legacy';
-    }
-  };
 }
 
 export default ChainClient;
-export { ChainConfig };
+export { ChainConfig, AddressType };

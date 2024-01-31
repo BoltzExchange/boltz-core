@@ -21,13 +21,13 @@ import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
 import { Network } from 'liquidjs-lib/src/networks';
 import { getHexString } from '../../Utils';
 import { OutputType } from '../../consts/Enums';
-import { validateInputs } from '../../swap/Claim';
+import { isRelevantTaprootOutput, validateInputs } from '../../swap/Claim';
 import { scriptBuffersToScript } from '../../swap/SwapUtils';
 import { getOutputValue } from '../Utils';
 import Networks from '../consts/Networks';
 import { LiquidClaimDetails } from '../consts/Types';
 import { ecpair, secp } from '../init';
-import { createControlBlock, tapLeafHash, toHashTree } from './TaprooUtils';
+import { createControlBlock, tapLeafHash, toHashTree } from './TaprootUtils';
 
 const dummyTaprootSignature = Buffer.alloc(64);
 
@@ -35,6 +35,29 @@ const getSighashType = (type: OutputType) =>
   type === OutputType.Taproot
     ? Transaction.SIGHASH_DEFAULT
     : Transaction.SIGHASH_ALL;
+
+const validateLiquidInputs = (
+  utxos: LiquidClaimDetails[],
+  isRefund: boolean,
+) => {
+  validateInputs(utxos);
+
+  const taprootInputs = utxos.filter(isRelevantTaprootOutput);
+
+  if (isRefund && taprootInputs.some((utxo) => utxo.keys === undefined)) {
+    throw 'not all Taproot refund inputs have keys';
+  }
+
+  if (
+    taprootInputs.some(
+      (utxo) =>
+        utxo.keys === undefined &&
+        utxo.swapTree!.covenantClaimLeaf === undefined,
+    )
+  ) {
+    throw 'not all Taproot signature claims have keys';
+  }
+};
 
 /**
  * Claim swaps
@@ -58,7 +81,7 @@ export const constructClaimTransaction = (
   timeoutBlockHeight?: number,
   isRefund = false,
 ): Transaction => {
-  validateInputs(utxos);
+  validateLiquidInputs(utxos, isRefund);
 
   if (
     utxos.some(
@@ -133,10 +156,10 @@ export const constructClaimTransaction = (
     },
   ]);
 
-  const addFeeOutput = () => {
+  const addFeeOutput = (isUnblinded = false) => {
     updater.addOutputs([
       {
-        amount: fee,
+        amount: isUnblinded ? fee - 1 : fee,
         asset: network.assetHash,
       },
     ]);
@@ -149,7 +172,8 @@ export const constructClaimTransaction = (
       pset.addOutput(
         new CreatorOutput(
           network.assetHash,
-          0,
+          // TODO: figure out flakiness with blinding 0 amount outputs
+          1,
           Buffer.of(ops.OP_RETURN),
           ecpair.makeRandom().publicKey,
           0,
@@ -157,7 +181,7 @@ export const constructClaimTransaction = (
       );
     }
 
-    addFeeOutput();
+    addFeeOutput(blindingKey === undefined);
 
     blindPset(pset, utxos);
   } else {
@@ -170,7 +194,7 @@ export const constructClaimTransaction = (
 
   for (const [i, utxo] of utxos.entries()) {
     if (utxo.type === OutputType.Taproot) {
-      if (utxo.cooperative) {
+      if (utxo.cooperative || utxo.keys === undefined) {
         signatures.push(dummyTaprootSignature);
         continue;
       }
@@ -178,7 +202,7 @@ export const constructClaimTransaction = (
       const leafHash = tapLeafHash(
         isRefund ? utxo.swapTree!.refundLeaf : utxo.swapTree!.claimLeaf,
       );
-      const signature = utxo.keys.signSchnorr(
+      const signature = utxo.keys!.signSchnorr(
         pset.getInputPreimage(
           i,
           getSighashType(utxo.type),
@@ -194,7 +218,7 @@ export const constructClaimTransaction = (
           tapScriptSigs: [
             {
               signature: signature,
-              pubkey: toXOnly(utxo.keys.publicKey),
+              pubkey: toXOnly(utxo.keys!.publicKey),
               leafHash,
             },
           ],
@@ -203,7 +227,7 @@ export const constructClaimTransaction = (
       );
     } else {
       const signature = script.signature.encode(
-        utxo.keys.sign(pset.getInputPreimage(i, getSighashType(utxo.type))),
+        utxo.keys!.sign(pset.getInputPreimage(i, getSighashType(utxo.type))),
         getSighashType(utxo.type),
       );
       signatures.push(signature);
@@ -212,7 +236,7 @@ export const constructClaimTransaction = (
         i,
         {
           partialSig: {
-            pubkey: utxo.keys.publicKey,
+            pubkey: utxo.keys!.publicKey,
             signature,
           },
         },
@@ -253,13 +277,19 @@ export const constructClaimTransaction = (
             dummyTaprootSignature,
           ]);
         } else {
+          const isCovenantClaim = utxo.keys === undefined;
+
           const tapleaf = isRefund
             ? utxo.swapTree!.refundLeaf
-            : utxo.swapTree!.claimLeaf;
+            : isCovenantClaim
+              ? utxo.swapTree!.covenantClaimLeaf!
+              : utxo.swapTree!.claimLeaf;
 
           const witness = isRefund
             ? [signatures[i]]
-            : [signatures[i], utxo.preimage];
+            : isCovenantClaim
+              ? [utxo.preimage]
+              : [signatures[i], utxo.preimage];
 
           finals.finalScriptWitness = witnessStackToScriptWitness(
             witness.concat([

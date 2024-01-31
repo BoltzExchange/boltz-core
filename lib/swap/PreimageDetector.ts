@@ -11,8 +11,9 @@ export const detectPreimage = (
 
   // Get the preimage for P2TR, P2WSH and nested P2SH-P2WSH
   if (input.witness.length !== 0) {
-    // The second element of the witness is the preimage
-    return input.witness[1];
+    // The second element of the witness is the preimage for claims with signature
+    // The first element in case of claims with covenant
+    return input.witness[0].length === 32 ? input.witness[0] : input.witness[1];
   } else {
     // Get the preimage of legacy P2SH
     const scriptBuffers = script.decompile(input.script) as (Buffer | number)[];
