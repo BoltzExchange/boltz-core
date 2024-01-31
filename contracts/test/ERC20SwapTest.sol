@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.24;
 
 import "../BadERC20.sol";
 import "../ERC20Swap.sol";
@@ -42,7 +42,7 @@ contract ERC20SwapTest is Test {
 
     function testHashSwapValues() external {
         uint256 timelock = block.number;
-        
+
         assertEq(
             swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock),
             keccak256(abi.encodePacked(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock))
@@ -112,6 +112,23 @@ contract ERC20SwapTest is Test {
 
         vm.prank(claimAddress);
         swap.claim(preimage, lockupAmount, address(token), address(this), timelock);
+
+        assertEq(token.balanceOf(claimAddress), lockupAmount);
+        assertEq(token.balanceOf(address(swap)), 0);
+
+        assertFalse(querySwap(timelock));
+    }
+
+    function testClaimAddress() external {
+        uint256 timelock = block.number;
+
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHash, preimage);
+
+        swap.claim(preimage, lockupAmount, address(token), claimAddress, address(this), timelock);
 
         assertEq(token.balanceOf(claimAddress), lockupAmount);
         assertEq(token.balanceOf(address(swap)), 0);

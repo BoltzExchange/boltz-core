@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.21;
+pragma solidity 0.8.24;
 
 // This token is intentionally not complying to the ERC20 standard so that the ERC20Swap contract
 // can be tested against such non-standardised tokens
