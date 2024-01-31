@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.21;
+pragma solidity 0.8.24;
 
 import "./TransferHelper.sol";
 
@@ -79,15 +79,32 @@ contract EtherSwap {
         address refundAddress,
         uint timelock
     ) external {
+        // Passing "msg.sender" as "claimAddress" to "hashValues" ensures that only the destined address can claim
+        // All other addresses would produce a different hash for which no swap can be found in the "swaps" mapping
+        claim(preimage, amount, msg.sender, refundAddress, timelock);
+    }
+
+    /// Claims Ether locked in the contract for a specified claim address
+    /// @dev To query the arguments of this function, get the "Lockup" event logs for the SHA256 hash of the preimage
+    /// @param preimage Preimage of the swap
+    /// @param amount Amount locked in the contract for the swap in WEI
+    /// @param claimAddress Address to which the claimed funds will be sent
+    /// @param refundAddress Address that locked the Ether in the contract
+    /// @param timelock Block height after which the locked Ether can be refunded
+    function claim(
+        bytes32 preimage,
+        uint amount,
+        address claimAddress,
+        address refundAddress,
+        uint timelock
+    ) public {
         // If the preimage is wrong, so will be its hash which will result in a wrong value hash and no swap being found
         bytes32 preimageHash = sha256(abi.encodePacked(preimage));
 
-        // Passing "msg.sender" as "claimAddress" to "hashValues" ensures that only the destined address can claim
-        // All other addresses would produce a different hash for which no swap can be found in the "swaps" mapping
         bytes32 hash = hashValues(
             preimageHash,
             amount,
-            msg.sender,
+            claimAddress,
             refundAddress,
             timelock
         );
@@ -102,7 +119,7 @@ contract EtherSwap {
         emit Claim(preimageHash, preimage);
 
         // Transfer the Ether to the claim address
-        TransferHelper.transferEther(payable(msg.sender), amount);
+        TransferHelper.transferEther(payable(claimAddress), amount);
     }
 
     /// Refunds Ether locked in the contract

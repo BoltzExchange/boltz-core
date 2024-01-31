@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.24;
 
 import "../EtherSwap.sol";
 import "forge-std/Test.sol";
@@ -37,7 +37,7 @@ contract EtherSwapTest is Test {
 
     function testHashSwapValues() external {
         uint256 timelock = block.number;
-        
+
         assertEq(
             swap.hashValues(preimageHash, lockupAmount, claimAddress, address(this), timelock),
             keccak256(abi.encodePacked(preimageHash, lockupAmount, claimAddress, address(this), timelock))
@@ -51,7 +51,7 @@ contract EtherSwapTest is Test {
 
     function testLock() external {
         uint256 timelock = block.number;
-        
+
         vm.expectEmit(true, true, false, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, claimAddress, address(this), timelock);
 
@@ -94,8 +94,25 @@ contract EtherSwapTest is Test {
 
         vm.expectEmit(true, false, false, true, address(swap));
         emit Claim(preimageHash, preimage);
-        
+
         swap.claim(preimage, lockupAmount, address(this), timelock);
+
+        assertFalse(querySwap(timelock));
+
+        assertEq(address(swap).balance, 0);
+        assertEq(claimAddress.balance - balanceBeforeClaim, lockupAmount);
+    }
+
+    function testClaimAddress() external {
+        uint256 timelock = block.number;
+        uint256 balanceBeforeClaim = claimAddress.balance;
+
+        lock(timelock);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHash, preimage);
+
+        swap.claim(preimage, lockupAmount, claimAddress, address(this), timelock);
 
         assertFalse(querySwap(timelock));
 
@@ -105,7 +122,7 @@ contract EtherSwapTest is Test {
 
     function testClaimTwiceFail() external {
         uint256 timelock = block.number;
-        
+
         lock(timelock);
 
         vm.startPrank(claimAddress);
@@ -140,7 +157,7 @@ contract EtherSwapTest is Test {
 
     function testRefundTwiceFail() external {
         uint256 timelock = block.number;
-        
+
         lock(timelock);
 
         swap.refund(preimageHash, lockupAmount, claimAddress, timelock);
