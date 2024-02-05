@@ -6,10 +6,15 @@ import "./TransferHelper.sol";
 
 // @title Hash timelock contract for ERC20 tokens
 contract ERC20Swap {
-    // State variables
+    // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 constant public version = 2;
+    uint8 constant public version = 3;
+
+    bytes32 immutable public DOMAIN_SEPARATOR;
+    bytes32 immutable public TYPEHASH_REFUND;
+
+    // State variables
 
     /// @dev Mapping between value hashes of swaps and whether they have Ether locked in the contract
     mapping (bytes32 => bool) public swaps;
@@ -29,6 +34,21 @@ contract ERC20Swap {
     event Refund(bytes32 indexed preimageHash);
 
     // Functions
+
+    constructor() {
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("ERC20Swap"),
+                keccak256("3"),
+                block.chainid,
+                address(this)
+            )
+        );
+        TYPEHASH_REFUND = keccak256(
+            "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,uint256 timeout)"
+        );
+    }
 
     // External functions
 
@@ -115,7 +135,7 @@ contract ERC20Swap {
         TransferHelper.safeTransferToken(tokenAddress, claimAddress, amount);
     }
 
-    /// Refunds tokens locked in the contract
+    /// Refunds tokens locked in the contract after the timeout
     /// @dev To query the arguments of this function, get the "Lockup" event logs for your refund address and the preimage hash if you have it
     /// @dev For further explanations and reasoning behind the statements in this function, check the "claim" function
     /// @param preimageHash Preimage hash of the swap
@@ -133,22 +153,54 @@ contract ERC20Swap {
         // Make sure the timelock has expired already
         // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
         require(timelock <= block.number, "ERC20Swap: swap has not timed out yet");
+        refundInternal(preimageHash, amount, tokenAddress, claimAddress, timelock);
+    }
 
-        bytes32 hash = hashValues(
-            preimageHash,
-            amount,
-            tokenAddress,
-            claimAddress,
-            msg.sender,
-            timelock
+    /// Refunds tokens locked in the contract with an EIP-712 signature of the claimAddress
+    /// @dev To query the arguments of this function, get the "Lockup" event logs for your refund address and the preimage hash if you have it
+    /// @dev For further explanations and reasoning behind the statements in this function, check the "claim" function
+    /// @param preimageHash Preimage hash of the swap
+    /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
+    /// @param tokenAddress Address of the token locked for the swap
+    /// @param claimAddress Address that that was destined to claim the funds
+    /// @param timelock Block height after which the locked Ether can be refunded
+    /// @param v final byte of the signature
+    /// @param r second 32 bytes of the signature
+    /// @param r first 32 bytes of the signature
+    function refundCooperative(
+        bytes32 preimageHash,
+        uint amount,
+        address tokenAddress,
+        address claimAddress,
+        uint timelock,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        address recoveredAddress = ecrecover(
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    DOMAIN_SEPARATOR,
+                    keccak256(
+                        abi.encode(
+                            TYPEHASH_REFUND,
+                            preimageHash,
+                            amount,
+                            tokenAddress,
+                            claimAddress,
+                            timelock
+                        )
+                    )
+                )
+            ),
+            v,
+            r,
+            s
         );
+        require(recoveredAddress != address(0) && recoveredAddress == claimAddress, "ERC20Swap: invalid signature");
 
-        checkSwapIsLocked(hash);
-        delete swaps[hash];
-
-        emit Refund(preimageHash);
-
-        TransferHelper.safeTransferToken(tokenAddress, msg.sender, amount);
+        refundInternal(preimageHash, amount, tokenAddress, claimAddress, timelock);
     }
 
     // Public functions
@@ -221,6 +273,30 @@ contract ERC20Swap {
     }
 
     // Private functions
+
+    function refundInternal(
+        bytes32 preimageHash,
+        uint amount,
+        address tokenAddress,
+        address claimAddress,
+        uint timelock
+    ) private {
+        bytes32 hash = hashValues(
+            preimageHash,
+            amount,
+            tokenAddress,
+            claimAddress,
+            msg.sender,
+            timelock
+        );
+
+        checkSwapIsLocked(hash);
+        delete swaps[hash];
+
+        emit Refund(preimageHash);
+
+        TransferHelper.safeTransferToken(tokenAddress, msg.sender, amount);
+    }
 
     /// Checks whether a swap has tokens locked in the contract
     /// @dev This function reverts if the swap has no tokens locked in the contract
