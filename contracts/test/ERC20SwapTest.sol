@@ -2,10 +2,11 @@
 
 pragma solidity ^0.8.24;
 
+import "forge-std/Test.sol";
+import "./SigUtils.sol";
 import "../BadERC20.sol";
 import "../ERC20Swap.sol";
 import "../TestERC20.sol";
-import "forge-std/Test.sol";
 
 contract ERC20SwapTest is Test {
     event Lockup(
@@ -25,14 +26,22 @@ contract ERC20SwapTest is Test {
     bytes32 internal preimage = sha256("");
     bytes32 internal preimageHash = sha256(abi.encodePacked(preimage));
     uint256 internal lockupAmount = 1 ether;
-    address payable internal claimAddress = payable(0xc6A63431BB6838289a41047602902381f14fa9c9);
+    uint256 internal claimAddressKey = 0xA11CE;
+    address internal claimAddress;
 
     uint256 internal mintAmount = lockupAmount * 2;
 
     IERC20 internal token = new TestERC20("TestERC20", "TRC", 18, mintAmount);
 
+    SigUtils internal sigUtils;
+
+    function setUp() public {
+        claimAddress = vm.addr(claimAddressKey);
+        sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR(), swap.TYPEHASH_REFUND());
+    }
+
     function testCorrectVersion() external {
-        assertEq(swap.version(), 2);
+        assertEq(swap.version(), 3);
     }
 
     function testShouldNotAcceptEther() external {
@@ -195,6 +204,46 @@ contract ERC20SwapTest is Test {
         swap.refund(preimageHash, lockupAmount, address(token), claimAddress, timelock);
     }
 
+    function testRefundCooperativeFail() external {
+        uint256 timelock = block.number + 21;
+
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        uint256 balanceBeforeRefund = token.balanceOf(address(this));
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            sigUtils.getTypedDataHash(
+                sigUtils.hashERC20SwapRefund(preimageHash, lockupAmount, address(token), claimAddress, timelock)
+            )
+        );
+
+        vm.expectEmit(true, false, false, false, address(swap));
+        emit Refund(preimageHash);
+
+        swap.refundCooperative(preimageHash, lockupAmount, address(token), claimAddress, timelock, v, r, s);
+
+        assertFalse(querySwap(timelock));
+
+        assertEq(token.balanceOf(address(swap)), 0);
+        assertEq(token.balanceOf(address(this)) - balanceBeforeRefund, lockupAmount);
+    }
+
+    function testRefundCooperativeInvalidSigFail() external {
+        uint256 timelock = block.number + 21;
+
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        uint8 v = 1;
+        bytes32 r = keccak256("invalid");
+        bytes32 s = keccak256("sig");
+
+        vm.expectRevert("ERC20Swap: invalid signature");
+        swap.refundCooperative(preimageHash, lockupAmount, address(token), claimAddress, timelock, v, r, s);
+    }
+
     function testBadERC20Token() external {
         BadERC20 badToken = new BadERC20("TestERC20", "TRC", 18, mintAmount);
         uint256 timelock = block.number;
@@ -229,7 +278,7 @@ contract ERC20SwapTest is Test {
         vm.expectEmit(true, true, false, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock);
 
-        swap.lockPrepayMinerfee{ value: prepayAmount }(preimageHash, lockupAmount, address(token), claimAddress, timelock);
+        swap.lockPrepayMinerfee{ value: prepayAmount }(preimageHash, lockupAmount, address(token), payable(claimAddress), timelock);
 
         assertTrue(querySwap(timelock));
         assertEq(claimAddress.balance, claimEthBalanceBefore + prepayAmount);

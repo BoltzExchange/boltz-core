@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.24;
 
-import "../EtherSwap.sol";
 import "forge-std/Test.sol";
+import "./SigUtils.sol";
+import "../EtherSwap.sol";
 
 contract EtherSwapTest is Test {
     event Lockup(
@@ -22,12 +23,20 @@ contract EtherSwapTest is Test {
     bytes32 internal preimage = sha256("");
     bytes32 internal preimageHash = sha256(abi.encodePacked(preimage));
     uint256 internal lockupAmount = 1 ether;
-    address internal claimAddress = 0xc6A63431BB6838289a41047602902381f14fa9c9;
+    uint256 internal claimAddressKey = 0xA11CE;
+    address internal claimAddress;
+
+    SigUtils internal sigUtils;
+
+    function setUp() public {
+        claimAddress = vm.addr(claimAddressKey);
+        sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR(), swap.TYPEHASH_REFUND());
+    }
 
     receive() payable external {}
 
     function testCorrectVersion() external {
-        assertEq(swap.version(), 2);
+        assertEq(swap.version(), 3);
     }
 
     function testNoSendEtherWithoutFunctionSig() external {
@@ -173,6 +182,44 @@ contract EtherSwapTest is Test {
 
         vm.expectRevert("EtherSwap: swap has not timed out yet");
         swap.refund(preimageHash, lockupAmount, claimAddress, timelock);
+    }
+
+    function testRefundCooperative() external {
+        uint256 timelock = block.number + 21;
+
+        lock(timelock);
+
+        uint256 balanceBeforeRefund = address(this).balance;
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            sigUtils.getTypedDataHash(
+                sigUtils.hashEtherSwapRefund(preimageHash, lockupAmount, claimAddress, timelock)
+            )
+        );
+
+        vm.expectEmit(true, false, false, false, address(swap));
+        emit Refund(preimageHash);
+
+        swap.refundCooperative(preimageHash, lockupAmount, claimAddress, timelock, v, r, s);
+
+        assertFalse(querySwap(timelock));
+
+        assertEq(address(swap).balance, 0);
+        assertEq(address(this).balance - balanceBeforeRefund, lockupAmount);
+    }
+
+    function testRefundCooperativeInvalidSigFail() external {
+        uint256 timelock = block.number + 21;
+
+        lock(timelock);
+
+        uint8 v = 1;
+        bytes32 r = keccak256("invalid");
+        bytes32 s = keccak256("sig");
+
+        vm.expectRevert("EtherSwap: invalid signature");
+        swap.refundCooperative(preimageHash, lockupAmount, claimAddress, timelock, v, r, s);
     }
 
     function testLockupPrepayMinerFee() external {
