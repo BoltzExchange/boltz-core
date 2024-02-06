@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2024-02-06
+
+### Bug Fixes
+
+- Type in file name
+- Check introspection output asset prefix
+
+### Features
+
+- Liquid claim covenant
+- Allow specifying claim address in contracts (#115)
+- Cooperative refunds in EVM contracts (#116)
+
+### Miscellaneous Tasks
+
+- Update CHANGELOG.md for v2.0.2
+- Change license to MIT (#114)
+- Update dependencies
+- Foundry release profile
+
+### Testing
+
+- Integration tests for Liquid Tapleaf scripts (#112)
+
 ## [2.0.2] - 2024-01-20
 
 ### Bug Fixes
