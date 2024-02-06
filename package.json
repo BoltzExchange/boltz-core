@@ -23,7 +23,7 @@
     "changelog": "git-cliff -o CHANGELOG.md",
     "preversion": "npm run lint && npm run compile && npm run test",
     "version": "npm run changelog",
-    "prepublishOnly": "npm run compile"
+    "prepublishOnly": "FOUNDRY_PROFILE=release npm run compile"
   },
   "license": "AGPL-3.0",
   "repository": {

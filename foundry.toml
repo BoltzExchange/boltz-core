@@ -4,3 +4,6 @@ test = "contracts/test"
 script = "contracts/script"
 libs = ["contracts/lib"]
 gas_reports = ["EtherSwap", "ERC20Swap"]
+
+[profile.release]
+via-ir = true
