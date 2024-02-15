@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2024-02-15
+
+### Features
+
+- SwapTreeSerializer support for covenants
+
+### Miscellaneous Tasks
+
+- Update CHANGELOG.md for v2.1.0
+
 ## [2.1.0] - 2024-02-06
 
 ### Bug Fixes
