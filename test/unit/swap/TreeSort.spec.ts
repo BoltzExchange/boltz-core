@@ -1,9 +1,6 @@
-import {
-  assignTreeProbabilities,
-  sortTree,
-} from '../../../lib/liquid/TreeSort';
-import { LiquidSwapTree } from '../../../lib/liquid/consts/Types';
+import { LiquidSwapTree } from '../../../lib/consts/Types';
 import { createLeaf } from '../../../lib/swap/TaprootUtils';
+import { assignTreeProbabilities, sortTree } from '../../../lib/swap/TreeSort';
 
 describe('TreeSort', () => {
   test.each`

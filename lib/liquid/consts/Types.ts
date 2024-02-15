@@ -1,9 +1,7 @@
 import { BIP32Interface } from 'bip32';
 import { ECPairInterface } from 'ecpair';
 import { Transaction, TxOutput } from 'liquidjs-lib';
-import { RefundDetails, SwapTree, Tapleaf } from '../../consts/Types';
-
-export type LiquidSwapTree = SwapTree & { covenantClaimLeaf?: Tapleaf };
+import { LiquidSwapTree, RefundDetails } from '../../consts/Types';
 
 export type LiquidRefundDetails = Omit<RefundDetails, 'value' | 'swapTree'> &
   TxOutput & {

@@ -1,5 +1,4 @@
-import { Tapleaf } from '../consts/Types';
-import { LiquidSwapTree } from './consts/Types';
+import { LiquidSwapTree } from '../consts/Types';
 
 type ProbabilityNode<T> = { probability: number; value: T };
 
@@ -29,9 +28,18 @@ const subSortTree = <T>(nodes: ProbabilityNode<T>[]): TreeNode<T> => {
 export const sortTree = <T>(nodes: ProbabilityNode<T>[]): TreeNode<T> =>
   subSortTree(nodes.sort((a, b) => b.probability - a.probability));
 
-export const assignTreeProbabilities = (
-  tree: Omit<LiquidSwapTree, 'tree'>,
-): ProbabilityNode<Tapleaf>[] => {
+export const assignTreeProbabilities = <T>(
+  tree: Omit<
+    Record<keyof Omit<LiquidSwapTree, 'covenantClaimLeaf'>, T | undefined> & {
+      covenantClaimLeaf?: T;
+    },
+    'tree'
+  >,
+): ProbabilityNode<T>[] => {
+  if (tree.claimLeaf === undefined || tree.refundLeaf === undefined) {
+    throw 'invalid tree';
+  }
+
   if (tree.covenantClaimLeaf) {
     return [
       {

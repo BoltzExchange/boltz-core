@@ -3,10 +3,8 @@ import { Taptree, isTapleaf } from 'bitcoinjs-lib/src/types';
 import { Transaction, TxOutput } from 'liquidjs-lib';
 import {
   HashTree,
-  TaprootLeaf,
   findScriptPath as liquidFindScriptPath,
   tapLeafHash as liquidTapLeafHash,
-  toHashTree as liquidToHashTree,
 } from 'liquidjs-lib/src/bip341';
 import { taggedHash } from 'liquidjs-lib/src/crypto';
 import { Network } from 'liquidjs-lib/src/networks';
@@ -44,24 +42,27 @@ export const hashForWitnessV1 = (
 export const tapLeafHash = (leaf: Tapleaf) =>
   liquidTapLeafHash(convertLeaf(leaf));
 
+export const tapBranchHash = (a: Buffer, b: Buffer) =>
+  taggedHash('TapBranch/elements', Buffer.concat([a, b]));
+
 export const tapTweakHash = (publicKey: Buffer, tweak: Buffer) =>
   taggedHash('TapTweak/elements', Buffer.concat([toXOnly(publicKey), tweak]));
 
-export const toHashTree = (tree: Taptree): HashTree => {
-  const leafs: TaprootLeaf[] = [];
+export function toHashTree(scriptTree: Taptree): HashTree {
+  if (isTapleaf(scriptTree)) {
+    return { hash: tapLeafHash(scriptTree as Tapleaf) };
+  }
 
-  const convertToLeafs = (tree: Taptree) => {
-    if (isTapleaf(tree)) {
-      leafs.push(convertLeaf(tree as Tapleaf));
-    } else {
-      convertToLeafs(tree[0]);
-      convertToLeafs(tree[1]);
-    }
+  const hashes = [toHashTree(scriptTree[0]), toHashTree(scriptTree[1])];
+  hashes.sort((a, b) => a.hash.compare(b.hash));
+  const [left, right] = hashes;
+
+  return {
+    hash: tapBranchHash(left.hash, right.hash),
+    left,
+    right,
   };
-  convertToLeafs(tree);
-
-  return liquidToHashTree(leafs);
-};
+}
 
 export const tweakMusig = (musig: Musig, tree: Taptree): Buffer =>
   toXOnly(

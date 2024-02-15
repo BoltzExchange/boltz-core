@@ -1,6 +1,6 @@
 import { getHexBuffer, getHexString } from '../Utils';
-import { SwapTree, Tapleaf } from '../consts/Types';
-import { swapLeafsToTree } from './TaprootUtils';
+import { LiquidSwapTree, SwapTree, Tapleaf } from '../consts/Types';
+import { assignTreeProbabilities, sortTree } from './TreeSort';
 
 type SerializedLeaf = {
   version: number;
@@ -10,6 +10,10 @@ type SerializedLeaf = {
 type SerializedTree = {
   claimLeaf: SerializedLeaf;
   refundLeaf: SerializedLeaf;
+};
+
+type SerializedLiquidSwapTree = SerializedTree & {
+  covenantClaimLeaf?: SerializedLeaf;
 };
 
 const serializeLeaf = (leaf: Tapleaf): SerializedLeaf => ({
@@ -22,24 +26,38 @@ const deserializeLeaf = (leaf: SerializedLeaf): Tapleaf => ({
   output: getHexBuffer(leaf.output),
 });
 
-export const serializeSwapTree = (tree: SwapTree): SerializedTree => ({
-  claimLeaf: serializeLeaf(tree.claimLeaf),
-  refundLeaf: serializeLeaf(tree.refundLeaf),
-});
+export const serializeSwapTree = (
+  tree: LiquidSwapTree,
+): SerializedTree | SerializedLiquidSwapTree => {
+  const res: SerializedLiquidSwapTree = {
+    claimLeaf: serializeLeaf(tree.claimLeaf),
+    refundLeaf: serializeLeaf(tree.refundLeaf),
+  };
+
+  if (tree.covenantClaimLeaf !== undefined) {
+    res.covenantClaimLeaf = serializeLeaf(tree.covenantClaimLeaf);
+  }
+
+  return res;
+};
 
 export const deserializeSwapTree = (
-  tree: string | SerializedTree,
-): SwapTree => {
+  tree: string | SerializedTree | LiquidSwapTree,
+): SwapTree | LiquidSwapTree => {
   const parsed = typeof tree === 'string' ? JSON.parse(tree) : tree;
 
-  const res = {
+  const res: Omit<LiquidSwapTree, 'tree'> = {
     claimLeaf: deserializeLeaf(parsed.claimLeaf),
     refundLeaf: deserializeLeaf(parsed.refundLeaf),
+    covenantClaimLeaf:
+      parsed.covenantClaimLeaf !== undefined
+        ? deserializeLeaf(parsed.covenantClaimLeaf)
+        : undefined,
   };
 
   return {
     ...res,
-    tree: swapLeafsToTree(res.claimLeaf, res.refundLeaf),
+    tree: sortTree(assignTreeProbabilities(res)),
   };
 };
 

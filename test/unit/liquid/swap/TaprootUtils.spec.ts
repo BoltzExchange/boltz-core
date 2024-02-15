@@ -58,6 +58,12 @@ describe('TaprootUtils', () => {
     expect(hashTree).toMatchSnapshot();
   });
 
+  test('should convert netsted taproot tree to hash tree', () => {
+    const hashTree = toHashTree([taptree, taptree]);
+    expect(hashTree).toBeDefined();
+    expect(hashTree).toMatchSnapshot();
+  });
+
   test('should tweak Musig', async () => {
     const secp = await zkp();
     const ourMusigKey = ECPair.makeRandom();

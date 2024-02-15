@@ -2,13 +2,12 @@ import ops from '@boltz/bitcoin-ops';
 import { crypto, script } from 'bitcoinjs-lib';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
 import { getHexBuffer } from '../../Utils';
-import { Tapleaf } from '../../consts/Types';
+import { LiquidSwapTree, Tapleaf } from '../../consts/Types';
 import bitcoinReverseSwapTree from '../../swap/ReverseSwapTree';
 import { leafVersionLiquid } from '../../swap/TaprootUtils';
-import { assignTreeProbabilities, sortTree } from '../TreeSort';
+import { assignTreeProbabilities, sortTree } from '../../swap/TreeSort';
 import { getScriptIntrospectionValues } from '../Utils';
 import liquidOps from '../consts/Ops';
-import { LiquidSwapTree } from '../consts/Types';
 
 enum Feature {
   ClaimCovenant,

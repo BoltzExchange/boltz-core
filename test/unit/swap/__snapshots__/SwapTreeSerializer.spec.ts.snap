@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SwapTreeSerializer should serialize swap trees (isLiquid: false) 1`] = `
+exports[`SwapTreeSerializer should serialize swap tree (isLiquid: false) 1`] = `
 {
   "claimLeaf": {
     "output": "a914124b4a204760441dc802c445d4987ba1bd967e6d882083d1d7b47cd4163db23e633b81a3a6906a99a99e5acbbe4df29172f42621668cac",
@@ -13,10 +13,27 @@ exports[`SwapTreeSerializer should serialize swap trees (isLiquid: false) 1`] = 
 }
 `;
 
-exports[`SwapTreeSerializer should serialize swap trees (isLiquid: true) 1`] = `
+exports[`SwapTreeSerializer should serialize swap tree (isLiquid: true) 1`] = `
 {
   "claimLeaf": {
     "output": "a914124b4a204760441dc802c445d4987ba1bd967e6d882083d1d7b47cd4163db23e633b81a3a6906a99a99e5acbbe4df29172f42621668cac",
+    "version": 196,
+  },
+  "refundLeaf": {
+    "output": "2010154f49ec6656fd70d28abd9bbb71633da124eda324b1bf2b28dd9686915087ad017bb1",
+    "version": 196,
+  },
+}
+`;
+
+exports[`SwapTreeSerializer should serialize swap tree with covenant 1`] = `
+{
+  "claimLeaf": {
+    "output": "82012088a914124b4a204760441dc802c445d4987ba1bd967e6d882083d1d7b47cd4163db23e633b81a3a6906a99a99e5acbbe4df29172f42621668cac",
+    "version": 196,
+  },
+  "covenantClaimLeaf": {
+    "output": "82012088a914124b4a204760441dc802c445d4987ba1bd967e6d8800d151882083d1d7b47cd4163db23e633b81a3a6906a99a99e5acbbe4df29172f42621668c8800ce51882025b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a8800cf7508a08601000000000087",
     "version": 196,
   },
   "refundLeaf": {
