@@ -40,7 +40,7 @@ contract ERC20SwapTest is Test {
         sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR(), swap.TYPEHASH_REFUND());
     }
 
-    function testCorrectVersion() external {
+    function testCorrectVersion() external view {
         assertEq(swap.version(), 3);
     }
 
@@ -49,7 +49,7 @@ contract ERC20SwapTest is Test {
         require(!success);
     }
 
-    function testHashSwapValues() external {
+    function testHashSwapValues() external view {
         uint256 timelock = block.number;
 
         assertEq(

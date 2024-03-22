@@ -28,6 +28,7 @@ import swapTree, {
   extractClaimPublicKeyFromSwapTree,
   extractRefundPublicKeyFromSwapTree,
 } from './swap/SwapTree';
+import { compareTrees } from './swap/SwapTreeCompare';
 import * as SwapTreeSerializer from './swap/SwapTreeSerializer';
 import * as SwapUtils from './swap/SwapUtils';
 import * as TaprootUtils from './swap/TaprootUtils';
@@ -57,6 +58,7 @@ export {
   targetFee,
   swapScript,
   detectSwap,
+  compareTrees,
   detectPreimage,
   reverseSwapTree,
   reverseSwapScript,

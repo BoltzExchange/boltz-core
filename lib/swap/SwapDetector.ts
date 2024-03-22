@@ -49,7 +49,7 @@ export const detectSwap = <
         vout,
         type: scriptMatch[0],
         ...output,
-      } as DetectedSwap<T>;
+      } as unknown as DetectedSwap<T>;
     }
   }
 
