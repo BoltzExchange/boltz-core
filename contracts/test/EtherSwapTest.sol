@@ -35,7 +35,7 @@ contract EtherSwapTest is Test {
 
     receive() payable external {}
 
-    function testCorrectVersion() external {
+    function testCorrectVersion() external view {
         assertEq(swap.version(), 3);
     }
 
@@ -44,7 +44,7 @@ contract EtherSwapTest is Test {
         require(!success);
     }
 
-    function testHashSwapValues() external {
+    function testHashSwapValues() external view {
         uint256 timelock = block.number;
 
         assertEq(
