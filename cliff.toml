@@ -26,14 +26,14 @@ body = """
     | filter(attribute="scope")
     | sort(attribute="scope") %}
         - **({{commit.scope}})**{% if commit.breaking %} [**breaking**]{% endif %} \
-            {{ commit.message }} - ([{{ commit.id | truncate(length=7, end="") }}]($REPO/commit/{{ commit.id }})) - {{ commit.author.name }}
+            {{ commit.message }} - ([{{ commit.id | truncate(length=7, end="") }}]($REPO/commit/{{ commit.id }}))
     {%- endfor -%}
     {% raw %}\n{% endraw %}\
     {%- for commit in commits %}
         {%- if commit.scope -%}
         {% else -%}
             - {% if commit.breaking %} [**breaking**]{% endif %}\
-                {{ commit.message }} - ([{{ commit.id | truncate(length=7, end="") }}]($REPO/commit/{{ commit.id }})) - {{ commit.author.name }}
+                {{ commit.message }} - ([{{ commit.id | truncate(length=7, end="") }}]($REPO/commit/{{ commit.id }}))
         {% endif -%}
     {% endfor -%}
 {% endfor %}\n
@@ -46,7 +46,7 @@ footer = """
 trim = true
 # postprocessors
 postprocessors = [
-    { pattern = '\$REPO', replace = "https://github.com/BoltzExchange/boltz-backend" },
+    { pattern = '\$REPO', replace = "https://github.com/BoltzExchange/boltz-core" },
 ]
 
 [git]
