@@ -166,7 +166,7 @@ contract ERC20Swap {
     /// @param timelock Block height after which the locked Ether can be refunded
     /// @param v final byte of the signature
     /// @param r second 32 bytes of the signature
-    /// @param r first 32 bytes of the signature
+    /// @param s first 32 bytes of the signature
     function refundCooperative(
         bytes32 preimageHash,
         uint amount,
