@@ -7,3 +7,6 @@ gas_reports = ["EtherSwap", "ERC20Swap"]
 
 [profile.release]
 via-ir = true
+
+[fuzz]
+runs = 8192

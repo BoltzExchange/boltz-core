@@ -9,24 +9,24 @@ contract EtherSwap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 constant public version = 3;
+    uint8 public constant version = 3;
 
-    bytes32 immutable public DOMAIN_SEPARATOR;
-    bytes32 immutable public TYPEHASH_REFUND;
+    bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 public immutable TYPEHASH_REFUND;
 
     // State variables
 
     /// @dev Mapping between value hashes of swaps and whether they have Ether locked in the contract
-    mapping (bytes32 => bool) public swaps;
+    mapping(bytes32 => bool) public swaps;
 
     // Events
 
     event Lockup(
         bytes32 indexed preimageHash,
-        uint amount,
+        uint256 amount,
         address claimAddress,
         address indexed refundAddress,
-        uint timelock
+        uint256 timelock
     );
 
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
@@ -44,9 +44,7 @@ contract EtherSwap {
                 address(this)
             )
         );
-        TYPEHASH_REFUND = keccak256(
-            "Refund(bytes32 preimageHash,uint256 amount,address claimAddress,uint256 timeout)"
-        );
+        TYPEHASH_REFUND = keccak256("Refund(bytes32 preimageHash,uint256 amount,address claimAddress,uint256 timeout)");
     }
 
     // External functions
@@ -56,11 +54,7 @@ contract EtherSwap {
     /// @param preimageHash Preimage hash of the swap
     /// @param claimAddress Address that can claim the locked Ether
     /// @param timelock Block height after which the locked Ether can be refunded
-    function lock(
-        bytes32 preimageHash,
-        address claimAddress,
-        uint timelock
-    ) external payable {
+    function lock(bytes32 preimageHash, address claimAddress, uint256 timelock) external payable {
         lockEther(preimageHash, msg.value, claimAddress, timelock);
     }
 
@@ -74,8 +68,8 @@ contract EtherSwap {
     function lockPrepayMinerfee(
         bytes32 preimageHash,
         address payable claimAddress,
-        uint timelock,
-        uint prepayAmount
+        uint256 timelock,
+        uint256 prepayAmount
     ) external payable {
         // Revert on underflow in next statement
         require(msg.value > prepayAmount, "EtherSwap: sent amount must be greater than the prepay amount");
@@ -93,12 +87,7 @@ contract EtherSwap {
     /// @param amount Amount locked in the contract for the swap in WEI
     /// @param refundAddress Address that locked the Ether in the contract
     /// @param timelock Block height after which the locked Ether can be refunded
-    function claim(
-        bytes32 preimage,
-        uint amount,
-        address refundAddress,
-        uint timelock
-    ) external {
+    function claim(bytes32 preimage, uint256 amount, address refundAddress, uint256 timelock) external {
         // Passing "msg.sender" as "claimAddress" to "hashValues" ensures that only the destined address can claim
         // All other addresses would produce a different hash for which no swap can be found in the "swaps" mapping
         claim(preimage, amount, msg.sender, refundAddress, timelock);
@@ -111,23 +100,13 @@ contract EtherSwap {
     /// @param claimAddress Address to which the claimed funds will be sent
     /// @param refundAddress Address that locked the Ether in the contract
     /// @param timelock Block height after which the locked Ether can be refunded
-    function claim(
-        bytes32 preimage,
-        uint amount,
-        address claimAddress,
-        address refundAddress,
-        uint timelock
-    ) public {
+    function claim(bytes32 preimage, uint256 amount, address claimAddress, address refundAddress, uint256 timelock)
+        public
+    {
         // If the preimage is wrong, so will be its hash which will result in a wrong value hash and no swap being found
         bytes32 preimageHash = sha256(abi.encodePacked(preimage));
 
-        bytes32 hash = hashValues(
-            preimageHash,
-            amount,
-            claimAddress,
-            refundAddress,
-            timelock
-        );
+        bytes32 hash = hashValues(preimageHash, amount, claimAddress, refundAddress, timelock);
 
         // Make sure that the swap to be claimed has Ether locked
         checkSwapIsLocked(hash);
@@ -149,12 +128,7 @@ contract EtherSwap {
     /// @param amount Amount locked in the contract for the swap in WEI
     /// @param claimAddress Address that that was destined to claim the funds
     /// @param timelock Block height after which the locked Ether can be refunded
-    function refund(
-        bytes32 preimageHash,
-        uint amount,
-        address claimAddress,
-        uint timelock
-    ) external {
+    function refund(bytes32 preimageHash, uint256 amount, address claimAddress, uint256 timelock) external {
         // Make sure the timelock has expired already
         // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
         require(timelock <= block.number, "EtherSwap: swap has not timed out yet");
@@ -172,28 +146,20 @@ contract EtherSwap {
     /// @param r second 32 bytes of the signature
     /// @param s first 32 bytes of the signature
     function refundCooperative(
-      bytes32 preimageHash,
-      uint amount,
-      address claimAddress,
-      uint timelock,
-      uint8 v,
-      bytes32 r,
-      bytes32 s
+        bytes32 preimageHash,
+        uint256 amount,
+        address claimAddress,
+        uint256 timelock,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external {
         address recoveredAddress = ecrecover(
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
                     DOMAIN_SEPARATOR,
-                    keccak256(
-                        abi.encode(
-                            TYPEHASH_REFUND,
-                            preimageHash,
-                            amount,
-                            claimAddress,
-                            timelock
-                        )
-                    )
+                    keccak256(abi.encode(TYPEHASH_REFUND, preimageHash, amount, claimAddress, timelock))
                 )
             ),
             v,
@@ -216,18 +182,12 @@ contract EtherSwap {
     /// @return Value hash of the swap
     function hashValues(
         bytes32 preimageHash,
-        uint amount,
+        uint256 amount,
         address claimAddress,
         address refundAddress,
-        uint timelock
+        uint256 timelock
     ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
-            preimageHash,
-            amount,
-            claimAddress,
-            refundAddress,
-            timelock
-        ));
+        return keccak256(abi.encodePacked(preimageHash, amount, claimAddress, refundAddress, timelock));
     }
 
     // Private functions
@@ -238,21 +198,15 @@ contract EtherSwap {
     /// @param amount Amount to be locked in the contract
     /// @param claimAddress Address that can claim the locked Ether
     /// @param timelock Block height after which the locked Ether can be refunded
-    function lockEther(bytes32 preimageHash, uint amount, address claimAddress, uint timelock) private {
+    function lockEther(bytes32 preimageHash, uint256 amount, address claimAddress, uint256 timelock) private {
         // Locking zero WEI in the contract is pointless
         require(amount > 0, "EtherSwap: locked amount must not be zero");
 
         // Hash the values of the swap
-        bytes32 hash = hashValues(
-            preimageHash,
-            amount,
-            claimAddress,
-            msg.sender,
-            timelock
-        );
+        bytes32 hash = hashValues(preimageHash, amount, claimAddress, msg.sender, timelock);
 
         // Make sure no swap with this value hash exists yet
-        require(swaps[hash] == false, "EtherSwap: swap exists already");
+        require(!swaps[hash], "EtherSwap: swap exists already");
 
         // Save to the state that funds were locked for this swap
         swaps[hash] = true;
@@ -261,14 +215,8 @@ contract EtherSwap {
         emit Lockup(preimageHash, amount, claimAddress, msg.sender, timelock);
     }
 
-    function refundInternal(bytes32 preimageHash, uint amount, address claimAddress, uint timelock) private {
-        bytes32 hash = hashValues(
-            preimageHash,
-            amount,
-            claimAddress,
-            msg.sender,
-            timelock
-        );
+    function refundInternal(bytes32 preimageHash, uint256 amount, address claimAddress, uint256 timelock) private {
+        bytes32 hash = hashValues(preimageHash, amount, claimAddress, msg.sender, timelock);
 
         checkSwapIsLocked(hash);
         delete swaps[hash];
@@ -282,6 +230,6 @@ contract EtherSwap {
     /// @dev This function reverts if the swap has no Ether locked in the contract
     /// @param hash Value hash of the swap
     function checkSwapIsLocked(bytes32 hash) private view {
-        require(swaps[hash] == true, "EtherSwap: swap has no Ether locked in the contract");
+        require(swaps[hash], "EtherSwap: swap has no Ether locked in the contract");
     }
 }

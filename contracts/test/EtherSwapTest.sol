@@ -9,10 +9,10 @@ import "../EtherSwap.sol";
 contract EtherSwapTest is Test {
     event Lockup(
         bytes32 indexed preimageHash,
-        uint amount,
+        uint256 amount,
         address claimAddress,
         address indexed refundAddress,
-        uint timelock
+        uint256 timelock
     );
 
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
@@ -33,14 +33,14 @@ contract EtherSwapTest is Test {
         sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR(), swap.TYPEHASH_REFUND());
     }
 
-    receive() payable external {}
+    receive() external payable {}
 
     function testCorrectVersion() external view {
         assertEq(swap.version(), 3);
     }
 
     function testNoSendEtherWithoutFunctionSig() external {
-        (bool success,) = address(swap).call{ value: 1 }("");
+        (bool success,) = address(swap).call{value: 1}("");
         require(!success);
     }
 
@@ -193,9 +193,7 @@ contract EtherSwapTest is Test {
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
-            sigUtils.getTypedDataHash(
-                sigUtils.hashEtherSwapRefund(preimageHash, lockupAmount, claimAddress, timelock)
-            )
+            sigUtils.getTypedDataHash(sigUtils.hashEtherSwapRefund(preimageHash, lockupAmount, claimAddress, timelock))
         );
 
         vm.expectEmit(true, false, false, false, address(swap));
@@ -229,7 +227,9 @@ contract EtherSwapTest is Test {
         vm.expectEmit(true, true, false, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, claimAddress, address(this), timelock);
 
-        swap.lockPrepayMinerfee{ value: lockupAmount + prepayAmount }(preimageHash, payable(claimAddress), timelock, prepayAmount);
+        swap.lockPrepayMinerfee{value: lockupAmount + prepayAmount}(
+            preimageHash, payable(claimAddress), timelock, prepayAmount
+        );
 
         assertEq(address(swap).balance, lockupAmount);
         assertEq(claimAddress.balance, prepayAmount);
@@ -239,21 +239,19 @@ contract EtherSwapTest is Test {
 
     function testLockupPrepayMinerFeeGtValueFail() external {
         vm.expectRevert("EtherSwap: sent amount must be greater than the prepay amount");
-        swap.lockPrepayMinerfee{ value: 1 }(preimageHash, payable(claimAddress), block.number, 2);
+        swap.lockPrepayMinerfee{value: 1}(preimageHash, payable(claimAddress), block.number, 2);
     }
 
     function testLockupPrepayMinerFeeEqValueFail() external {
         vm.expectRevert("EtherSwap: sent amount must be greater than the prepay amount");
-        swap.lockPrepayMinerfee{ value: 1 }(preimageHash, payable(claimAddress), block.number, 1);
+        swap.lockPrepayMinerfee{value: 1}(preimageHash, payable(claimAddress), block.number, 1);
     }
 
     function lock(uint256 timelock) internal {
-        swap.lock{ value: lockupAmount }(preimageHash, claimAddress, timelock);
+        swap.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
     }
 
     function querySwap(uint256 timelock) internal view returns (bool) {
-        return swap.swaps(
-            swap.hashValues(preimageHash, lockupAmount, claimAddress, address(this), timelock)
-        );
+        return swap.swaps(swap.hashValues(preimageHash, lockupAmount, claimAddress, address(this), timelock));
     }
 }
