@@ -3,7 +3,7 @@
  */
 import ops from '@boltz/bitcoin-ops';
 import * as bip65 from 'bip65';
-import bip66 from 'bip66';
+import { encode as bip66Encode } from 'bip66';
 import { script } from 'bitcoinjs-lib';
 import Bn from 'bn.js';
 import * as varuint from 'varuint-bitcoin';
@@ -32,7 +32,7 @@ const derEncode = (point: string) => {
     return zeroHexBuffer;
   }
 
-  x = x.slice(i);
+  x = x.subarray(i);
 
   if (x[0] & 0x80) {
     return Buffer.concat([zeroHexBuffer, x], x.length + 1);
@@ -56,10 +56,12 @@ export const encodeSignature = (flag: number, signature: Buffer): Buffer => {
 
   const hashType = Buffer.from([flag]);
 
-  const r = derEncode(getHexString(signature.slice(0, pointSize)));
-  const s = derEncode(getHexString(signature.slice(pointSize, signatureEnd)));
+  const r = derEncode(getHexString(signature.subarray(0, pointSize)));
+  const s = derEncode(
+    getHexString(signature.subarray(pointSize, signatureEnd)),
+  );
 
-  return Buffer.concat([bip66.encode(r, s), hashType]);
+  return Buffer.concat([bip66Encode(r, s), hashType]);
 };
 
 /**
