@@ -40,6 +40,9 @@ jobs:
       - name: Prettier
         run: npm run prettier:check
 
+      - name: Forge fmt
+        run: forge fmt --check contracts/*.sol contracts/script/ contracts/test/
+
       - name: Unit tests
         run: npm run test:unit
 

@@ -9,15 +9,15 @@ contract ERC20Swap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 constant public version = 3;
+    uint8 public constant version = 3;
 
-    bytes32 immutable public DOMAIN_SEPARATOR;
-    bytes32 immutable public TYPEHASH_REFUND;
+    bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 public immutable TYPEHASH_REFUND;
 
     // State variables
 
     /// @dev Mapping between value hashes of swaps and whether they have Ether locked in the contract
-    mapping (bytes32 => bool) public swaps;
+    mapping(bytes32 => bool) public swaps;
 
     // Events
 
@@ -27,7 +27,7 @@ contract ERC20Swap {
         address tokenAddress,
         address claimAddress,
         address indexed refundAddress,
-        uint timelock
+        uint256 timelock
     );
 
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
@@ -65,7 +65,7 @@ contract ERC20Swap {
         uint256 amount,
         address tokenAddress,
         address payable claimAddress,
-        uint timelock
+        uint256 timelock
     ) external payable {
         lock(preimageHash, amount, tokenAddress, claimAddress, timelock);
 
@@ -80,13 +80,9 @@ contract ERC20Swap {
     /// @param tokenAddress Address of the token locked for the swap
     /// @param refundAddress Address that locked the tokens in the contract
     /// @param timelock Block height after which the locked tokens can be refunded
-    function claim(
-        bytes32 preimage,
-        uint amount,
-        address tokenAddress,
-        address refundAddress,
-        uint timelock
-    ) external {
+    function claim(bytes32 preimage, uint256 amount, address tokenAddress, address refundAddress, uint256 timelock)
+        external
+    {
         // Passing "msg.sender" as "claimAddress" to "hashValues" ensures that only the destined address can claim
         // All other addresses would produce a different hash for which no swap can be found in the "swaps" mapping
         claim(preimage, amount, tokenAddress, msg.sender, refundAddress, timelock);
@@ -102,23 +98,16 @@ contract ERC20Swap {
     /// @param timelock Block height after which the locked tokens can be refunded
     function claim(
         bytes32 preimage,
-        uint amount,
+        uint256 amount,
         address tokenAddress,
         address claimAddress,
         address refundAddress,
-        uint timelock
+        uint256 timelock
     ) public {
         // If the preimage is wrong, so will be its hash which will result in a wrong value hash and no swap being found
         bytes32 preimageHash = sha256(abi.encodePacked(preimage));
 
-        bytes32 hash = hashValues(
-            preimageHash,
-            amount,
-            tokenAddress,
-            claimAddress,
-            refundAddress,
-            timelock
-        );
+        bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
 
         // Make sure that the swap to be claimed has tokens locked
         checkSwapIsLocked(hash);
@@ -143,13 +132,9 @@ contract ERC20Swap {
     /// @param tokenAddress Address of the token locked for the swap
     /// @param claimAddress Address that that was destined to claim the funds
     /// @param timelock Block height after which the locked Ether can be refunded
-    function refund(
-        bytes32 preimageHash,
-        uint amount,
-        address tokenAddress,
-        address claimAddress,
-        uint timelock
-    ) external {
+    function refund(bytes32 preimageHash, uint256 amount, address tokenAddress, address claimAddress, uint256 timelock)
+        external
+    {
         // Make sure the timelock has expired already
         // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
         require(timelock <= block.number, "ERC20Swap: swap has not timed out yet");
@@ -169,10 +154,10 @@ contract ERC20Swap {
     /// @param s first 32 bytes of the signature
     function refundCooperative(
         bytes32 preimageHash,
-        uint amount,
+        uint256 amount,
         address tokenAddress,
         address claimAddress,
-        uint timelock,
+        uint256 timelock,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -182,16 +167,7 @@ contract ERC20Swap {
                 abi.encodePacked(
                     "\x19\x01",
                     DOMAIN_SEPARATOR,
-                    keccak256(
-                        abi.encode(
-                            TYPEHASH_REFUND,
-                            preimageHash,
-                            amount,
-                            tokenAddress,
-                            claimAddress,
-                            timelock
-                        )
-                    )
+                    keccak256(abi.encode(TYPEHASH_REFUND, preimageHash, amount, tokenAddress, claimAddress, timelock))
                 )
             ),
             v,
@@ -213,25 +189,14 @@ contract ERC20Swap {
     /// @param tokenAddress Address of the token to be locked
     /// @param claimAddress Address that can claim the locked tokens
     /// @param timelock Block height after which the locked tokens can be refunded
-    function lock(
-        bytes32 preimageHash,
-        uint256 amount,
-        address tokenAddress,
-        address claimAddress,
-        uint timelock
-    ) public {
+    function lock(bytes32 preimageHash, uint256 amount, address tokenAddress, address claimAddress, uint256 timelock)
+        public
+    {
         // Locking zero tokens in the contract is pointless
         require(amount > 0, "ERC20Swap: locked amount must not be zero");
 
         // Hash the values of the swap
-        bytes32 hash = hashValues(
-            preimageHash,
-            amount,
-            tokenAddress,
-            claimAddress,
-            msg.sender,
-            timelock
-        );
+        bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
 
         // Make sure no swap with this value hash exists yet
         require(!swaps[hash], "ERC20Swap: swap exists already");
@@ -260,35 +225,21 @@ contract ERC20Swap {
         address tokenAddress,
         address claimAddress,
         address refundAddress,
-        uint timelock
+        uint256 timelock
     ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
-            preimageHash,
-            amount,
-            tokenAddress,
-            claimAddress,
-            refundAddress,
-            timelock
-        ));
+        return keccak256(abi.encodePacked(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock));
     }
 
     // Private functions
 
     function refundInternal(
         bytes32 preimageHash,
-        uint amount,
+        uint256 amount,
         address tokenAddress,
         address claimAddress,
-        uint timelock
+        uint256 timelock
     ) private {
-        bytes32 hash = hashValues(
-            preimageHash,
-            amount,
-            tokenAddress,
-            claimAddress,
-            msg.sender,
-            timelock
-        );
+        bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
 
         checkSwapIsLocked(hash);
         delete swaps[hash];

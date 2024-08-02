@@ -15,7 +15,7 @@ contract ERC20SwapTest is Test {
         address tokenAddress,
         address claimAddress,
         address indexed refundAddress,
-        uint timelock
+        uint256 timelock
     );
 
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
@@ -45,7 +45,7 @@ contract ERC20SwapTest is Test {
     }
 
     function testShouldNotAcceptEther() external {
-        (bool success,) = address(swap).call{ value: 1 }("");
+        (bool success,) = address(swap).call{value: 1}("");
         require(!success);
     }
 
@@ -54,7 +54,9 @@ contract ERC20SwapTest is Test {
 
         assertEq(
             swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock),
-            keccak256(abi.encodePacked(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock))
+            keccak256(
+                abi.encodePacked(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock)
+            )
         );
     }
 
@@ -251,9 +253,11 @@ contract ERC20SwapTest is Test {
         badToken.approve(address(swap), lockupAmount);
         swap.lock(preimageHash, lockupAmount, address(badToken), claimAddress, timelock);
 
-        assertTrue(swap.swaps(
-            swap.hashValues(preimageHash, lockupAmount, address(badToken), claimAddress, address(this), timelock)
-        ));
+        assertTrue(
+            swap.swaps(
+                swap.hashValues(preimageHash, lockupAmount, address(badToken), claimAddress, address(this), timelock)
+            )
+        );
 
         // Check the balances to make sure tokens were transferred to the contract
         assertEq(badToken.balanceOf(address(swap)), lockupAmount);
@@ -278,7 +282,9 @@ contract ERC20SwapTest is Test {
         vm.expectEmit(true, true, false, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock);
 
-        swap.lockPrepayMinerfee{ value: prepayAmount }(preimageHash, lockupAmount, address(token), payable(claimAddress), timelock);
+        swap.lockPrepayMinerfee{value: prepayAmount}(
+            preimageHash, lockupAmount, address(token), payable(claimAddress), timelock
+        );
 
         assertTrue(querySwap(timelock));
         assertEq(claimAddress.balance, claimEthBalanceBefore + prepayAmount);

@@ -11,8 +11,8 @@ library TransferHelper {
     /// @dev Please note that ".call" forwards all leftover gas which means that sending Ether to accounts and contract is possible but also that you should specify or sanity check the gas limit
     /// @param to Address to which the Ether should be sent
     /// @param amount Amount of Ether to send in WEI
-    function transferEther(address payable to, uint amount) internal {
-        (bool success, ) = to.call{value: amount}("");
+    function transferEther(address payable to, uint256 amount) internal {
+        (bool success,) = to.call{value: amount}("");
         require(success, "TransferHelper: could not transfer Ether");
     }
 
@@ -22,12 +22,11 @@ library TransferHelper {
     /// @param token Address of the token
     /// @param to Address to which the tokens should be transferred
     /// @param value Amount of token that should be transferred in the smallest denomination of the token
-    function safeTransferToken(address token, address to, uint value) internal {
+    function safeTransferToken(address token, address to, uint256 value) internal {
         // bytes4(keccak256(bytes('transfer(address,uint256)')));
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0xa9059cbb, to, value));
         require(
-            success && (data.length == 0 || abi.decode(data, (bool))),
-            "TransferHelper: could not transfer ERC20 tokens"
+            success && (data.length == 0 || abi.decode(data, (bool))), "TransferHelper: could not transfer ERC20 tokens"
         );
     }
 
@@ -39,7 +38,7 @@ library TransferHelper {
     /// @param from Address from which the tokens should be transferred
     /// @param to Address to which the tokens should be transferred
     /// @param value Amount of token that should be transferred in the smallest denomination of the token
-    function safeTransferTokenFrom(address token, address from, address to, uint value) internal {
+    function safeTransferTokenFrom(address token, address from, address to, uint256 value) internal {
         // bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, value));
         require(

@@ -10,7 +10,7 @@ interface IBadERC20 {
     function balanceOf(address account) external view returns (uint256);
     function allowance(address owner, address spender) external view returns (uint256);
 
-    function approve(address spender, uint value) external;
+    function approve(address spender, uint256 value) external;
 
     function transfer(address recipient, uint256 amount) external;
     function transferFrom(address sender, address recipient, uint256 amount) external;
@@ -22,9 +22,9 @@ interface IBadERC20 {
 contract BadERC20 is IBadERC20 {
     uint8 public decimals;
 
-    mapping (address => uint256) private _balances;
+    mapping(address => uint256) private _balances;
 
-    mapping (address => mapping (address => uint256)) private _allowances;
+    mapping(address => mapping(address => uint256)) private _allowances;
 
     string private _name;
     string private _symbol;
