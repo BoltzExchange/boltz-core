@@ -223,9 +223,6 @@ contract ERC20Swap {
         // Locking zero tokens in the contract is pointless
         require(amount > 0, "ERC20Swap: locked amount must not be zero");
 
-        // Transfer the specified amount of tokens from the sender of the transaction to the contract
-        TransferHelper.safeTransferTokenFrom(tokenAddress, msg.sender, address(this), amount);
-
         // Hash the values of the swap
         bytes32 hash = hashValues(
             preimageHash,
@@ -237,13 +234,16 @@ contract ERC20Swap {
         );
 
         // Make sure no swap with this value hash exists yet
-        require(swaps[hash] == false, "ERC20Swap: swap exists already");
+        require(!swaps[hash], "ERC20Swap: swap exists already");
 
         // Save to the state that funds were locked for this swap
         swaps[hash] = true;
 
         // Emit the "Lockup" event
         emit Lockup(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
+
+        // Transfer the specified amount of tokens from the sender of the transaction to the contract
+        TransferHelper.safeTransferTokenFrom(tokenAddress, msg.sender, address(this), amount);
     }
 
     /// Hashes all the values of a swap with Keccak256
@@ -302,6 +302,6 @@ contract ERC20Swap {
     /// @dev This function reverts if the swap has no tokens locked in the contract
     /// @param hash Value hash of the swap
     function checkSwapIsLocked(bytes32 hash) private view {
-        require(swaps[hash] == true, "ERC20Swap: swap has no tokens locked in the contract");
+        require(swaps[hash], "ERC20Swap: swap has no tokens locked in the contract");
     }
 }

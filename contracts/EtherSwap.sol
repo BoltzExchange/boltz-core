@@ -252,7 +252,7 @@ contract EtherSwap {
         );
 
         // Make sure no swap with this value hash exists yet
-        require(swaps[hash] == false, "EtherSwap: swap exists already");
+        require(!swaps[hash], "EtherSwap: swap exists already");
 
         // Save to the state that funds were locked for this swap
         swaps[hash] = true;
@@ -282,6 +282,6 @@ contract EtherSwap {
     /// @dev This function reverts if the swap has no Ether locked in the contract
     /// @param hash Value hash of the swap
     function checkSwapIsLocked(bytes32 hash) private view {
-        require(swaps[hash] == true, "EtherSwap: swap has no Ether locked in the contract");
+        require(swaps[hash], "EtherSwap: swap has no Ether locked in the contract");
     }
 }
