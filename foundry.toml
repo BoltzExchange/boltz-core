@@ -5,8 +5,11 @@ script = "contracts/script"
 libs = ["contracts/lib"]
 gas_reports = ["EtherSwap", "ERC20Swap"]
 
+evm_version = "istanbul"
+
 [profile.release]
 via-ir = true
+optimizer_runs = 4294967295
 
 [fuzz]
 runs = 8192
