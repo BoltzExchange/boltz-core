@@ -72,6 +72,8 @@ describe.each`
       expect(tx.ins[0].witness).toHaveLength(1);
       expect(tx.ins[0].witness[0].equals(Buffer.alloc(64))).toEqual(true);
 
+      expect(tx.outs[0].rangeProof!.length !== 0).toEqual(blindOutput);
+
       const theirNonce = secp.musig.nonceGen(
         randomBytes(32),
         refundKeys.publicKey,
@@ -94,6 +96,9 @@ describe.each`
       tx.setWitness(0, [musig!.aggregatePartials()]);
 
       await elementsClient.sendRawTransaction(tx.toHex());
+      const info = await elementsClient.getRawTransactionVerbose(tx.getId());
+      expect(info.vsize).toEqual(tx.virtualSize(false));
+      expect(info.discountvsize).toEqual(tx.virtualSize(true));
     });
 
     test('should claim via script path', async () => {
