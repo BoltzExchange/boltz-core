@@ -101,6 +101,12 @@ class ChainClient {
     }
   };
 
+  public getRawTransactionVerbose = (id: string) =>
+    this.client.request<{
+      vsize: number;
+      discountvsize: number;
+    }>('getrawtransaction', [id, true]);
+
   public getNewAddress = (type = AddressType.Bech32): Promise<string> => {
     return this.client.request<string>('getnewaddress', ['', type]);
   };

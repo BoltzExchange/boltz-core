@@ -108,7 +108,7 @@ export const constructClaimTransaction = (
       // Construct the nested redeem script for nested SegWit inputs
       case OutputType.Compatibility: {
         const nestedScript = [
-          getHexString(varuint.encode(ops.OP_0)),
+          getHexString(Buffer.from(varuint.encode(ops.OP_0).buffer)),
           crypto.sha256(utxo.redeemScript!),
         ];
 

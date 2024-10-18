@@ -182,10 +182,12 @@ export const constructClaimTransaction = (
     }
 
     addFeeOutput(blindingKey === undefined);
-
-    blindPset(pset, utxos);
   } else {
     addFeeOutput();
+  }
+
+  if (utxos[0].blindingPrivateKey !== undefined || blindingKey !== undefined) {
+    blindPset(pset, utxos);
   }
 
   const signer = new Signer(pset);

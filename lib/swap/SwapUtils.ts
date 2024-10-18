@@ -76,7 +76,12 @@ export const scriptBuffersToScript = (elements: ScriptElement[]): Buffer => {
 
   elements.forEach((element) => {
     if (Buffer.isBuffer(element)) {
-      buffers.push(Buffer.concat([varuint.encode(element.length), element]));
+      buffers.push(
+        Buffer.concat([
+          Buffer.from(varuint.encode(element.length).buffer),
+          element,
+        ]),
+      );
     } else {
       buffers.push(getHexBuffer(element.toString(16)));
     }
@@ -97,7 +102,12 @@ export const toPushdataScript = (elements: ScriptElement[]): Buffer => {
 
   elements.forEach((element) => {
     if (Buffer.isBuffer(element)) {
-      buffers.push(Buffer.concat([varuint.encode(element.length), element]));
+      buffers.push(
+        Buffer.concat([
+          Buffer.from(varuint.encode(element.length).buffer),
+          element,
+        ]),
+      );
     } else {
       buffers.push(new Bn(element, 10).toArrayLike(Buffer));
     }
