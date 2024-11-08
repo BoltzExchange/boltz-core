@@ -3,6 +3,37 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.1.3](https://github.com/BoltzExchange/boltz-core/compare/v2.1.2..v2.1.3) - 2024-10-18
+
+### Bug Fixes
+
+- changelog formatting - ([bdc771c](https://github.com/BoltzExchange/boltz-core/commit/bdc771c85116f6992df9327d9f2a16c8b34433a2))
+- parameter name in swap contracts - ([700be59](https://github.com/BoltzExchange/boltz-core/commit/700be59fcbff71115b99e8127e9bdd9ab1ed75e9))
+
+### Features
+
+- discount CT support - ([c09b42b](https://github.com/BoltzExchange/boltz-core/commit/c09b42b5e82ea0d8d5acb339728ec1848567866a))
+
+### Miscellaneous Chores
+
+- use Node.js v22 in CI - ([90a5179](https://github.com/BoltzExchange/boltz-core/commit/90a51793877973e1d79d2c6984a6b01fb906759c))
+- bump Bitcoin Core version v27 - ([cfa58cb](https://github.com/BoltzExchange/boltz-core/commit/cfa58cbca9e5da3442cc1c5be01d3e6545a6181a))
+- bump Solidity compiler to v0.8.26 - ([8710c5a](https://github.com/BoltzExchange/boltz-core/commit/8710c5a53830a3553553451c2c8b98bedc59a336))
+- update NPM dependencies - ([4472d51](https://github.com/BoltzExchange/boltz-core/commit/4472d519837c9675ec28319859f72bbf46ef6409))
+- bump braces from 3.0.2 to 3.0.3 (#120) - ([6515efa](https://github.com/BoltzExchange/boltz-core/commit/6515efaf8ee78dc694ec3fd15c0cb579d3d6d951))
+- bump ws from 8.17.0 to 8.17.1 (#121) - ([2acc682](https://github.com/BoltzExchange/boltz-core/commit/2acc68231ba843a3089da8b807357f7ca15fe67e))
+- update dependencies - ([1ea52ab](https://github.com/BoltzExchange/boltz-core/commit/1ea52ab2084b4bc9eab6d18c02079383fddde60f))
+- format Solidity with forge fmt - ([0537cdc](https://github.com/BoltzExchange/boltz-core/commit/0537cdc9fafb45ac343b57f7aea0985902f8813c))
+- update dependencies and refactor deprecations - ([42b734e](https://github.com/BoltzExchange/boltz-core/commit/42b734e8053e582c4b1eabe6076de4322bb9a57a))
+- increase Solidity optimizer runs - ([17098d0](https://github.com/BoltzExchange/boltz-core/commit/17098d0c7b3e9cb3cc6966adc3886eebd941b5bc))
+- run CI against Node.js v23 - ([b1d9651](https://github.com/BoltzExchange/boltz-core/commit/b1d96517455a873c92564e9fb6f8f47ee44e22eb))
+- bump Solidity version to v0.8.28 - ([b59e9e5](https://github.com/BoltzExchange/boltz-core/commit/b59e9e59771d015843db3e31cf16b1db5184f174))
+
+### Tests
+
+- fuzz tests for swap contracts - ([79058f9](https://github.com/BoltzExchange/boltz-core/commit/79058f9e31ef4d74f58f755effe7eb08b23389fc))
+
+---
 ## [2.1.2](https://github.com/BoltzExchange/boltz-core/compare/v2.1.1..v2.1.2) - 2024-03-23
 
 ### Features
