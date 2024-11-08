@@ -30,7 +30,7 @@ describe('Liquid PreimageDetector', () => {
     type                 | scriptFunc           | name
     ${OutputType.Bech32} | ${swapScript}        | ${'P2WSH swap'}
     ${OutputType.Bech32} | ${reverseSwapScript} | ${'P2WSH reverse swap'}
-  `(`should detect preimage of $name input`, ({ type, scriptFunc }) => {
+  `('should detect preimage of $name input', ({ type, scriptFunc }) => {
     const redeemScript = scriptFunc(
       crypto.hash160(preimage),
       claimKeys.publicKey,

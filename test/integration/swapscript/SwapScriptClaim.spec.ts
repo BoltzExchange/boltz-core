@@ -40,7 +40,7 @@ describe('SwapScript claim', () => {
     ${OutputType.Bech32}        | ${'P2WSH'}
     ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
     ${OutputType.Legacy}        | ${'P2SH'}
-  `(`should claim a $name swap`, async ({ type }) => {
+  `('should claim a $name swap', async ({ type }) => {
     const { utxo } = await createSwapOutput(type, false, swapScript);
     await claimSwap([utxo]);
   });

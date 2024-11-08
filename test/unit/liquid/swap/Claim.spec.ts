@@ -1,8 +1,11 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { getHexBuffer } from '../../../../lib/Utils';
 import { OutputType } from '../../../../lib/consts/Enums';
-import { LiquidClaimDetails } from '../../../../lib/liquid';
-import { constructClaimTransaction, init } from '../../../../lib/liquid';
+import {
+  LiquidClaimDetails,
+  constructClaimTransaction,
+  init,
+} from '../../../../lib/liquid';
 import { liquidClaimDetailsMap } from './ClaimDetails';
 
 describe('Liquid Claim', () => {
@@ -50,7 +53,7 @@ describe('Liquid Claim', () => {
     type                        | name
     ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
     ${OutputType.Legacy}        | ${'P2SH'}
-  `(`should throw with $name inputs`, ({ type }) => {
+  `('should throw with $name inputs', ({ type }) => {
     expect(() =>
       testClaim(
         [

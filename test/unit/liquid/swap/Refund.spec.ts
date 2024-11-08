@@ -2,8 +2,11 @@ import zkp from '@vulpemventures/secp256k1-zkp';
 import { confidential } from 'liquidjs-lib';
 import { getHexBuffer } from '../../../../lib/Utils';
 import { OutputType } from '../../../../lib/consts/Enums';
-import { LiquidRefundDetails } from '../../../../lib/liquid';
-import { constructRefundTransaction, init } from '../../../../lib/liquid';
+import {
+  LiquidRefundDetails,
+  constructRefundTransaction,
+  init,
+} from '../../../../lib/liquid';
 import { ECPair } from '../../Utils';
 import { lbtcRegtest, nonce } from './ClaimDetails';
 

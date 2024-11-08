@@ -18,7 +18,7 @@ describe('ReverseSwapTree claim', () => {
     ${33}
     ${64}
   `(
-    `should not claim via script path when preimage length is invalid (length $length)`,
+    'should not claim via script path when preimage length is invalid (length $length)',
     async ({ length }) => {
       const { utxo } = await createSwapOutput(
         OutputType.Taproot,
