@@ -20,7 +20,7 @@ describe('Liquid SwapDetector', () => {
     ${OutputType.Bech32}        | ${reverseSwapScript} | ${'P2WSH reverse swap'}
     ${OutputType.Compatibility} | ${reverseSwapScript} | ${'P2SH nested P2WSH reverse swap'}
     ${OutputType.Legacy}        | ${reverseSwapScript} | ${'P2SH reverse swap'}
-  `(`should detect $name`, async ({ type, scriptFunc }) => {
+  `('should detect $name', async ({ type, scriptFunc }) => {
     const keys = ECPair.makeRandom();
     const redeemScript = scriptFunc(
       crypto.sha256(keys.publicKey!),

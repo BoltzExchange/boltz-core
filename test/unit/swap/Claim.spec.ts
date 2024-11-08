@@ -22,7 +22,7 @@ describe('Claim', () => {
     ${OutputType.Bech32}        | ${131} | ${'P2WSH'}
     ${OutputType.Compatibility} | ${166} | ${'P2SH nested P2WSH'}
     ${OutputType.Legacy}        | ${274} | ${'P2SH'}
-  `(`should claim a $name swap`, ({ type, fee }) => {
+  `('should claim a $name swap', ({ type, fee }) => {
     expect(
       testClaim([claimDetailsMap.get(type)!], fee).toHex(),
     ).toMatchSnapshot();

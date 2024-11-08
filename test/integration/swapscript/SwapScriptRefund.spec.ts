@@ -21,7 +21,7 @@ describe('SwapScript refund', () => {
     ${OutputType.Bech32}        | ${'P2WSH'}
     ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
     ${OutputType.Legacy}        | ${'P2SH'}
-  `(`should refund a $name swap`, async ({ type }) => {
+  `('should refund a $name swap', async ({ type }) => {
     const { utxo } = await createSwapOutput(
       type,
       true,
@@ -36,7 +36,7 @@ describe('SwapScript refund', () => {
     ${OutputType.Bech32}        | ${'P2WSH'}
     ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
     ${OutputType.Legacy}        | ${'P2SH'}
-  `(`should not refund a $name swap before timeout`, async ({ type }) => {
+  `('should not refund a $name swap before timeout', async ({ type }) => {
     const { utxo } = await createSwapOutput(
       type,
       true,

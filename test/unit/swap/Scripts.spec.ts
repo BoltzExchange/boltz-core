@@ -31,7 +31,7 @@ describe('Scripts', () => {
     ${p2shOutput}      | ${redeemScript}  | ${'P2SH'}
     ${p2shP2wshOutput} | ${redeemScript}  | ${'P2SH nested P2WSH'}
     ${p2trOutput}      | ${key}           | ${'P2TR'}
-  `(`should get $name output script`, async ({ scriptFunc, input }) => {
+  `('should get $name output script', async ({ scriptFunc, input }) => {
     expect(getHexString(scriptFunc(input))).toMatchSnapshot();
   });
 

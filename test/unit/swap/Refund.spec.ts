@@ -61,7 +61,7 @@ describe('Refund', () => {
     ${OutputType.Bech32}        | ${127} | ${'P2WSH'}
     ${OutputType.Compatibility} | ${162} | ${'P2SH nested P2WSH'}
     ${OutputType.Legacy}        | ${258} | ${'P2SH'}
-  `(`should refund a $name swap`, async ({ type, fee }) => {
+  `('should refund a $name swap', async ({ type, fee }) => {
     expect(
       testRefund([refundDetailsMap.get(type)!], fee).toHex(),
     ).toMatchSnapshot();
