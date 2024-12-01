@@ -16,6 +16,7 @@
     "docker:start": "./startRegtest.sh",
     "docker:stop": "docker stop boltz-bitcoin && docker rm boltz-bitcoin && docker kill boltz-elements && docker rm boltz-elements",
     "test": "npm run test:solidity && npm run test:unit && npm run test:int",
+    "format:solidity": "forge fmt contracts/*.sol contracts/script/ contracts/test/",
     "test:solidity": "forge test",
     "test:unit": "jest test/unit",
     "test:int": "jest test/integration --runInBand",

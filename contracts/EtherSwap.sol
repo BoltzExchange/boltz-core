@@ -9,7 +9,7 @@ contract EtherSwap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant version = 3;
+    uint8 public constant version = 4;
 
     bytes32 public immutable DOMAIN_SEPARATOR;
     bytes32 public immutable TYPEHASH_REFUND;
@@ -103,22 +103,39 @@ contract EtherSwap {
     function claim(bytes32 preimage, uint256 amount, address claimAddress, address refundAddress, uint256 timelock)
         public
     {
-        // If the preimage is wrong, so will be its hash which will result in a wrong value hash and no swap being found
-        bytes32 preimageHash = sha256(abi.encodePacked(preimage));
-
-        bytes32 hash = hashValues(preimageHash, amount, claimAddress, refundAddress, timelock);
-
-        // Make sure that the swap to be claimed has Ether locked
-        checkSwapIsLocked(hash);
-        // Delete the swap from the mapping to ensure that it cannot be claimed or refunded anymore
-        // This *HAS* to be done before actually sending the Ether to avoid reentrancy
-        delete swaps[hash];
-
-        // Emit the claim event
-        emit Claim(preimageHash, preimage);
+        prepareClaim(preimage, amount, claimAddress, refundAddress, timelock);
 
         // Transfer the Ether to the claim address
         TransferHelper.transferEther(payable(claimAddress), amount);
+    }
+
+    /// Claims multiple swaps
+    /// @dev All swaps that are claimed have to have "msg.sender" as "claimAddress"
+    /// @param preimages Preimages of the swaps
+    /// @param amounts Amounts that are locked in the contract for the swap in WEI
+    /// @param refundAddresses Addresses that locked the Ether in the contract
+    /// @param timelocks Block heights after which the locked Ether can be refunded
+    function claimBatch(
+        bytes32[] calldata preimages,
+        uint256[] calldata amounts,
+        address[] calldata refundAddresses,
+        uint256[] calldata timelocks
+    ) external {
+        uint256 toSend = 0;
+        uint256 swapAmount = 0;
+
+        unchecked {
+            for (uint256 i = 0; i < preimages.length; i++) {
+                swapAmount = amounts[i];
+                prepareClaim(preimages[i], swapAmount, msg.sender, refundAddresses[i], timelocks[i]);
+
+                // For the "prepareClaim" function to not revert, the amount has to have been locked
+                // in the contract which means this addition cannot overflow
+                toSend += swapAmount;
+            }
+        }
+
+        TransferHelper.transferEther(payable(msg.sender), toSend);
     }
 
     /// Refunds Ether locked in the contract after the timeout
@@ -191,6 +208,35 @@ contract EtherSwap {
     }
 
     // Private functions
+
+    /// Prepares a claim by checking if funds were locked, deleting the swap from storage
+    /// and emitting an event but ***does not*** transfer
+    /// @param preimage Preimage of the swap
+    /// @param amount Amount locked in the contract for the swap in WEI
+    /// @param claimAddress Address that that was destined to claim the funds
+    /// @param refundAddress Address that locked the Ether and can refund them
+    /// @param timelock Block height after which the locked Ether can be refunded
+    function prepareClaim(
+        bytes32 preimage,
+        uint256 amount,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock
+    ) private {
+        // If the preimage is wrong, so will be its hash which will result in a wrong value hash and no swap being found
+        bytes32 preimageHash = sha256(abi.encodePacked(preimage));
+        bytes32 hash = hashValues(preimageHash, amount, claimAddress, refundAddress, timelock);
+
+        // Make sure that the swap to be claimed has Ether locked
+        checkSwapIsLocked(hash);
+
+        // Delete the swap from the mapping to ensure that it cannot be claimed or refunded anymore
+        // This *HAS* to be done before actually sending the Ether to avoid reentrancy
+        delete swaps[hash];
+
+        // Emit the claim event
+        emit Claim(preimageHash, preimage);
+    }
 
     /// Locks Ether in the contract
     /// @notice The refund address is the sender of the transaction

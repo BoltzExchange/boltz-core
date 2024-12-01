@@ -36,7 +36,7 @@ contract EtherSwapTest is Test {
     receive() external payable {}
 
     function testCorrectVersion() external view {
-        assertEq(swap.version(), 3);
+        assertEq(swap.version(), 4);
     }
 
     function testNoSendEtherWithoutFunctionSig() external {
@@ -127,6 +127,50 @@ contract EtherSwapTest is Test {
 
         assertEq(address(swap).balance, 0);
         assertEq(claimAddress.balance - balanceBeforeClaim, lockupAmount);
+    }
+
+    function testClaimBatchTwo() external {
+        uint256 timelock = block.number;
+        uint256 balanceBeforeClaim = claimAddress.balance;
+
+        swap.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        bytes32 preimageSecond = sha256("2");
+        bytes32 preimageHashSecond = sha256(abi.encodePacked(preimageSecond));
+
+        uint256 lockupAmountSecond = 123;
+        uint256 timelockSecond = block.number + 21;
+
+        swap.lock{value: lockupAmountSecond}(preimageHashSecond, claimAddress, timelockSecond);
+
+        bytes32[] memory preimages = new bytes32[](2);
+        preimages[0] = preimage;
+        preimages[1] = preimageSecond;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = lockupAmount;
+        amounts[1] = lockupAmountSecond;
+
+        address[] memory refundAddresses = new address[](2);
+        refundAddresses[0] = address(this);
+        refundAddresses[1] = address(this);
+
+        uint256[] memory timelocks = new uint256[](2);
+        timelocks[0] = timelock;
+        timelocks[1] = timelockSecond;
+
+        vm.prank(claimAddress);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHash, preimage);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHashSecond, preimageSecond);
+
+        swap.claimBatch(preimages, amounts, refundAddresses, timelocks);
+
+        assertEq(address(swap).balance, 0);
+        assertEq(claimAddress.balance - balanceBeforeClaim, lockupAmount + lockupAmountSecond);
     }
 
     function testClaimTwiceFail() external {
