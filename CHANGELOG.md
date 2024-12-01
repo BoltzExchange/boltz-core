@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.1.4](https://github.com/BoltzExchange/boltz-core/compare/v2.1.3..v2.1.4) - 2024-12-01
+
+### Miscellaneous Chores
+
+- add changelog for v2.1.3 - ([cc9b5f7](https://github.com/BoltzExchange/boltz-core/commit/cc9b5f747dc6dd14b6a8b4af98a17584bf35737f))
+- update ESLint to v9 - ([4e521c8](https://github.com/BoltzExchange/boltz-core/commit/4e521c89a2b65892581fce1955ee263b2ec599b1))
+- compile Solidity without via-ir optimizer - ([6e1fecc](https://github.com/BoltzExchange/boltz-core/commit/6e1fecc1224bb6e588779044f5b38053da2c7790))
+- minor dependency updates (#125) - ([5fa276c](https://github.com/BoltzExchange/boltz-core/commit/5fa276c73d36679d4397be519267154ac0339189))
+
+---
 ## [2.1.3](https://github.com/BoltzExchange/boltz-core/compare/v2.1.2..v2.1.3) - 2024-10-18
 
 ### Bug Fixes
