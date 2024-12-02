@@ -41,7 +41,7 @@ contract ERC20SwapTest is Test {
     }
 
     function testCorrectVersion() external view {
-        assertEq(swap.version(), 3);
+        assertEq(swap.version(), 4);
     }
 
     function testShouldNotAcceptEther() external {
@@ -147,6 +147,116 @@ contract ERC20SwapTest is Test {
         assertFalse(querySwap(timelock));
     }
 
+    function testClaimBatchTwo() external {
+        uint256 timelock = block.number;
+        uint256 balanceBeforeClaim = token.balanceOf(claimAddress);
+
+        token.approve(address(swap), lockupAmount);
+        swap.lock(preimageHash, lockupAmount, address(token), claimAddress, timelock);
+
+        bytes32 preimageSecond = sha256("2");
+        bytes32 preimageHashSecond = sha256(abi.encodePacked(preimageSecond));
+
+        uint256 lockupAmountSecond = 123;
+        uint256 timelockSecond = block.number + 21;
+
+        token.approve(address(swap), lockupAmount);
+        swap.lock(preimageHashSecond, lockupAmountSecond, address(token), claimAddress, timelockSecond);
+
+        bytes32[] memory preimages = new bytes32[](2);
+        preimages[0] = preimage;
+        preimages[1] = preimageSecond;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = lockupAmount;
+        amounts[1] = lockupAmountSecond;
+
+        address[] memory refundAddresses = new address[](2);
+        refundAddresses[0] = address(this);
+        refundAddresses[1] = address(this);
+
+        uint256[] memory timelocks = new uint256[](2);
+        timelocks[0] = timelock;
+        timelocks[1] = timelockSecond;
+
+        vm.prank(claimAddress);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHash, preimage);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHashSecond, preimageSecond);
+
+        swap.claimBatch(address(token), preimages, amounts, refundAddresses, timelocks);
+
+        assertEq(address(swap).balance, 0);
+        assertEq(token.balanceOf(claimAddress) - balanceBeforeClaim, lockupAmount + lockupAmountSecond);
+    }
+
+    function testClaimBatchThree() external {
+        uint256 timelock = block.number;
+        uint256 balanceBeforeClaim = token.balanceOf(claimAddress);
+
+        token.approve(address(swap), lockupAmount);
+        swap.lock(preimageHash, lockupAmount, address(token), claimAddress, timelock);
+
+        bytes32 preimageSecond = sha256("2");
+        bytes32 preimageHashSecond = sha256(abi.encodePacked(preimageSecond));
+
+        uint256 lockupAmountSecond = 123;
+        uint256 timelockSecond = block.number + 21;
+
+        token.approve(address(swap), lockupAmountSecond);
+        swap.lock(preimageHashSecond, lockupAmountSecond, address(token), claimAddress, timelockSecond);
+
+        bytes32 preimageThird = sha256("3");
+        bytes32 preimageHashThird = sha256(abi.encodePacked(preimageThird));
+
+        uint256 lockupAmountThird = 321;
+        uint256 timelockThird = block.number + 42;
+
+        token.approve(address(swap), lockupAmountThird);
+        swap.lock(preimageHashThird, lockupAmountThird, address(token), claimAddress, timelockThird);
+
+        bytes32[] memory preimages = new bytes32[](3);
+        preimages[0] = preimage;
+        preimages[1] = preimageSecond;
+        preimages[2] = preimageThird;
+
+        uint256[] memory amounts = new uint256[](3);
+        amounts[0] = lockupAmount;
+        amounts[1] = lockupAmountSecond;
+        amounts[2] = lockupAmountThird;
+
+        address[] memory refundAddresses = new address[](3);
+        refundAddresses[0] = address(this);
+        refundAddresses[1] = address(this);
+        refundAddresses[2] = address(this);
+
+        uint256[] memory timelocks = new uint256[](3);
+        timelocks[0] = timelock;
+        timelocks[1] = timelockSecond;
+        timelocks[2] = timelockThird;
+
+        vm.prank(claimAddress);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHash, preimage);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHashSecond, preimageSecond);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHashThird, preimageThird);
+
+        swap.claimBatch(address(token), preimages, amounts, refundAddresses, timelocks);
+
+        assertEq(address(swap).balance, 0);
+        assertEq(
+            token.balanceOf(claimAddress) - balanceBeforeClaim, lockupAmount + lockupAmountSecond + lockupAmountThird
+        );
+    }
+
     function testClaimTwiceFail() external {
         uint256 timelock = block.number;
 
@@ -157,6 +267,38 @@ contract ERC20SwapTest is Test {
         swap.claim(preimage, lockupAmount, address(token), address(this), timelock);
 
         try swap.claim(preimage, lockupAmount, address(token), address(this), timelock) {
+            fail();
+        } catch Error(string memory exception) {
+            assertEq(string(exception), "ERC20Swap: swap has no tokens locked in the contract");
+        } catch (bytes memory) {
+            fail();
+        }
+    }
+
+    function testClaimBatchTwiceFail() external {
+        uint256 timelock = block.number;
+
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        bytes32[] memory preimages = new bytes32[](2);
+        preimages[0] = preimage;
+        preimages[1] = preimage;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = lockupAmount;
+        amounts[1] = lockupAmount;
+
+        address[] memory refundAddresses = new address[](2);
+        refundAddresses[0] = address(this);
+        refundAddresses[1] = address(this);
+
+        uint256[] memory timelocks = new uint256[](2);
+        timelocks[0] = timelock;
+        timelocks[1] = timelock;
+
+        vm.prank(claimAddress);
+        try swap.claimBatch(address(token), preimages, amounts, refundAddresses, timelocks) {
             fail();
         } catch Error(string memory exception) {
             assertEq(string(exception), "ERC20Swap: swap has no tokens locked in the contract");

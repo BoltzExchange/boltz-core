@@ -173,6 +173,65 @@ contract EtherSwapTest is Test {
         assertEq(claimAddress.balance - balanceBeforeClaim, lockupAmount + lockupAmountSecond);
     }
 
+    function testClaimBatchThree() external {
+        uint256 timelock = block.number;
+        uint256 balanceBeforeClaim = claimAddress.balance;
+
+        swap.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        bytes32 preimageSecond = sha256("2");
+        bytes32 preimageHashSecond = sha256(abi.encodePacked(preimageSecond));
+
+        uint256 lockupAmountSecond = 123;
+        uint256 timelockSecond = block.number + 21;
+
+        swap.lock{value: lockupAmountSecond}(preimageHashSecond, claimAddress, timelockSecond);
+
+        bytes32 preimageThird = sha256("3");
+        bytes32 preimageHashThird = sha256(abi.encodePacked(preimageThird));
+
+        uint256 lockupAmountThird = 321;
+        uint256 timelockThird = block.number + 42;
+
+        swap.lock{value: lockupAmountThird}(preimageHashThird, claimAddress, timelockThird);
+
+        bytes32[] memory preimages = new bytes32[](3);
+        preimages[0] = preimage;
+        preimages[1] = preimageSecond;
+        preimages[2] = preimageThird;
+
+        uint256[] memory amounts = new uint256[](3);
+        amounts[0] = lockupAmount;
+        amounts[1] = lockupAmountSecond;
+        amounts[2] = lockupAmountThird;
+
+        address[] memory refundAddresses = new address[](3);
+        refundAddresses[0] = address(this);
+        refundAddresses[1] = address(this);
+        refundAddresses[2] = address(this);
+
+        uint256[] memory timelocks = new uint256[](3);
+        timelocks[0] = timelock;
+        timelocks[1] = timelockSecond;
+        timelocks[2] = timelockThird;
+
+        vm.prank(claimAddress);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHash, preimage);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHashSecond, preimageSecond);
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(preimageHashThird, preimageThird);
+
+        swap.claimBatch(preimages, amounts, refundAddresses, timelocks);
+
+        assertEq(address(swap).balance, 0);
+        assertEq(claimAddress.balance - balanceBeforeClaim, lockupAmount + lockupAmountSecond + lockupAmountThird);
+    }
+
     function testClaimTwiceFail() external {
         uint256 timelock = block.number;
 
@@ -182,6 +241,37 @@ contract EtherSwapTest is Test {
         swap.claim(preimage, lockupAmount, address(this), timelock);
 
         try swap.claim(preimage, lockupAmount, address(this), timelock) {
+            fail();
+        } catch Error(string memory exception) {
+            assertEq(string(exception), "EtherSwap: swap has no Ether locked in the contract");
+        } catch (bytes memory) {
+            fail();
+        }
+    }
+
+    function testClaimBatchTwiceFail() external {
+        uint256 timelock = block.number;
+
+        lock(timelock);
+
+        bytes32[] memory preimages = new bytes32[](2);
+        preimages[0] = preimage;
+        preimages[1] = preimage;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = lockupAmount;
+        amounts[1] = lockupAmount;
+
+        address[] memory refundAddresses = new address[](2);
+        refundAddresses[0] = address(this);
+        refundAddresses[1] = address(this);
+
+        uint256[] memory timelocks = new uint256[](2);
+        timelocks[0] = timelock;
+        timelocks[1] = timelock;
+
+        vm.prank(claimAddress);
+        try swap.claimBatch(preimages, amounts, refundAddresses, timelocks) {
             fail();
         } catch Error(string memory exception) {
             assertEq(string(exception), "EtherSwap: swap has no Ether locked in the contract");

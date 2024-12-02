@@ -9,7 +9,7 @@ contract ERC20Swap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant version = 3;
+    uint8 public constant version = 4;
 
     bytes32 public immutable DOMAIN_SEPARATOR;
     bytes32 public immutable TYPEHASH_REFUND;
@@ -40,7 +40,7 @@ contract ERC20Swap {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("ERC20Swap"),
-                keccak256("3"),
+                keccak256("4"),
                 block.chainid,
                 address(this)
             )
@@ -104,24 +104,41 @@ contract ERC20Swap {
         address refundAddress,
         uint256 timelock
     ) public {
-        // If the preimage is wrong, so will be its hash which will result in a wrong value hash and no swap being found
-        bytes32 preimageHash = sha256(abi.encodePacked(preimage));
-
-        bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
-
-        // Make sure that the swap to be claimed has tokens locked
-        checkSwapIsLocked(hash);
-
-        // Delete the swap from the mapping to ensure that it cannot be claimed or refunded anymore
-        // This *HAS* to be done before actually sending the tokens to avoid reentrancy
-        // Reentrancy is a bigger problem when sending Ether but there is no real downside to deleting from the mapping first
-        delete swaps[hash];
-
-        // Emit the "Claim" event
-        emit Claim(preimageHash, preimage);
+        prepareClaim(preimage, amount, tokenAddress, claimAddress, refundAddress, timelock);
 
         // Transfer the tokens to the claim address
         TransferHelper.safeTransferToken(tokenAddress, claimAddress, amount);
+    }
+
+    /// Claims multiple swaps
+    /// @dev All swaps that are claimed have to have "msg.sender" as "claimAddress" and the same token address
+    /// @param tokenAddress Address of the token of the swap
+    /// @param preimages Preimages of the swaps
+    /// @param amounts Amounts that are locked in the contract for the swap in WEI
+    /// @param refundAddresses Addresses that locked the Ether in the contract
+    /// @param timelocks Block heights after which the locked Ether can be refunded
+    function claimBatch(
+        address tokenAddress,
+        bytes32[] calldata preimages,
+        uint256[] calldata amounts,
+        address[] calldata refundAddresses,
+        uint256[] calldata timelocks
+    ) external {
+        uint256 toSend = 0;
+        uint256 swapAmount = 0;
+
+        unchecked {
+            for (uint256 i = 0; i < preimages.length; i++) {
+                swapAmount = amounts[i];
+                prepareClaim(preimages[i], swapAmount, tokenAddress, msg.sender, refundAddresses[i], timelocks[i]);
+
+                // For the "prepareClaim" function to not revert, the amount has to have been locked
+                // in the contract which means this addition cannot overflow in realistic scenarios
+                toSend += swapAmount;
+            }
+        }
+
+        TransferHelper.safeTransferToken(tokenAddress, payable(msg.sender), toSend);
     }
 
     /// Refunds tokens locked in the contract after the timeout
@@ -231,6 +248,39 @@ contract ERC20Swap {
     }
 
     // Private functions
+
+    /// Prepares a claim by checking if funds were locked, deleting the swap from storage
+    /// and emitting an event but ***does not*** transfer
+    /// @param preimage Preimage of the swap
+    /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
+    /// @param tokenAddress Address of the token of the swap
+    /// @param claimAddress Address that that was destined to claim the funds
+    /// @param refundAddress Address that locked the Ether and can refund them
+    /// @param timelock Block height after which the locked Ether can be refunded
+    function prepareClaim(
+        bytes32 preimage,
+        uint256 amount,
+        address tokenAddress,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock
+    ) private {
+        // If the preimage is wrong, so will be its hash which will result in a wrong value hash and no swap being found
+        bytes32 preimageHash = sha256(abi.encodePacked(preimage));
+
+        bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
+
+        // Make sure that the swap to be claimed has tokens locked
+        checkSwapIsLocked(hash);
+
+        // Delete the swap from the mapping to ensure that it cannot be claimed or refunded anymore
+        // This *HAS* to be done before actually sending the tokens to avoid reentrancy
+        // Reentrancy is a bigger problem when sending Ether but there is no real downside to deleting from the mapping first
+        delete swaps[hash];
+
+        // Emit the "Claim" event
+        emit Claim(preimageHash, preimage);
+    }
 
     function refundInternal(
         bytes32 preimageHash,

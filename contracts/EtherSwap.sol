@@ -39,7 +39,7 @@ contract EtherSwap {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("EtherSwap"),
-                keccak256("3"),
+                keccak256("4"),
                 block.chainid,
                 address(this)
             )
@@ -130,7 +130,7 @@ contract EtherSwap {
                 prepareClaim(preimages[i], swapAmount, msg.sender, refundAddresses[i], timelocks[i]);
 
                 // For the "prepareClaim" function to not revert, the amount has to have been locked
-                // in the contract which means this addition cannot overflow
+                // in the contract which means this addition cannot overflow in realistic scenarios
                 toSend += swapAmount;
             }
         }
