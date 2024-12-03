@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.2.0](https://github.com/BoltzExchange/boltz-core/compare/v2.1.4..v2.2.0) - 2024-12-03
+
+### Features
+
+- batch claim in EtherSwap - ([f0a969a](https://github.com/BoltzExchange/boltz-core/commit/f0a969ae7cb40642d593fcbad6a9490322ecd5f4))
+- batch claim in ERC20Swap - ([b74b2db](https://github.com/BoltzExchange/boltz-core/commit/b74b2db986d82d473166d7722c69272a0ffb3922))
+
+### Miscellaneous Chores
+
+- minor dependency updates (#129) - ([c0ca9b4](https://github.com/BoltzExchange/boltz-core/commit/c0ca9b41c8d87e4ec9b9cf448b7500c24d1576d9))
+- bump version to v2.2.0 - ([a6eb07c](https://github.com/BoltzExchange/boltz-core/commit/a6eb07c79cae93db714e229d5ea64e4eff8727e5))
+
+### Tests
+
+- add EtherSwap batch claim fuzz test (#128) - ([bdb0074](https://github.com/BoltzExchange/boltz-core/commit/bdb0074da032b7cbd74d650849c9c910ba7762c9))
+
+---
 ## [2.1.4](https://github.com/BoltzExchange/boltz-core/compare/v2.1.3..v2.1.4) - 2024-12-01
 
 ### Miscellaneous Chores
@@ -11,6 +28,7 @@ All notable changes to this project will be documented in this file. See [conven
 - update ESLint to v9 - ([4e521c8](https://github.com/BoltzExchange/boltz-core/commit/4e521c89a2b65892581fce1955ee263b2ec599b1))
 - compile Solidity without via-ir optimizer - ([6e1fecc](https://github.com/BoltzExchange/boltz-core/commit/6e1fecc1224bb6e588779044f5b38053da2c7790))
 - minor dependency updates (#125) - ([5fa276c](https://github.com/BoltzExchange/boltz-core/commit/5fa276c73d36679d4397be519267154ac0339189))
+- bump version to v2.1.4 - ([af7a6f9](https://github.com/BoltzExchange/boltz-core/commit/af7a6f99257bf22328b86d9814e437e05b0b1706))
 
 ---
 ## [2.1.3](https://github.com/BoltzExchange/boltz-core/compare/v2.1.2..v2.1.3) - 2024-10-18
