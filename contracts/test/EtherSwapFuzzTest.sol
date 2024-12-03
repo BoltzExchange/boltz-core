@@ -7,6 +7,8 @@ import "./SigUtils.sol";
 import "../EtherSwap.sol";
 
 contract EtherSwapFuzzTest is Test {
+    event Claim(bytes32 indexed preimageHash, bytes32 preimage);
+
     EtherSwap internal swap = new EtherSwap();
 
     receive() external payable {}
@@ -151,5 +153,51 @@ contract EtherSwapFuzzTest is Test {
         swap.refundCooperative(preimageHash, amount, claimAddress, timelock, v, r, s);
 
         assertTrue(swap.swaps(swap.hashValues(preimageHash, amount, claimAddress, address(this), timelock)));
+    }
+
+    function testClaimBatch(uint256 batchSize) external {
+        batchSize = bound(batchSize, 1, 100);
+        uint256 lockupAmount = 1 ether;
+        address claimAddress = vm.addr(0xA11CE);
+        uint256 balanceBeforeClaim = claimAddress.balance;
+
+        bytes32[] memory preimages = new bytes32[](batchSize);
+        bytes32[] memory preimageHashes = new bytes32[](batchSize);
+        uint256[] memory amounts = new uint256[](batchSize);
+        address[] memory refundAddresses = new address[](batchSize);
+        uint256[] memory timelocks = new uint256[](batchSize);
+
+        uint256 totalLockupAmount = 0;
+
+        for (uint256 i = 0; i < batchSize; i++) {
+            preimages[i] = sha256(abi.encodePacked(bytes32(i + 1)));
+            preimageHashes[i] = sha256(abi.encodePacked(preimages[i]));
+            amounts[i] = (i == 0) ? lockupAmount : (100 + i * 100);
+            refundAddresses[i] = address(this);
+            timelocks[i] = block.number + (i * 21);
+
+            swap.lock{value: amounts[i]}(preimageHashes[i], claimAddress, timelocks[i]);
+            totalLockupAmount += amounts[i];
+        }
+
+        vm.prank(claimAddress);
+
+        for (uint256 i = 0; i < batchSize; i++) {
+            vm.expectEmit(true, false, false, true, address(swap));
+            emit Claim(preimageHashes[i], preimages[i]);
+        }
+
+        swap.claimBatch(preimages, amounts, refundAddresses, timelocks);
+
+        for (uint256 i = 0; i < batchSize; i++) {
+            assertFalse(
+                swap.swaps(
+                    swap.hashValues(preimageHashes[i], amounts[i], claimAddress, refundAddresses[i], timelocks[i])
+                )
+            );
+        }
+
+        assertEq(address(swap).balance, 0);
+        assertEq(claimAddress.balance - balanceBeforeClaim, totalLockupAmount);
     }
 }
