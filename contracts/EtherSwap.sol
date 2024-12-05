@@ -93,22 +93,6 @@ contract EtherSwap {
         claim(preimage, amount, msg.sender, refundAddress, timelock);
     }
 
-    /// Claims Ether locked in the contract for a specified claim address
-    /// @dev To query the arguments of this function, get the "Lockup" event logs for the SHA256 hash of the preimage
-    /// @param preimage Preimage of the swap
-    /// @param amount Amount locked in the contract for the swap in WEI
-    /// @param claimAddress Address to which the claimed funds will be sent
-    /// @param refundAddress Address that locked the Ether in the contract
-    /// @param timelock Block height after which the locked Ether can be refunded
-    function claim(bytes32 preimage, uint256 amount, address claimAddress, address refundAddress, uint256 timelock)
-        public
-    {
-        prepareClaim(preimage, amount, claimAddress, refundAddress, timelock);
-
-        // Transfer the Ether to the claim address
-        TransferHelper.transferEther(payable(claimAddress), amount);
-    }
-
     /// Claims multiple swaps
     /// @dev All swaps that are claimed have to have "msg.sender" as "claimAddress"
     /// @param preimages Preimages of the swaps
@@ -146,10 +130,7 @@ contract EtherSwap {
     /// @param claimAddress Address that that was destined to claim the funds
     /// @param timelock Block height after which the locked Ether can be refunded
     function refund(bytes32 preimageHash, uint256 amount, address claimAddress, uint256 timelock) external {
-        // Make sure the timelock has expired already
-        // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
-        require(timelock <= block.number, "EtherSwap: swap has not timed out yet");
-        refundInternal(preimageHash, amount, claimAddress, timelock);
+        refund(preimageHash, amount, claimAddress, msg.sender, timelock);
     }
 
     /// Refunds Ether locked in the contract with an EIP-712 signature of the claimAddress
@@ -185,10 +166,43 @@ contract EtherSwap {
         );
         require(recoveredAddress != address(0) && recoveredAddress == claimAddress, "EtherSwap: invalid signature");
 
-        refundInternal(preimageHash, amount, claimAddress, timelock);
+        refundInternal(preimageHash, amount, claimAddress, msg.sender, timelock);
     }
 
     // Public functions
+
+    /// Claims Ether locked in the contract for a specified claim address
+    /// @dev To query the arguments of this function, get the "Lockup" event logs for the SHA256 hash of the preimage
+    /// @param preimage Preimage of the swap
+    /// @param amount Amount locked in the contract for the swap in WEI
+    /// @param claimAddress Address to which the claimed funds will be sent
+    /// @param refundAddress Address that locked the Ether in the contract
+    /// @param timelock Block height after which the locked Ether can be refunded
+    function claim(bytes32 preimage, uint256 amount, address claimAddress, address refundAddress, uint256 timelock)
+        public
+    {
+        prepareClaim(preimage, amount, claimAddress, refundAddress, timelock);
+
+        // Transfer the Ether to the claim address
+        TransferHelper.transferEther(payable(claimAddress), amount);
+    }
+
+    /// Refunds Ether locked in the contract after the timeout for a specified refund address address
+    /// @dev To query the arguments of this function, get the "Lockup" event logs for your refund address and the preimage hash if you have it
+    /// @dev For further explanations and reasoning behind the statements in this function, check the "claim" function
+    /// @param preimageHash Preimage hash of the swap
+    /// @param amount Amount locked in the contract for the swap in WEI
+    /// @param claimAddress Address that that was destined to claim the funds
+    /// @param refundAddress Address that locked the Ether in the contract
+    /// @param timelock Block height after which the locked Ether can be refunded
+    function refund(bytes32 preimageHash, uint256 amount, address claimAddress, address refundAddress, uint256 timelock)
+        public
+    {
+        // Make sure the timelock has expired already
+        // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
+        require(timelock <= block.number, "EtherSwap: swap has not timed out yet");
+        refundInternal(preimageHash, amount, claimAddress, refundAddress, timelock);
+    }
 
     /// Hashes all the values of a swap with Keccak256
     /// @param preimageHash Preimage hash of the swap
@@ -261,15 +275,21 @@ contract EtherSwap {
         emit Lockup(preimageHash, amount, claimAddress, msg.sender, timelock);
     }
 
-    function refundInternal(bytes32 preimageHash, uint256 amount, address claimAddress, uint256 timelock) private {
-        bytes32 hash = hashValues(preimageHash, amount, claimAddress, msg.sender, timelock);
+    function refundInternal(
+        bytes32 preimageHash,
+        uint256 amount,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock
+    ) private {
+        bytes32 hash = hashValues(preimageHash, amount, claimAddress, refundAddress, timelock);
 
         checkSwapIsLocked(hash);
         delete swaps[hash];
 
         emit Refund(preimageHash);
 
-        TransferHelper.transferEther(payable(msg.sender), amount);
+        TransferHelper.transferEther(payable(refundAddress), amount);
     }
 
     /// Checks whether a swap has Ether locked in the contract

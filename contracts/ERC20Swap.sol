@@ -16,7 +16,7 @@ contract ERC20Swap {
 
     // State variables
 
-    /// @dev Mapping between value hashes of swaps and whether they have Ether locked in the contract
+    /// @dev Mapping between value hashes of swaps and whether they have tokens locked in the contract
     mapping(bytes32 => bool) public swaps;
 
     // Events
@@ -88,35 +88,13 @@ contract ERC20Swap {
         claim(preimage, amount, tokenAddress, msg.sender, refundAddress, timelock);
     }
 
-    /// Claims Ether locked in the contract for a specified claim address
-    /// @dev To query the arguments of this function, get the "Lockup" event logs for the SHA256 hash of the preimage
-    /// @param preimage Preimage of the swap
-    /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
-    /// @param tokenAddress Address of the token locked for the swap
-    /// @param claimAddress Address to which the claimed funds will be sent
-    /// @param refundAddress Address that locked the tokens in the contract
-    /// @param timelock Block height after which the locked tokens can be refunded
-    function claim(
-        bytes32 preimage,
-        uint256 amount,
-        address tokenAddress,
-        address claimAddress,
-        address refundAddress,
-        uint256 timelock
-    ) public {
-        prepareClaim(preimage, amount, tokenAddress, claimAddress, refundAddress, timelock);
-
-        // Transfer the tokens to the claim address
-        TransferHelper.safeTransferToken(tokenAddress, claimAddress, amount);
-    }
-
     /// Claims multiple swaps
     /// @dev All swaps that are claimed have to have "msg.sender" as "claimAddress" and the same token address
     /// @param tokenAddress Address of the token of the swap
     /// @param preimages Preimages of the swaps
     /// @param amounts Amounts that are locked in the contract for the swap in WEI
-    /// @param refundAddresses Addresses that locked the Ether in the contract
-    /// @param timelocks Block heights after which the locked Ether can be refunded
+    /// @param refundAddresses Addresses that locked the tokens in the contract
+    /// @param timelocks Block heights after which the locked tokens can be refunded
     function claimBatch(
         address tokenAddress,
         bytes32[] calldata preimages,
@@ -148,14 +126,11 @@ contract ERC20Swap {
     /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
     /// @param tokenAddress Address of the token locked for the swap
     /// @param claimAddress Address that that was destined to claim the funds
-    /// @param timelock Block height after which the locked Ether can be refunded
+    /// @param timelock Block height after which the locked tokens can be refunded
     function refund(bytes32 preimageHash, uint256 amount, address tokenAddress, address claimAddress, uint256 timelock)
         external
     {
-        // Make sure the timelock has expired already
-        // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
-        require(timelock <= block.number, "ERC20Swap: swap has not timed out yet");
-        refundInternal(preimageHash, amount, tokenAddress, claimAddress, timelock);
+        refund(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
     }
 
     /// Refunds tokens locked in the contract with an EIP-712 signature of the claimAddress
@@ -165,7 +140,7 @@ contract ERC20Swap {
     /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
     /// @param tokenAddress Address of the token locked for the swap
     /// @param claimAddress Address that that was destined to claim the funds
-    /// @param timelock Block height after which the locked Ether can be refunded
+    /// @param timelock Block height after which the locked tokens can be refunded
     /// @param v final byte of the signature
     /// @param r second 32 bytes of the signature
     /// @param s first 32 bytes of the signature
@@ -193,7 +168,7 @@ contract ERC20Swap {
         );
         require(recoveredAddress != address(0) && recoveredAddress == claimAddress, "ERC20Swap: invalid signature");
 
-        refundInternal(preimageHash, amount, tokenAddress, claimAddress, timelock);
+        refundInternal(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
     }
 
     // Public functions
@@ -228,6 +203,51 @@ contract ERC20Swap {
         TransferHelper.safeTransferTokenFrom(tokenAddress, msg.sender, address(this), amount);
     }
 
+    /// Claims tokens locked in the contract for a specified claim address
+    /// @dev To query the arguments of this function, get the "Lockup" event logs for the SHA256 hash of the preimage
+    /// @param preimage Preimage of the swap
+    /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
+    /// @param tokenAddress Address of the token locked for the swap
+    /// @param claimAddress Address to which the claimed funds will be sent
+    /// @param refundAddress Address that locked the tokens in the contract
+    /// @param timelock Block height after which the locked tokens can be refunded
+    function claim(
+        bytes32 preimage,
+        uint256 amount,
+        address tokenAddress,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock
+    ) public {
+        prepareClaim(preimage, amount, tokenAddress, claimAddress, refundAddress, timelock);
+
+        // Transfer the tokens to the claim address
+        TransferHelper.safeTransferToken(tokenAddress, claimAddress, amount);
+    }
+
+    /// Refunds tokens locked in the contract after the timeout for a specified refund address
+    /// @dev To query the arguments of this function, get the "Lockup" event logs for your refund address and the preimage hash if you have it
+    /// @dev For further explanations and reasoning behind the statements in this function, check the "claim" function
+    /// @param preimageHash Preimage hash of the swap
+    /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
+    /// @param tokenAddress Address of the token locked for the swap
+    /// @param claimAddress Address that was destined to claim the funds
+    /// @param refundAddress Address that locked the tokens in the contract
+    /// @param timelock Block height after which the locked tokens can be refunded
+    function refund(
+        bytes32 preimageHash,
+        uint256 amount,
+        address tokenAddress,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock
+    ) public {
+        // Make sure the timelock has expired already
+        // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
+        require(timelock <= block.number, "ERC20Swap: swap has not timed out yet");
+        refundInternal(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
+    }
+
     /// Hashes all the values of a swap with Keccak256
     /// @param preimageHash Preimage hash of the swap
     /// @param amount Amount the swap has locked in the smallest denomination of the token
@@ -255,8 +275,8 @@ contract ERC20Swap {
     /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
     /// @param tokenAddress Address of the token of the swap
     /// @param claimAddress Address that that was destined to claim the funds
-    /// @param refundAddress Address that locked the Ether and can refund them
-    /// @param timelock Block height after which the locked Ether can be refunded
+    /// @param refundAddress Address that locked the tokens and can refund them
+    /// @param timelock Block height after which the locked tokens can be refunded
     function prepareClaim(
         bytes32 preimage,
         uint256 amount,
@@ -287,16 +307,17 @@ contract ERC20Swap {
         uint256 amount,
         address tokenAddress,
         address claimAddress,
+        address refundAddress,
         uint256 timelock
     ) private {
-        bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
+        bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
 
         checkSwapIsLocked(hash);
         delete swaps[hash];
 
         emit Refund(preimageHash);
 
-        TransferHelper.safeTransferToken(tokenAddress, msg.sender, amount);
+        TransferHelper.safeTransferToken(tokenAddress, refundAddress, amount);
     }
 
     /// Checks whether a swap has tokens locked in the contract

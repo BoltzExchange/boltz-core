@@ -298,6 +298,23 @@ contract EtherSwapTest is Test {
         assertEq(address(this).balance - balanceBeforeRefund, lockupAmount);
     }
 
+    function testRefundAddress() external {
+        uint256 timelock = block.number;
+
+        lock(timelock);
+
+        uint256 balanceBeforeRefund = address(this).balance;
+
+        vm.expectEmit(true, false, false, false, address(swap));
+        emit Refund(preimageHash);
+
+        vm.prank(claimAddress);
+        swap.refund(preimageHash, lockupAmount, claimAddress, address(this), timelock);
+
+        assertEq(address(swap).balance, 0);
+        assertEq(address(this).balance - balanceBeforeRefund, lockupAmount);
+    }
+
     function testRefundTwiceFail() external {
         uint256 timelock = block.number;
 
