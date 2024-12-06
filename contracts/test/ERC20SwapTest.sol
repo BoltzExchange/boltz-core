@@ -326,6 +326,26 @@ contract ERC20SwapTest is Test {
         assertEq(token.balanceOf(address(this)) - balanceBeforeRefund, lockupAmount);
     }
 
+    function testRefundAddress() external {
+        uint256 timelock = block.number;
+
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        uint256 balanceBeforeRefund = token.balanceOf(address(this));
+
+        vm.expectEmit(true, false, false, false, address(swap));
+        emit Refund(preimageHash);
+
+        vm.prank(claimAddress);
+        swap.refund(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock);
+
+        assertFalse(querySwap(timelock));
+
+        assertEq(token.balanceOf(address(swap)), 0);
+        assertEq(token.balanceOf(address(this)) - balanceBeforeRefund, lockupAmount);
+    }
+
     function testRefundTwiceFail() external {
         uint256 timelock = block.number;
 
