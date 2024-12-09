@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.16.0",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.1",

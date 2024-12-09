@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.2.1](https://github.com/BoltzExchange/boltz-core/compare/v2.2.0..v2.2.1) - 2024-12-09
+
+### Features
+
+- refund for other address in Solidity contracts (#130) - ([5d144d2](https://github.com/BoltzExchange/boltz-core/commit/5d144d22780154e8e67976209457c41fc76400b8))
+
+### Miscellaneous Chores
+
+- update CHANGELOG.md for v2.2.0 - ([d0f7634](https://github.com/BoltzExchange/boltz-core/commit/d0f7634666f908c6e187eb459cb9f8c853fb6a0a))
+
+---
 ## [2.2.0](https://github.com/BoltzExchange/boltz-core/compare/v2.1.4..v2.2.0) - 2024-12-03
 
 ### Features
