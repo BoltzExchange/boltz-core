@@ -101,6 +101,9 @@ class ChainClient {
     }
   };
 
+  public testMempoolAccept = (...txs: string[]) =>
+    this.client.request<[{ allowed: boolean }]>('testmempoolaccept', [txs]);
+
   public getRawTransactionVerbose = (id: string) =>
     this.client.request<{
       vsize: number;
