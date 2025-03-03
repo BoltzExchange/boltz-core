@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.2.2](https://github.com/BoltzExchange/boltz-core/compare/v2.2.1..v2.2.2) - 2025-03-03
+
+### Bug Fixes
+
+- spending of explicit outputs with confidential nonce - ([e450da2](https://github.com/BoltzExchange/boltz-core/commit/e450da25707b3b46761e9410456c2b9808ee1b61))
+
+---
 ## [2.2.1](https://github.com/BoltzExchange/boltz-core/compare/v2.2.0..v2.2.1) - 2024-12-09
 
 ### Features
@@ -12,6 +19,7 @@ All notable changes to this project will be documented in this file. See [conven
 ### Miscellaneous Chores
 
 - update CHANGELOG.md for v2.2.0 - ([d0f7634](https://github.com/BoltzExchange/boltz-core/commit/d0f7634666f908c6e187eb459cb9f8c853fb6a0a))
+- bump version to v2.2.1 - ([eb446ad](https://github.com/BoltzExchange/boltz-core/commit/eb446ad13389cb6bf1338dedf7a5447f082a1170))
 
 ---
 ## [2.2.0](https://github.com/BoltzExchange/boltz-core/compare/v2.1.4..v2.2.0) - 2024-12-03
