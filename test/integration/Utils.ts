@@ -46,7 +46,7 @@ import ChainClient from './utils/ChainClient';
 
 let secp: Secp256k1ZKP;
 
-const generateKeys = (): ECPairInterface => {
+export const generateKeys = (): ECPairInterface => {
   return ECPair.makeRandom({ network: Networks.bitcoinRegtest });
 };
 

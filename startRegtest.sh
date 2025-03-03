@@ -13,7 +13,7 @@ print_header() {
 print_header "Bitcoin Core"
 
 echo "Creating container"
-docker run -v `pwd`/docker:/config -d --name $bitcoin_container -p 18443:18443 boltz/bitcoin-core:28.0 $bitcoin_config > /dev/null
+docker run -v `pwd`/docker:/config -d --name $bitcoin_container -p 18443:18443 boltz/bitcoin-core:28.1 $bitcoin_config > /dev/null
 
 sleep 1
 
@@ -28,7 +28,7 @@ elements_config='--conf=/config/elements.conf'
 print_header "Elements Core"
 
 echo "Creating container"
-docker run -v `pwd`/docker:/config -d --name $elements_container -p 18884:18884 boltz/elements:23.2.4 $elements_config > /dev/null
+docker run -v `pwd`/docker:/config -d --name $elements_container -p 18884:18884 boltz/elements:23.2.6 $elements_config > /dev/null
 
 sleep 1
 
