@@ -3,11 +3,29 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [3.0.0](https://github.com/BoltzExchange/boltz-core/compare/v2.2.2..v3.0.0) - 2025-04-03
+
+### Miscellaneous Chores
+
+- explicit Bitcoin signet mapping - ([f3b84f6](https://github.com/BoltzExchange/boltz-core/commit/f3b84f6b220902571588cdd85c2a94ca0f3f13c6))
+- minor dependency bumps - ([b720631](https://github.com/BoltzExchange/boltz-core/commit/b720631bb577fb7928a9de5dd8202e2f1ce21265))
+- bump version to v3.0.0 - ([12d1084](https://github.com/BoltzExchange/boltz-core/commit/12d10846d1ba68f7fcd5f2c0379283420f8513d0))
+- drop support for Node.js v18 - ([3a5ad7c](https://github.com/BoltzExchange/boltz-core/commit/3a5ad7c20d7260018bd6212acd08cddde580fe30))
+
+### Refactoring
+
+- update to ecpair v3 - ([97e1862](https://github.com/BoltzExchange/boltz-core/commit/97e1862c2b4035881c095aca6466a6dad5a733c8))
+
+---
 ## [2.2.2](https://github.com/BoltzExchange/boltz-core/compare/v2.2.1..v2.2.2) - 2025-03-03
 
 ### Bug Fixes
 
 - spending of explicit outputs with confidential nonce - ([e450da2](https://github.com/BoltzExchange/boltz-core/commit/e450da25707b3b46761e9410456c2b9808ee1b61))
+
+### Miscellaneous Chores
+
+- bump version to v2.2.2 - ([88c26a0](https://github.com/BoltzExchange/boltz-core/commit/88c26a0a693c998dc61abc2cf8189707f9e98068))
 
 ---
 ## [2.2.1](https://github.com/BoltzExchange/boltz-core/compare/v2.2.0..v2.2.1) - 2024-12-09
