@@ -66,8 +66,8 @@ describe.each`
 
       const tree = liquidReverseSwapTree(
         preimageHash,
-        ourKeys.publicKey,
-        theirKeys.publicKey,
+        Buffer.from(ourKeys.publicKey),
+        Buffer.from(theirKeys.publicKey),
         timeoutBlockHeight,
         [
           {
@@ -78,10 +78,12 @@ describe.each`
           },
         ],
       );
-      const musig = new Musig(secp, ourKeys, randomBytes(32), [
-        ourKeys.publicKey,
-        theirKeys.publicKey,
-      ]);
+      const musig = new Musig(
+        secp,
+        ourKeys,
+        randomBytes(32),
+        [ourKeys.publicKey, theirKeys.publicKey].map(Buffer.from),
+      );
       const tweakedKey = tweakMusig(musig, tree.tree);
 
       let swapAddress = address.fromOutputScript(
@@ -157,7 +159,7 @@ describe.each`
       );
       musig.signPartial();
       musig.addPartial(
-        theirKeys.publicKey,
+        Buffer.from(theirKeys.publicKey),
         secp.musig.partialSign(
           theirNonce.secNonce,
           theirKeys.privateKey!,
@@ -234,7 +236,7 @@ describe.each`
         switch (addressType) {
           case 'p2tr':
             outputAddress = address.fromOutputScript(
-              p2trOutput(ECPair.makeRandom().publicKey),
+              p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
               networks.regtest,
             );
             break;

@@ -9,34 +9,32 @@ import { ECPair } from '../Utils';
 
 describe('SwapTree', () => {
   test('should extract claim public key from swap tree', () => {
-    const claimKeys = ECPair.makeRandom();
+    const claimKeys = Buffer.from(ECPair.makeRandom().publicKey);
 
     const tree = swapTree(
       false,
       randomBytes(32),
-      claimKeys.publicKey,
-      ECPair.makeRandom().publicKey,
+      claimKeys,
+      Buffer.from(ECPair.makeRandom().publicKey),
       123,
     );
 
-    expect(extractClaimPublicKeyFromSwapTree(tree)).toEqual(
-      toXOnly(claimKeys.publicKey),
-    );
+    expect(extractClaimPublicKeyFromSwapTree(tree)).toEqual(toXOnly(claimKeys));
   });
 
   test('should extract refund public key from swap tree', () => {
-    const refundKeys = ECPair.makeRandom();
+    const refundKeys = Buffer.from(ECPair.makeRandom().publicKey);
 
     const tree = swapTree(
       false,
       randomBytes(32),
-      ECPair.makeRandom().publicKey,
-      refundKeys.publicKey,
+      Buffer.from(ECPair.makeRandom().publicKey),
+      refundKeys,
       123,
     );
 
     expect(extractRefundPublicKeyFromSwapTree(tree)).toEqual(
-      toXOnly(refundKeys.publicKey),
+      toXOnly(refundKeys),
     );
   });
 });

@@ -9,34 +9,34 @@ import { ECPair } from '../Utils';
 
 describe('ReverseSwapTree', () => {
   test('should extract claim public key from swap tree', () => {
-    const claimKeys = ECPair.makeRandom();
+    const claimKeys = Buffer.from(ECPair.makeRandom().publicKey);
 
     const tree = reverseSwapTree(
       false,
       randomBytes(32),
-      claimKeys.publicKey,
-      ECPair.makeRandom().publicKey,
+      claimKeys,
+      Buffer.from(ECPair.makeRandom().publicKey),
       123,
     );
 
     expect(extractClaimPublicKeyFromReverseSwapTree(tree)).toEqual(
-      toXOnly(claimKeys.publicKey),
+      toXOnly(claimKeys),
     );
   });
 
   test('should extract refund public key from swap tree', () => {
-    const refundKeys = ECPair.makeRandom();
+    const refundKeys = Buffer.from(ECPair.makeRandom().publicKey);
 
     const tree = reverseSwapTree(
       false,
       randomBytes(32),
-      ECPair.makeRandom().publicKey,
-      refundKeys.publicKey,
+      Buffer.from(ECPair.makeRandom().publicKey),
+      refundKeys,
       123,
     );
 
     expect(extractRefundPublicKeyFromReverseSwapTree(tree)).toEqual(
-      toXOnly(refundKeys.publicKey),
+      toXOnly(refundKeys),
     );
   });
 });

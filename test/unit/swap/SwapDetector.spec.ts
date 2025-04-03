@@ -22,11 +22,11 @@ describe('SwapDetector', () => {
     ${OutputType.Compatibility} | ${reverseSwapScript} | ${'P2SH nested P2WSH reverse swap'}
     ${OutputType.Legacy}        | ${reverseSwapScript} | ${'P2SH reverse swap'}
   `('should detect $name', async ({ type, scriptFunc }) => {
-    const keys = ECPair.makeRandom();
+    const publicKey = Buffer.from(ECPair.makeRandom().publicKey);
     const redeemScript = scriptFunc(
-      crypto.sha256(keys.publicKey!),
-      keys.publicKey!,
-      keys.publicKey!,
+      crypto.sha256(publicKey),
+      publicKey,
+      publicKey,
       1,
     );
 
@@ -35,7 +35,7 @@ describe('SwapDetector', () => {
 
     const transaction = new Transaction();
     transaction.addOutput(
-      p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey!)),
+      p2pkhOutput(crypto.hash160(Buffer.from(ECPair.makeRandom().publicKey))),
       12,
     );
     transaction.addOutput(script, expectedAmount);
@@ -52,11 +52,11 @@ describe('SwapDetector', () => {
 
   test('should detect tweaked Taproot keys', () => {
     const keys = ECPair.makeRandom();
-    const tweakedKeys = toXOnly(keys.publicKey);
+    const tweakedKeys = toXOnly(Buffer.from(keys.publicKey));
 
     const transaction = new Transaction();
     transaction.addOutput(
-      p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey!)),
+      p2pkhOutput(crypto.hash160(Buffer.from(ECPair.makeRandom().publicKey))),
       12,
     );
     transaction.addOutput(p2trOutput(tweakedKeys), 21);
@@ -74,7 +74,7 @@ describe('SwapDetector', () => {
   test('should return undefined no swap can be found', () => {
     const transaction = new Transaction();
     transaction.addOutput(
-      p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey!)),
+      p2pkhOutput(crypto.hash160(Buffer.from(ECPair.makeRandom().publicKey))),
       12,
     );
     transaction.addOutput(bitcoinScript.fromASM('OP_RETURN'), 312);

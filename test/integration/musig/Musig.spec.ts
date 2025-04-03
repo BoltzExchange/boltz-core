@@ -29,7 +29,7 @@ describe('Musig', () => {
       ),
     );
     const musig = new Musig(secp, ourKey, randomBytes(32), [
-      ourKey.publicKey,
+      Buffer.from(ourKey.publicKey),
       getHexBuffer(
         '02e88bd3780532bbb4a127a2e041467bc42c5cc4ff16ddb5afa7e27c5b653de44c',
       ),
@@ -46,10 +46,12 @@ describe('Musig', () => {
     const ourKey = ECPair.makeRandom();
     const theirKey = ECPair.makeRandom();
 
-    const musig = new Musig(secp, ourKey, randomBytes(32), [
-      ourKey.publicKey,
-      theirKey.publicKey,
-    ]);
+    const musig = new Musig(
+      secp,
+      ourKey,
+      randomBytes(32),
+      [ourKey.publicKey, theirKey.publicKey].map(Buffer.from),
+    );
 
     // Fund address
     const outputScript = p2trOutput(musig.getAggregatedPublicKey());
@@ -90,7 +92,7 @@ describe('Musig', () => {
     musig.initializeSession(sigHash);
     musig.signPartial();
     musig.addPartial(
-      theirKey.publicKey,
+      Buffer.from(theirKey.publicKey),
       secp.musig.partialSign(
         theirNonce.secNonce,
         theirKey.privateKey!,

@@ -84,7 +84,7 @@ describe.each`
       );
       musig!.signPartial();
       musig!.addPartial(
-        refundKeys.publicKey,
+        Buffer.from(refundKeys.publicKey),
         secp.musig.partialSign(
           theirNonce.secNonce,
           refundKeys.privateKey!,

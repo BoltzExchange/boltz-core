@@ -95,7 +95,7 @@ export const constructClaimTransaction = (
         const signature = utxo.keys.sign(sigHash);
 
         const inputScript = [
-          encodeSignature(Transaction.SIGHASH_ALL, signature),
+          encodeSignature(Transaction.SIGHASH_ALL, Buffer.from(signature)),
           utxo.preimage,
           ops.OP_PUSHDATA1,
           utxo.redeemScript!,
@@ -134,7 +134,7 @@ export const constructClaimTransaction = (
           Transaction.SIGHASH_DEFAULT,
         );
 
-        const signature = utxo.keys.signSchnorr(sigHash);
+        const signature = Buffer.from(utxo.keys.signSchnorr(sigHash));
         const witness = isRefund ? [signature] : [signature, utxo.preimage];
 
         tx.setWitness(
@@ -163,7 +163,7 @@ export const constructClaimTransaction = (
         Transaction.SIGHASH_ALL,
       );
       const signature = script.signature.encode(
-        utxo.keys.sign(sigHash),
+        Buffer.from(utxo.keys.sign(sigHash)),
         Transaction.SIGHASH_ALL,
       );
 

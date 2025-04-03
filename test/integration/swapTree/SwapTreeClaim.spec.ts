@@ -51,7 +51,7 @@ describe.each`
     musig!.initializeSession(hashForWitnessV1([utxo], tx, 0));
     musig!.signPartial();
     musig!.addPartial(
-      refundKeys.publicKey,
+      Buffer.from(refundKeys.publicKey),
       secp.musig.partialSign(
         theirNonce.secNonce,
         refundKeys.privateKey!,

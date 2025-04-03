@@ -58,7 +58,7 @@
     "bip66": "^2.0.0",
     "bitcoinjs-lib": "^6.1.7",
     "bn.js": "^5.2.1",
-    "ecpair": "^2.1.0",
+    "ecpair": "^3.0.0",
     "varuint-bitcoin": "^2.0.0"
   },
   "devDependencies": {

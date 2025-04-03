@@ -31,7 +31,7 @@ class Musig {
     }
 
     this.myIndex = this.publicKeys.findIndex((key) =>
-      this.key.publicKey.equals(key),
+      Buffer.from(this.key.publicKey).equals(key),
     );
 
     if (this.myIndex === -1) {
@@ -85,7 +85,9 @@ class Musig {
 
   public aggregateNonces = (nonces: [Uint8Array, Uint8Array][]) => {
     if (
-      nonces.find(([keyCmp]) => this.key.publicKey.equals(keyCmp)) === undefined
+      nonces.find(([keyCmp]) =>
+        Buffer.from(this.key.publicKey).equals(keyCmp),
+      ) === undefined
     ) {
       nonces.push([this.key.publicKey, this.getPublicNonce()]);
     }
@@ -97,7 +99,7 @@ class Musig {
     const ordered: Uint8Array[] = [];
 
     for (const key of this.publicKeys) {
-      const nonce = nonces.find(([keyCmp]) => key.equals(keyCmp));
+      const nonce = nonces.find(([keyCmp]) => Buffer.from(key).equals(keyCmp));
       if (nonce === undefined) {
         throw `could not find nonce for public key ${getHexString(key)}`;
       }

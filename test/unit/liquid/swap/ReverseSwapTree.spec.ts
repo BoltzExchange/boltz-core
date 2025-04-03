@@ -9,21 +9,25 @@ describe('ReverseSwapTree', () => {
     expect(() =>
       reverseSwapTree(
         randomBytes(32),
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
+        Buffer.from(ECPair.makeRandom().publicKey),
+        Buffer.from(ECPair.makeRandom().publicKey),
         123,
         [
           {
             type: Feature.ClaimCovenant,
             expectedAmount: 123,
             assetHash: networks.regtest.assetHash,
-            outputScript: p2trOutput(ECPair.makeRandom().publicKey),
+            outputScript: p2trOutput(
+              Buffer.from(ECPair.makeRandom().publicKey),
+            ),
           },
           {
             type: Feature.ClaimCovenant,
             expectedAmount: 123,
             assetHash: networks.regtest.assetHash,
-            outputScript: p2trOutput(ECPair.makeRandom().publicKey),
+            outputScript: p2trOutput(
+              Buffer.from(ECPair.makeRandom().publicKey),
+            ),
           },
         ],
       ),
@@ -36,8 +40,8 @@ describe('ReverseSwapTree', () => {
     expect(() =>
       reverseSwapTree(
         randomBytes(32),
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
+        Buffer.from(ECPair.makeRandom().publicKey),
+        Buffer.from(ECPair.makeRandom().publicKey),
         123,
         [
           {

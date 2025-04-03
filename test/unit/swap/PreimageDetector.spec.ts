@@ -40,8 +40,8 @@ describe('PreimageDetector', () => {
   `('should detect preimage of $name input', ({ type, scriptFunc }) => {
     const redeemScript = scriptFunc(
       crypto.sha256(preimage),
-      claimKeys.publicKey,
-      refundKeys.publicKey,
+      Buffer.from(claimKeys.publicKey),
+      Buffer.from(refundKeys.publicKey),
       1,
     );
     const claimTransaction = constructClaimTransaction(
@@ -59,7 +59,7 @@ describe('PreimageDetector', () => {
           ),
         },
       ],
-      p2wpkhOutput(crypto.hash160(claimKeys.publicKey)),
+      p2wpkhOutput(crypto.hash160(Buffer.from(claimKeys.publicKey))),
       2,
       false,
     );
@@ -88,12 +88,12 @@ describe('PreimageDetector', () => {
             refundKeys.publicKey,
             1,
           ),
-          internalKey: toXOnly(claimKeys.publicKey),
+          internalKey: toXOnly(Buffer.from(claimKeys.publicKey)),
           keys: claimKeys,
-          script: p2trOutput(claimKeys.publicKey),
+          script: p2trOutput(Buffer.from(claimKeys.publicKey)),
         },
       ],
-      p2wpkhOutput(crypto.hash160(claimKeys.publicKey)),
+      p2wpkhOutput(crypto.hash160(Buffer.from(claimKeys.publicKey))),
       2,
       false,
     );
