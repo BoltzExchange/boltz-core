@@ -22,10 +22,12 @@ import { createLeaf } from '../../../../lib/swap/TaprootUtils';
 import { ECPair } from '../../Utils';
 
 describe('TaprootUtils', () => {
-  const key = ECPair.fromPrivateKey(
-    getHexBuffer(
-      '87ca03c7557e262775987404c3f07d43b7331721f2916324b53e90e3541132c5',
-    ),
+  const publicKey = Buffer.from(
+    ECPair.fromPrivateKey(
+      getHexBuffer(
+        '87ca03c7557e262775987404c3f07d43b7331721f2916324b53e90e3541132c5',
+      ),
+    ).publicKey,
   );
   const bytes = getHexBuffer(
     '6ca8dbc536d5ffbe22af6e8034840cdc305fea9d2bdea252d378d7db9bb77882',
@@ -33,7 +35,7 @@ describe('TaprootUtils', () => {
 
   const taptree: Taptree = [
     createLeaf(true, [ops.OP_SHA256, bytes, ops.OP_EQUALVERIFY]),
-    createLeaf(true, [key.publicKey, ops.OP_CHECKSIGVERIFY]),
+    createLeaf(true, [publicKey, ops.OP_CHECKSIGVERIFY]),
   ];
 
   beforeAll(async () => {
@@ -47,7 +49,7 @@ describe('TaprootUtils', () => {
   });
 
   test('should hash tap tweaks', () => {
-    const tweak = tapTweakHash(key.publicKey, bytes);
+    const tweak = tapTweakHash(publicKey, bytes);
     expect(tweak).toBeInstanceOf(Buffer);
     expect(tweak).toMatchSnapshot();
   });
@@ -68,10 +70,12 @@ describe('TaprootUtils', () => {
     const secp = await zkp();
     const ourMusigKey = ECPair.makeRandom();
 
-    const musig = new Musig(secp, ourMusigKey, randomBytes(32), [
-      ourMusigKey.publicKey,
-      ECPair.makeRandom().publicKey,
-    ]);
+    const musig = new Musig(
+      secp,
+      ourMusigKey,
+      randomBytes(32),
+      [ourMusigKey.publicKey, ECPair.makeRandom().publicKey].map(Buffer.from),
+    );
     const tweakedKey = tweakMusig(musig, taptree);
 
     expect(tweakedKey).toEqual(
@@ -90,7 +94,7 @@ describe('TaprootUtils', () => {
   test('should create control blocks', () => {
     initEccLib(ecc);
 
-    const internalKey = toXOnly(ECPair.makeRandom().publicKey);
+    const internalKey = toXOnly(Buffer.from(ECPair.makeRandom().publicKey));
     const controlBlock = createControlBlock(
       toHashTree(taptree),
       taptree[0] as Tapleaf,
@@ -125,7 +129,7 @@ describe('TaprootUtils', () => {
           randomBytes(20),
           ops.OP_EQUALVERIFY,
         ]),
-        toXOnly(ECPair.makeRandom().publicKey),
+        toXOnly(Buffer.from(ECPair.makeRandom().publicKey)),
       ),
     ).toThrow('leaf not in tree');
   });

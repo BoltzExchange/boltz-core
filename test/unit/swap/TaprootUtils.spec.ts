@@ -30,7 +30,10 @@ import { ECPair } from '../Utils';
 describe('TaprootUtils', () => {
   const taptree: Taptree = [
     createLeaf(false, [ops.OP_SHA256, randomBytes(32), ops.OP_EQUALVERIFY]),
-    createLeaf(false, [ECPair.makeRandom().publicKey, ops.OP_CHECKSIGVERIFY]),
+    createLeaf(false, [
+      Buffer.from(ECPair.makeRandom().publicKey),
+      ops.OP_CHECKSIGVERIFY,
+    ]),
   ];
 
   test('should convert swap leafs to a tree', () => {
@@ -53,7 +56,7 @@ describe('TaprootUtils', () => {
       ops.OP_SHA256,
       randomBytes(32),
       ops.OP_EQUALVERIFY,
-      ECPair.makeRandom().publicKey,
+      Buffer.from(ECPair.makeRandom().publicKey),
       ops.OP_CHECKSIGVERIFY,
     ];
 
@@ -66,10 +69,12 @@ describe('TaprootUtils', () => {
     const secp = await zkp();
     const ourMusigKey = ECPair.makeRandom();
 
-    const musig = new Musig(secp, ourMusigKey, randomBytes(32), [
-      ourMusigKey.publicKey,
-      ECPair.makeRandom().publicKey,
-    ]);
+    const musig = new Musig(
+      secp,
+      ourMusigKey,
+      randomBytes(32),
+      [ourMusigKey.publicKey, ECPair.makeRandom().publicKey].map(Buffer.from),
+    );
     const tweakedKey = tweakMusig(musig, taptree);
 
     expect(tweakedKey).toEqual(
@@ -88,7 +93,7 @@ describe('TaprootUtils', () => {
   test('should create control blocks', () => {
     initEccLib(ecc);
 
-    const internalKey = toXOnly(ECPair.makeRandom().publicKey);
+    const internalKey = toXOnly(Buffer.from(ECPair.makeRandom().publicKey));
     const controlBlock = createControlBlock(
       toHashTree(taptree),
       taptree[0] as Tapleaf,
@@ -118,7 +123,7 @@ describe('TaprootUtils', () => {
           randomBytes(20),
           ops.OP_EQUALVERIFY,
         ]),
-        toXOnly(ECPair.makeRandom().publicKey),
+        toXOnly(Buffer.from(ECPair.makeRandom().publicKey)),
       ),
     ).toThrow('leaf not in tree');
   });
@@ -152,7 +157,7 @@ describe('TaprootUtils', () => {
     tx.addInput(randomBytes(32), 2);
 
     tx.addOutput(
-      p2trOutput(ECPair.makeRandom().publicKey),
+      p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
       details.reduce((sum, entry) => sum + entry.value, 0),
     );
 

@@ -12,7 +12,7 @@ import { ECPair } from '../Utils';
 
 describe('Liquid Utils', () => {
   test('should get P2TR introspection values', () => {
-    const output = p2trOutput(ECPair.makeRandom().publicKey);
+    const output = p2trOutput(Buffer.from(ECPair.makeRandom().publicKey));
 
     expect(getScriptIntrospectionValues(output)).toEqual({
       version: 1,
@@ -21,7 +21,9 @@ describe('Liquid Utils', () => {
   });
 
   test('should get P2WPKH introspection values', () => {
-    const output = p2wpkhOutput(crypto.hash160(ECPair.makeRandom().publicKey));
+    const output = p2wpkhOutput(
+      crypto.hash160(Buffer.from(ECPair.makeRandom().publicKey)),
+    );
 
     expect(getScriptIntrospectionValues(output)).toEqual({
       version: 0,
@@ -39,7 +41,9 @@ describe('Liquid Utils', () => {
   });
 
   test('should get P2PKH introspection values', () => {
-    const output = p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey));
+    const output = p2pkhOutput(
+      crypto.hash160(Buffer.from(ECPair.makeRandom().publicKey)),
+    );
 
     expect(getScriptIntrospectionValues(output)).toEqual({
       version: -1,

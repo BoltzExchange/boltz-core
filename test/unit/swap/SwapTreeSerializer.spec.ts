@@ -12,16 +12,20 @@ describe('SwapTreeSerializer', () => {
   const preimageHash = getHexBuffer(
     'a8aca40d423f00ec0a69b1b815169d7412a747e08e5669e80b3106e82975908a',
   );
-  const claimPublicKey = ECPair.fromPrivateKey(
-    getHexBuffer(
-      '4cffad3235065eff2959eabeb36cccaed698bc5a009d43f2ca1ce2d251599f85',
-    ),
-  ).publicKey;
-  const refundPublicKey = ECPair.fromPrivateKey(
-    getHexBuffer(
-      'eb4036423cd9ae6eaa44eb7203047c613aa2c6f52153b6783d53fa4e19173af1',
-    ),
-  ).publicKey;
+  const claimPublicKey = Buffer.from(
+    ECPair.fromPrivateKey(
+      getHexBuffer(
+        '4cffad3235065eff2959eabeb36cccaed698bc5a009d43f2ca1ce2d251599f85',
+      ),
+    ).publicKey,
+  );
+  const refundPublicKey = Buffer.from(
+    ECPair.fromPrivateKey(
+      getHexBuffer(
+        'eb4036423cd9ae6eaa44eb7203047c613aa2c6f52153b6783d53fa4e19173af1',
+      ),
+    ).publicKey,
+  );
   const timeoutBlockHeight = 123;
 
   const createTree = (isLiquid: boolean) =>

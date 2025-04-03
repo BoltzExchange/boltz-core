@@ -54,7 +54,7 @@ describe('Liquid PreimageDetector', () => {
           asset: lbtcRegtest,
         },
       ],
-      p2wpkhOutput(crypto.hash160(claimKeys.publicKey)),
+      p2wpkhOutput(crypto.hash160(Buffer.from(claimKeys.publicKey))),
       2,
       false,
     );

@@ -111,7 +111,7 @@ export const init = async () => {
 };
 
 export const destinationOutput = p2wpkhOutput(
-  crypto.hash160(generateKeys().publicKey!),
+  crypto.hash160(Buffer.from(generateKeys().publicKey)),
 );
 
 export const blindWitnessAddress = (
@@ -231,8 +231,8 @@ export const createSwapOutput = async <
     const tree = (generateScript as typeof swapTree)(
       !isBitcoin,
       crypto.sha256(preimage),
-      claimKeys.publicKey,
-      refundKeys.publicKey,
+      Buffer.from(claimKeys.publicKey),
+      Buffer.from(refundKeys.publicKey),
       timeout,
     ) as SwapTree;
 
@@ -240,7 +240,7 @@ export const createSwapOutput = async <
       secp,
       isRefund ? refundKeys : claimKeys,
       randomBytes(32),
-      [claimKeys.publicKey, refundKeys.publicKey],
+      [claimKeys.publicKey, refundKeys.publicKey].map(Buffer.from),
     );
 
     const tweakedKey = (isBitcoin ? tweakMusig : liquidTweakMusig)(
@@ -263,8 +263,8 @@ export const createSwapOutput = async <
   } else {
     const redeemScript = (generateScript as typeof swapScript)(
       crypto.sha256(preimage),
-      claimKeys.publicKey,
-      refundKeys.publicKey,
+      Buffer.from(claimKeys.publicKey),
+      Buffer.from(refundKeys.publicKey),
       timeout,
     ) as Buffer;
 

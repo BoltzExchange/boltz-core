@@ -24,7 +24,7 @@ describe('ExplicitOutputWithNonce', () => {
 
   test('should be able to spend an explicit output with a confidential nonce', async () => {
     const keys = generateKeys();
-    const outputScript = p2trOutput(keys.publicKey!);
+    const outputScript = p2trOutput(Buffer.from(keys.publicKey));
     const addr = address.fromOutputScript(outputScript, networks.regtest);
 
     const transaction = Transaction.fromHex(
@@ -47,14 +47,16 @@ describe('ExplicitOutputWithNonce', () => {
     const tree = swapTree(
       true,
       crypto.sha256(preimage),
-      claimKeys.publicKey,
-      refundKeys.publicKey,
+      Buffer.from(claimKeys.publicKey),
+      Buffer.from(refundKeys.publicKey),
       timeoutBlockHeight,
     );
-    const musig = new Musig(secp, claimKeys, randomBytes(32), [
-      claimKeys.publicKey,
-      refundKeys.publicKey,
-    ]);
+    const musig = new Musig(
+      secp,
+      claimKeys,
+      randomBytes(32),
+      [claimKeys.publicKey, refundKeys.publicKey].map(Buffer.from),
+    );
     const tweakedKey = tweakMusig(musig, tree.tree);
     const swapOutputScript = p2trOutput(tweakedKey);
 
@@ -80,18 +82,20 @@ describe('ExplicitOutputWithNonce', () => {
     );
 
     swapTx.ins[0].witness = [
-      keys.signSchnorr(
-        swapTx.hashForWitnessV1(
-          0,
-          [prevOut.script],
-          [
-            {
-              asset: prevOut.asset,
-              value: prevOut.value,
-            },
-          ],
-          Transaction.SIGHASH_DEFAULT,
-          networks.regtest.genesisBlockHash,
+      Buffer.from(
+        keys.signSchnorr(
+          swapTx.hashForWitnessV1(
+            0,
+            [prevOut.script],
+            [
+              {
+                asset: prevOut.asset,
+                value: prevOut.value,
+              },
+            ],
+            Transaction.SIGHASH_DEFAULT,
+            networks.regtest.genesisBlockHash,
+          ),
         ),
       ),
     ];

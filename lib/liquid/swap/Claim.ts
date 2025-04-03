@@ -175,7 +175,7 @@ export const constructClaimTransaction = (
           // TODO: figure out flakiness with blinding 0 amount outputs
           1,
           Buffer.of(ops.OP_RETURN),
-          ecpair.makeRandom().publicKey,
+          Buffer.from(ecpair.makeRandom().publicKey),
           0,
         ).toPartialOutput(),
       );
@@ -212,15 +212,15 @@ export const constructClaimTransaction = (
           leafHash,
         ),
       );
-      signatures.push(signature);
+      signatures.push(Buffer.from(signature));
       signer.addSignature(
         i,
         {
           genesisBlockHash: network.genesisBlockHash,
           tapScriptSigs: [
             {
-              signature: signature,
-              pubkey: toXOnly(utxo.keys!.publicKey),
+              signature: Buffer.from(signature),
+              pubkey: toXOnly(Buffer.from(utxo.keys!.publicKey)),
               leafHash,
             },
           ],
@@ -229,7 +229,11 @@ export const constructClaimTransaction = (
       );
     } else {
       const signature = script.signature.encode(
-        utxo.keys!.sign(pset.getInputPreimage(i, getSighashType(utxo.type))),
+        Buffer.from(
+          utxo.keys!.sign(
+            Buffer.from(pset.getInputPreimage(i, getSighashType(utxo.type))),
+          ),
+        ),
         getSighashType(utxo.type),
       );
       signatures.push(signature);
@@ -238,7 +242,7 @@ export const constructClaimTransaction = (
         i,
         {
           partialSig: {
-            pubkey: utxo.keys!.publicKey,
+            pubkey: Buffer.from(utxo.keys!.publicKey),
             signature,
           },
         },

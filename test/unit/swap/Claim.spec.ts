@@ -64,7 +64,7 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(ECPair.makeRandom().publicKey),
+          p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
           1,
         ),
       ).toThrow('not all non Taproot inputs have a redeem script');
@@ -83,7 +83,7 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(ECPair.makeRandom().publicKey),
+          p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
           1,
         ),
       ).toThrow('not all Taproot inputs have a swap tree');
@@ -102,7 +102,7 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(ECPair.makeRandom().publicKey),
+          p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
           1,
         ),
       ).toThrow('not all Taproot inputs have an internal key');

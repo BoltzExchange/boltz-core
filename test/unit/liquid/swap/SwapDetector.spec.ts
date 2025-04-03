@@ -21,11 +21,11 @@ describe('Liquid SwapDetector', () => {
     ${OutputType.Compatibility} | ${reverseSwapScript} | ${'P2SH nested P2WSH reverse swap'}
     ${OutputType.Legacy}        | ${reverseSwapScript} | ${'P2SH reverse swap'}
   `('should detect $name', async ({ type, scriptFunc }) => {
-    const keys = ECPair.makeRandom();
+    const publicKey = Buffer.from(ECPair.makeRandom().publicKey);
     const redeemScript = scriptFunc(
-      crypto.sha256(keys.publicKey!),
-      keys.publicKey!,
-      keys.publicKey!,
+      crypto.sha256(publicKey),
+      publicKey,
+      publicKey,
       1,
     );
 
@@ -34,7 +34,7 @@ describe('Liquid SwapDetector', () => {
     const transaction = new Transaction();
     const script = outputFunctionForType(type)!(redeemScript);
     transaction.addOutput(
-      p2pkhOutput(crypto.hash160(ECPair.makeRandom().publicKey!)),
+      p2pkhOutput(crypto.hash160(Buffer.from(ECPair.makeRandom().publicKey))),
       confidential.satoshiToConfidentialValue(12),
       lbtcRegtest,
       nonce,

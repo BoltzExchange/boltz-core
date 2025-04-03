@@ -18,6 +18,7 @@ const Networks = {
   // Bitcoin networks
   bitcoinMainnet: networks.bitcoin,
   bitcoinTestnet: networks.testnet,
+  bitcoinSignet: networks.testnet,
   bitcoinSimnet: {
     messagePrefix: bitcoinPrefix,
     bip32: simnetBip32,
