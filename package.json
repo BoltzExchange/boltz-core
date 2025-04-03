@@ -32,7 +32,7 @@
     "url": "git+https://github.com/BoltzExchange/boltz-core.git"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "files": [
     "LICENSE",
