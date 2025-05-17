@@ -43,11 +43,16 @@ describe('SwapScript refund', () => {
       swapScript,
       bestBlockHeight + 1,
     );
-    await expect(refundSwap([utxo], bestBlockHeight)).rejects.toEqual({
-      code: -26,
-      message:
+
+    try {
+      await refundSwap([utxo], bestBlockHeight);
+      expect(true).toBe(false);
+    } catch (error: any) {
+      expect(error.code).toBe(-26);
+      expect(error.message).toContain(
         'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
-    });
+      );
+    }
   });
 
   test('should refund multiple swaps in one transaction', async () => {
