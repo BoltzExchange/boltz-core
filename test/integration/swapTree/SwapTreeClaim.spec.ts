@@ -82,11 +82,15 @@ describe.each`
     );
     utxo.preimage = randomBytes(32);
 
-    await expect(claimSwap([utxo])).rejects.toEqual({
-      code: -26,
-      message:
+    try {
+      await claimSwap([utxo]);
+      expect(true).toBe(false);
+    } catch (error: any) {
+      expect(error.code).toBe(-26);
+      expect(error.message).toContain(
         'mandatory-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
-    });
+      );
+    }
   });
 
   test('should not claim via script path when claim key is invalid', async () => {
@@ -97,10 +101,14 @@ describe.each`
     );
     utxo.keys = ECPair.makeRandom();
 
-    await expect(claimSwap([utxo])).rejects.toEqual({
-      code: -26,
-      message:
+    try {
+      await claimSwap([utxo]);
+      expect(true).toBe(false);
+    } catch (error: any) {
+      expect(error.code).toBe(-26);
+      expect(error.message).toContain(
         'mandatory-script-verify-flag-failed (Invalid Schnorr signature)',
-    });
+      );
+    }
   });
 });

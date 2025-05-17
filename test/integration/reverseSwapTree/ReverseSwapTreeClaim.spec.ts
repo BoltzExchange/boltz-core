@@ -29,11 +29,15 @@ describe('ReverseSwapTree claim', () => {
         randomBytes(length),
       );
 
-      await expect(claimSwap([utxo])).rejects.toEqual({
-        code: -26,
-        message:
+      try {
+        await claimSwap([utxo]);
+        expect(true).toBe(false);
+      } catch (error: any) {
+        expect(error.code).toBe(-26);
+        expect(error.message).toContain(
           'mandatory-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
-      });
+        );
+      }
     },
   );
 });

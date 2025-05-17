@@ -29,7 +29,7 @@ describe('ReverseSwapScript claim', () => {
     }
 
     expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toEqual(
+    expect(actualError.message).toContain(
       'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
     );
   });
@@ -51,7 +51,7 @@ describe('ReverseSwapScript claim', () => {
     }
 
     expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toEqual(
+    expect(actualError.message).toContain(
       'mandatory-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
     );
   });

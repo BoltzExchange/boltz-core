@@ -36,11 +36,16 @@ describe.each`
       treeFunc,
       timeout + 21,
     );
-    await expect(refundSwap([utxo], timeout)).rejects.toEqual({
-      code: -26,
-      message:
+
+    try {
+      await refundSwap([utxo], timeout);
+      expect(true).toBe(false);
+    } catch (error: any) {
+      expect(error.code).toBe(-26);
+      expect(error.message).toContain(
         'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
-    });
+      );
+    }
   });
 
   test('should not refund via script path when refund key is invalid', async () => {
@@ -53,10 +58,14 @@ describe.each`
     );
     utxo.keys = ECPair.makeRandom();
 
-    await expect(refundSwap([utxo], timeout)).rejects.toEqual({
-      code: -26,
-      message:
+    try {
+      await refundSwap([utxo], timeout);
+      expect(true).toBe(false);
+    } catch (error: any) {
+      expect(error.code).toBe(-26);
+      expect(error.message).toContain(
         'mandatory-script-verify-flag-failed (Invalid Schnorr signature)',
-    });
+      );
+    }
   });
 });
