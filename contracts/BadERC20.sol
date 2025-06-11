@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.30;
 
 // This token is intentionally not complying to the ERC20 standard so that the ERC20Swap contract
 // can be tested against such non-standardised tokens
