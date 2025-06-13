@@ -36,7 +36,7 @@ contract EtherSwapTest is Test {
     receive() external payable {}
 
     function testCorrectVersion() external view {
-        assertEq(swap.version(), 4);
+        assertEq(swap.version(), 5);
     }
 
     function testNoSendEtherWithoutFunctionSig() external {
