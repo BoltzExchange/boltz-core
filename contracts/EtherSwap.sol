@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.30;
 
 import "./TransferHelper.sol";
 
@@ -9,9 +9,10 @@ contract EtherSwap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant version = 4;
+    uint8 public constant version = 5;
 
     bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 public immutable TYPEHASH_CLAIM;
     bytes32 public immutable TYPEHASH_REFUND;
 
     // State variables
@@ -39,12 +40,15 @@ contract EtherSwap {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("EtherSwap"),
-                keccak256("4"),
+                keccak256("5"),
                 block.chainid,
                 address(this)
             )
         );
-        TYPEHASH_REFUND = keccak256("Refund(bytes32 preimageHash,uint256 amount,address claimAddress,uint256 timeout)");
+        TYPEHASH_CLAIM = keccak256(
+            "Claim(bytes32 preimage,uint256 amount,address refundAddress,uint256 timelock,address destination)"
+        );
+        TYPEHASH_REFUND = keccak256("Refund(bytes32 preimageHash,uint256 amount,address claimAddress,uint256 timelock)");
     }
 
     // External functions
@@ -91,6 +95,34 @@ contract EtherSwap {
         // Passing "msg.sender" as "claimAddress" to "hashValues" ensures that only the destined address can claim
         // All other addresses would produce a different hash for which no swap can be found in the "swaps" mapping
         claim(preimage, amount, msg.sender, refundAddress, timelock);
+    }
+
+    function claim(
+        bytes32 preimage,
+        uint256 amount,
+        address refundAddress,
+        uint256 timelock,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (address) {
+        address claimAddress = ecrecover(
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    DOMAIN_SEPARATOR,
+                    keccak256(abi.encode(TYPEHASH_CLAIM, preimage, amount, refundAddress, timelock, msg.sender))
+                )
+            ),
+            v,
+            r,
+            s
+        );
+
+        prepareClaim(preimage, amount, claimAddress, refundAddress, timelock);
+        TransferHelper.transferEther(payable(msg.sender), amount);
+
+        return claimAddress;
     }
 
     /// Claims multiple swaps

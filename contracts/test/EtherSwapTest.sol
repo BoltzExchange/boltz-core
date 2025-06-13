@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "./SigUtils.sol";
@@ -36,7 +36,7 @@ contract EtherSwapTest is Test {
     receive() external payable {}
 
     function testCorrectVersion() external view {
-        assertEq(swap.version(), 4);
+        assertEq(swap.version(), 5);
     }
 
     function testNoSendEtherWithoutFunctionSig() external {
