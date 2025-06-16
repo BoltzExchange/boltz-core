@@ -37,7 +37,7 @@ contract ERC20SwapTest is Test {
 
     function setUp() public {
         claimAddress = vm.addr(claimAddressKey);
-        sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR(), swap.TYPEHASH_REFUND());
+        sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR());
     }
 
     function testCorrectVersion() external view {
@@ -368,27 +368,27 @@ contract ERC20SwapTest is Test {
         swap.refund(preimageHash, lockupAmount, address(token), claimAddress, timelock);
     }
 
-    function testRefundCooperativeFail() external {
-        uint256 timelock = block.number + 21;
-
+    function testRefundCooperative() external {
         token.approve(address(swap), lockupAmount);
-        lock(timelock);
+        lock(block.number + 21);
 
         uint256 balanceBeforeRefund = token.balanceOf(address(this));
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
             sigUtils.getTypedDataHash(
-                sigUtils.hashERC20SwapRefund(preimageHash, lockupAmount, address(token), claimAddress, timelock)
+                sigUtils.hashERC20SwapRefund(
+                    swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, address(token), claimAddress, block.number + 21
+                )
             )
         );
 
         vm.expectEmit(true, false, false, false, address(swap));
         emit Refund(preimageHash);
 
-        swap.refundCooperative(preimageHash, lockupAmount, address(token), claimAddress, timelock, v, r, s);
+        swap.refundCooperative(preimageHash, lockupAmount, address(token), claimAddress, block.number + 21, v, r, s);
 
-        assertFalse(querySwap(timelock));
+        assertFalse(querySwap(block.number + 21));
 
         assertEq(token.balanceOf(address(swap)), 0);
         assertEq(token.balanceOf(address(this)) - balanceBeforeRefund, lockupAmount);
