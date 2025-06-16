@@ -3,7 +3,7 @@ src = "contracts"
 test = "contracts/test"
 script = "contracts/script"
 libs = ["contracts/lib"]
-gas_reports = ["EtherSwap", "ERC20Swap"]
+gas_reports = ["EtherSwap", "ERC20Swap", "Router"]
 
 evm_version = "istanbul"
 
