@@ -9,9 +9,10 @@ contract ERC20Swap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant version = 4;
+    uint8 public constant version = 5;
 
     bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 public immutable TYPEHASH_CLAIM;
     bytes32 public immutable TYPEHASH_REFUND;
 
     // State variables
@@ -40,13 +41,16 @@ contract ERC20Swap {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("ERC20Swap"),
-                keccak256("4"),
+                keccak256(abi.encode(version)),
                 block.chainid,
                 address(this)
             )
         );
+        TYPEHASH_CLAIM = keccak256(
+            "Claim(bytes32 preimage,uint256 amount,address tokenAddress,address refundAddress,uint256 timelock,address destination)"
+        );
         TYPEHASH_REFUND = keccak256(
-            "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,uint256 timeout)"
+            "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,uint256 timelock)"
         );
     }
 
@@ -86,6 +90,37 @@ contract ERC20Swap {
         // Passing "msg.sender" as "claimAddress" to "hashValues" ensures that only the destined address can claim
         // All other addresses would produce a different hash for which no swap can be found in the "swaps" mapping
         claim(preimage, amount, tokenAddress, msg.sender, refundAddress, timelock);
+    }
+
+    function claim(
+        bytes32 preimage,
+        uint256 amount,
+        address tokenAddress,
+        address refundAddress,
+        uint256 timelock,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (address) {
+        address recoveredAddress = ecrecover(
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    DOMAIN_SEPARATOR,
+                    keccak256(
+                        abi.encode(TYPEHASH_CLAIM, preimage, amount, tokenAddress, refundAddress, timelock, msg.sender)
+                    )
+                )
+            ),
+            v,
+            r,
+            s
+        );
+
+        prepareClaim(preimage, amount, tokenAddress, recoveredAddress, refundAddress, timelock);
+        TransferHelper.safeTransferToken(tokenAddress, msg.sender, amount);
+
+        return recoveredAddress;
     }
 
     /// Claims multiple swaps
