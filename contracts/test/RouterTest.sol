@@ -73,6 +73,29 @@ contract RouterTest is Test {
         assertEq(claimAddress.balance - balanceBefore, lockupAmount);
     }
 
+    function testClaimExecuteEntireBalance() public {
+        uint256 balanceBefore = claimAddress.balance;
+
+        uint256 timelock = block.number + 21;
+        swap.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        Router.Claim memory claim = signClaim(timelock);
+
+        MockTarget mockTarget = new MockTarget();
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(mockTarget),
+            value: 0,
+            callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
+        });
+
+        vm.prank(claimAddress);
+        router.claimExecute(claim, calls, address(0), lockupAmount - 21);
+
+        assertEq(mockTarget.calls(), 3);
+        assertEq(claimAddress.balance - balanceBefore, lockupAmount);
+    }
+
     function testClaimExecuteMultiple() public {
         uint256 balanceBefore = claimAddress.balance;
 
@@ -120,6 +143,29 @@ contract RouterTest is Test {
 
         vm.prank(claimAddress);
         router.claimExecute(claim, calls, address(token), lockupAmount);
+
+        assertEq(token.balanceOf(claimAddress) - balanceBefore, lockupAmount);
+    }
+
+    function testClaimExecuteTokenEntireBalance() public {
+        uint256 balanceBefore = token.balanceOf(claimAddress);
+
+        uint256 timelock = block.number + 21;
+        swap.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        Router.Claim memory claim = signClaim(timelock);
+
+        MockDex dex = new MockDex(token);
+        token.transfer(address(dex), lockupAmount);
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(dex),
+            value: lockupAmount,
+            callData: abi.encodeWithSelector(MockDex.swap.selector)
+        });
+
+        vm.prank(claimAddress);
+        router.claimExecute(claim, calls, address(token), lockupAmount - 21);
 
         assertEq(token.balanceOf(claimAddress) - balanceBefore, lockupAmount);
     }
@@ -194,7 +240,7 @@ contract RouterTest is Test {
         });
 
         vm.prank(claimAddress);
-        vm.expectRevert("TransferHelper: could not transfer Ether");
+        vm.expectRevert(Router.InsufficientBalance.selector);
         router.claimExecute(claim, calls, address(0), lockupAmount + 1);
     }
 
@@ -214,7 +260,7 @@ contract RouterTest is Test {
         });
 
         vm.prank(claimAddress);
-        vm.expectRevert("TransferHelper: could not transfer ERC20 tokens");
+        vm.expectRevert(Router.InsufficientBalance.selector);
         router.claimExecute(claim, calls, address(token), lockupAmount + 1);
     }
 

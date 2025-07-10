@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 
 import "./TransferHelper.sol";
 import "./EtherSwap.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Router
 /// @dev A contract that enables atomic claiming from EtherSwap contracts followed by arbitrary call execution and fund sweeping.
@@ -47,6 +48,9 @@ contract Router {
     /// @param index The index of the failed call in the calls array
     error CallFailed(uint256 index);
 
+    /// @dev Thrown when the sweep amount is greater than the contract balance
+    error InsufficientBalance();
+
     /// @dev Version of the contract used for compatibility checks
     uint8 public constant version = 1;
 
@@ -63,7 +67,7 @@ contract Router {
         )
     );
     bytes32 public immutable TYPEHASH_CLAIM =
-        keccak256("Claim(bytes32 preimage,address token,uint256 sweepAmount,address destination)");
+        keccak256("Claim(bytes32 preimage,address token,uint256 minAmountOut,address destination)");
 
     /// @dev Constructor sets the EtherSwap contract address
     /// @param swapContract The address of the EtherSwap contract to interact with
@@ -75,21 +79,21 @@ contract Router {
     /// @param claim The claim parameters for the EtherSwap contract
     /// @param calls Array of arbitrary calls to execute after claiming
     /// @param token The token address to sweep (address(0) for Ether)
-    /// @param sweepAmount The amount to sweep to the claimer
+    /// @param minAmountOut The amount to sweep to the claimer
     //
     // Flow:
     // 1. Claim funds from the EtherSwap contract
     // 2. Verify the claimer is the transaction sender
     // 3. Execute all provided calls in sequence
     // 4. Sweep remaining funds (Ether or tokens) to the claimer
-    function claimExecute(Claim calldata claim, Call[] calldata calls, address token, uint256 sweepAmount) external {
+    function claimExecute(Claim calldata claim, Call[] calldata calls, address token, uint256 minAmountOut) external {
         // Ensure only the rightful claimer can execute this function
         if (claimSwap(claim) != msg.sender) {
             revert ClaimInvalidAddress();
         }
 
         executeCalls(calls);
-        sweep(msg.sender, token, sweepAmount);
+        sweep(msg.sender, token, minAmountOut);
     }
 
     /// @dev Claims funds from the swap contract, executes arbitrary calls, then sweeps remaining funds to a specified destination
@@ -97,7 +101,7 @@ contract Router {
     /// @param claim The claim parameters for the EtherSwap contract
     /// @param calls Array of arbitrary calls to execute after claiming
     /// @param token The token address to sweep (address(0) for Ether)
-    /// @param sweepAmount The amount to sweep to the destination
+    /// @param minAmountOut The amount to sweep to the destination
     /// @param destination The address where the swept funds will be sent
     /// @param v Final byte of the signature
     /// @param r Second 32 bytes of the signature
@@ -112,14 +116,14 @@ contract Router {
         Claim calldata claim,
         Call[] calldata calls,
         address token,
-        uint256 sweepAmount,
+        uint256 minAmountOut,
         address destination,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) external {
         // Verify that the claimer has signed authorization for this specific execution
-        // The signature covers: preimage, token, sweepAmount, and destination
+        // The signature covers: preimage, token, minAmountOut, and destination
         if (
             claimSwap(claim)
                 != ecrecover(
@@ -127,7 +131,7 @@ contract Router {
                         abi.encodePacked(
                             "\x19\x01",
                             DOMAIN_SEPARATOR,
-                            keccak256(abi.encode(TYPEHASH_CLAIM, claim.preimage, token, sweepAmount, destination))
+                            keccak256(abi.encode(TYPEHASH_CLAIM, claim.preimage, token, minAmountOut, destination))
                         )
                     ),
                     v,
@@ -139,7 +143,7 @@ contract Router {
         }
 
         executeCalls(calls);
-        sweep(destination, token, sweepAmount);
+        sweep(destination, token, minAmountOut);
     }
 
     function claimSwap(Claim calldata claim) internal returns (address) {
@@ -168,11 +172,23 @@ contract Router {
         }
     }
 
-    function sweep(address destination, address token, uint256 amount) internal {
+    function sweep(address destination, address token, uint256 minAmountOut) internal {
+        uint256 balance = 0;
+
         if (token == address(0)) {
-            TransferHelper.transferEther(payable(destination), amount);
+            balance = address(this).balance;
         } else {
-            TransferHelper.safeTransferToken(token, destination, amount);
+            balance = IERC20(token).balanceOf(address(this));
+        }
+
+        if (balance < minAmountOut) {
+            revert InsufficientBalance();
+        }
+
+        if (token == address(0)) {
+            TransferHelper.transferEther(payable(destination), balance);
+        } else {
+            TransferHelper.safeTransferToken(token, destination, balance);
         }
     }
 
