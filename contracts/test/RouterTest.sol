@@ -198,7 +198,7 @@ contract RouterTest is Test {
         calls[0] = Router.Call({
             target: address(SWAP),
             value: 0,
-            callData: abi.encodeWithSelector(EtherSwap.claimBatch.selector)
+            callData: abi.encodeWithSelector(EtherSwap.refundCooperative.selector)
         });
 
         vm.prank(claimAddress);
