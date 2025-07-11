@@ -41,7 +41,7 @@ contract ERC20Swap {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("ERC20Swap"),
-                keccak256(abi.encode(version)),
+                keccak256("5"),
                 block.chainid,
                 address(this)
             )
