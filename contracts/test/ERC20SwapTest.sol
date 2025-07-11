@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "./SigUtils.sol";
@@ -28,6 +28,7 @@ contract ERC20SwapTest is Test {
     uint256 internal lockupAmount = 1 ether;
     uint256 internal claimAddressKey = 0xA11CE;
     address internal claimAddress;
+    address internal constant destination = 0x3d9cc5780CA1db78760ad3D35458509178A85A4A;
 
     uint256 internal mintAmount = lockupAmount * 2;
 
@@ -37,11 +38,11 @@ contract ERC20SwapTest is Test {
 
     function setUp() public {
         claimAddress = vm.addr(claimAddressKey);
-        sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR(), swap.TYPEHASH_REFUND());
+        sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR());
     }
 
     function testCorrectVersion() external view {
-        assertEq(swap.version(), 4);
+        assertEq(swap.version(), 5);
     }
 
     function testShouldNotAcceptEther() external {
@@ -145,6 +146,41 @@ contract ERC20SwapTest is Test {
         assertEq(token.balanceOf(address(swap)), 0);
 
         assertFalse(querySwap(timelock));
+    }
+
+    function testClaimWithSignature() external {
+        uint256 timelock = block.number + 21;
+
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        uint256 balanceBeforeClaim = token.balanceOf(destination);
+
+        (uint8 v, bytes32 r, bytes32 s) = generateClaimSignature(timelock);
+
+        vm.expectEmit(true, false, false, false, address(swap));
+        emit Claim(preimageHash, preimage);
+
+        vm.prank(destination);
+        address recovered = swap.claim(preimage, lockupAmount, address(token), address(this), timelock, v, r, s);
+        assertEq(recovered, claimAddress);
+
+        assertFalse(querySwap(timelock));
+
+        assertEq(address(swap).balance, 0);
+        assertEq(token.balanceOf(destination) - balanceBeforeClaim, lockupAmount);
+    }
+
+    function testClaimWithSignatureInvalid() external {
+        uint256 timelock = block.number + 21;
+
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        (uint8 v, bytes32 r, bytes32 s) = generateClaimSignature(timelock);
+
+        vm.expectRevert("ERC20Swap: swap has no tokens locked in the contract");
+        swap.claim(preimage, lockupAmount, address(token), address(this), timelock, v, r, s);
     }
 
     function testClaimBatchTwo() external {
@@ -368,27 +404,27 @@ contract ERC20SwapTest is Test {
         swap.refund(preimageHash, lockupAmount, address(token), claimAddress, timelock);
     }
 
-    function testRefundCooperativeFail() external {
-        uint256 timelock = block.number + 21;
-
+    function testRefundCooperative() external {
         token.approve(address(swap), lockupAmount);
-        lock(timelock);
+        lock(block.number + 21);
 
         uint256 balanceBeforeRefund = token.balanceOf(address(this));
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
             sigUtils.getTypedDataHash(
-                sigUtils.hashERC20SwapRefund(preimageHash, lockupAmount, address(token), claimAddress, timelock)
+                sigUtils.hashERC20SwapRefund(
+                    swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, address(token), claimAddress, block.number + 21
+                )
             )
         );
 
         vm.expectEmit(true, false, false, false, address(swap));
         emit Refund(preimageHash);
 
-        swap.refundCooperative(preimageHash, lockupAmount, address(token), claimAddress, timelock, v, r, s);
+        swap.refundCooperative(preimageHash, lockupAmount, address(token), claimAddress, block.number + 21, v, r, s);
 
-        assertFalse(querySwap(timelock));
+        assertFalse(querySwap(block.number + 21));
 
         assertEq(token.balanceOf(address(swap)), 0);
         assertEq(token.balanceOf(address(this)) - balanceBeforeRefund, lockupAmount);
@@ -459,6 +495,17 @@ contract ERC20SwapTest is Test {
     function querySwap(uint256 timelock) internal view returns (bool) {
         return swap.swaps(
             swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock)
+        );
+    }
+
+    function generateClaimSignature(uint256 timelock) internal view returns (uint8, bytes32, bytes32) {
+        return vm.sign(
+            claimAddressKey,
+            sigUtils.getTypedDataHash(
+                sigUtils.hashERC20SwapClaim(
+                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(token), address(this), timelock, destination
+                )
+            )
         );
     }
 }

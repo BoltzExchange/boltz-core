@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "./SigUtils.sol";
@@ -25,18 +25,19 @@ contract EtherSwapTest is Test {
     uint256 internal lockupAmount = 1 ether;
     uint256 internal claimAddressKey = 0xA11CE;
     address internal claimAddress;
+    address payable internal constant destination = payable(0x3d9cc5780CA1db78760ad3D35458509178A85A4A);
 
     SigUtils internal sigUtils;
 
     function setUp() public {
         claimAddress = vm.addr(claimAddressKey);
-        sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR(), swap.TYPEHASH_REFUND());
+        sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR());
     }
 
     receive() external payable {}
 
     function testCorrectVersion() external view {
-        assertEq(swap.version(), 4);
+        assertEq(swap.version(), 5);
     }
 
     function testNoSendEtherWithoutFunctionSig() external {
@@ -127,6 +128,51 @@ contract EtherSwapTest is Test {
 
         assertEq(address(swap).balance, 0);
         assertEq(claimAddress.balance - balanceBeforeClaim, lockupAmount);
+    }
+
+    function testClaimWithSignature() external {
+        uint256 timelock = block.number + 21;
+        lock(timelock);
+
+        uint256 balanceBeforeClaim = address(destination).balance;
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            sigUtils.getTypedDataHash(
+                sigUtils.hashEtherSwapClaim(
+                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(this), timelock, destination
+                )
+            )
+        );
+
+        vm.expectEmit(true, false, false, false, address(swap));
+        emit Claim(preimageHash, preimage);
+
+        vm.prank(destination);
+        address recovered = swap.claim(preimage, lockupAmount, address(this), timelock, v, r, s);
+        assertEq(recovered, claimAddress);
+
+        assertFalse(querySwap(timelock));
+
+        assertEq(address(swap).balance, 0);
+        assertEq(address(destination).balance - balanceBeforeClaim, lockupAmount);
+    }
+
+    function testClaimWithSignatureInvalid() external {
+        uint256 timelock = block.number + 21;
+        lock(timelock);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            sigUtils.getTypedDataHash(
+                sigUtils.hashEtherSwapClaim(
+                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(this), timelock, destination
+                )
+            )
+        );
+
+        vm.expectRevert("EtherSwap: swap has no Ether locked in the contract");
+        swap.claim(preimage, lockupAmount, address(this), timelock, v, r, s);
     }
 
     function testClaimBatchTwo() external {
@@ -344,7 +390,9 @@ contract EtherSwapTest is Test {
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
-            sigUtils.getTypedDataHash(sigUtils.hashEtherSwapRefund(preimageHash, lockupAmount, claimAddress, timelock))
+            sigUtils.getTypedDataHash(
+                sigUtils.hashEtherSwapRefund(swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, claimAddress, timelock)
+            )
         );
 
         vm.expectEmit(true, false, false, false, address(swap));

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.30;
 
 import "./TransferHelper.sol";
 
@@ -9,9 +9,10 @@ contract EtherSwap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant version = 4;
+    uint8 public constant version = 5;
 
     bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 public immutable TYPEHASH_CLAIM;
     bytes32 public immutable TYPEHASH_REFUND;
 
     // State variables
@@ -39,12 +40,15 @@ contract EtherSwap {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256("EtherSwap"),
-                keccak256("4"),
+                keccak256("5"),
                 block.chainid,
                 address(this)
             )
         );
-        TYPEHASH_REFUND = keccak256("Refund(bytes32 preimageHash,uint256 amount,address claimAddress,uint256 timeout)");
+        TYPEHASH_CLAIM = keccak256(
+            "Claim(bytes32 preimage,uint256 amount,address refundAddress,uint256 timelock,address destination)"
+        );
+        TYPEHASH_REFUND = keccak256("Refund(bytes32 preimageHash,uint256 amount,address claimAddress,uint256 timelock)");
     }
 
     // External functions
@@ -91,6 +95,47 @@ contract EtherSwap {
         // Passing "msg.sender" as "claimAddress" to "hashValues" ensures that only the destined address can claim
         // All other addresses would produce a different hash for which no swap can be found in the "swaps" mapping
         claim(preimage, amount, msg.sender, refundAddress, timelock);
+    }
+
+    /// Claims Ether locked in the contract using an EIP-712 signature from the claim address
+    /// @notice This function allows anyone to execute a claim on behalf of the intended claim address by providing a valid signature
+    /// @dev The signature must be created by the claim address over the claim data using EIP-712 standard
+    /// @dev The recovered claim address from the signature must match the intended claim address for the swap
+    /// @dev The claimed funds are sent to msg.sender (the transaction executor), not the claim address that signed
+    /// @param preimage Preimage of the swap
+    /// @param amount Amount locked in the contract for the swap in WEI
+    /// @param refundAddress Address that locked the Ether in the contract
+    /// @param timelock Block height after which the locked Ether can be refunded
+    /// @param v Final byte of the signature
+    /// @param r Second 32 bytes of the signature
+    /// @param s First 32 bytes of the signature
+    /// @return claimAddress The address that signed the claim message (recovered from signature)
+    function claim(
+        bytes32 preimage,
+        uint256 amount,
+        address refundAddress,
+        uint256 timelock,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (address) {
+        address claimAddress = ecrecover(
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    DOMAIN_SEPARATOR,
+                    keccak256(abi.encode(TYPEHASH_CLAIM, preimage, amount, refundAddress, timelock, msg.sender))
+                )
+            ),
+            v,
+            r,
+            s
+        );
+
+        prepareClaim(preimage, amount, claimAddress, refundAddress, timelock);
+        TransferHelper.transferEther(payable(msg.sender), amount);
+
+        return claimAddress;
     }
 
     /// Claims multiple swaps
@@ -140,9 +185,9 @@ contract EtherSwap {
     /// @param amount Amount locked in the contract for the swap in WEI
     /// @param claimAddress Address that that was destined to claim the funds
     /// @param timelock Block height after which the locked Ether can be refunded
-    /// @param v final byte of the signature
-    /// @param r second 32 bytes of the signature
-    /// @param s first 32 bytes of the signature
+    /// @param v Final byte of the signature
+    /// @param r Second 32 bytes of the signature
+    /// @param s First 32 bytes of the signature
     function refundCooperative(
         bytes32 preimageHash,
         uint256 amount,
