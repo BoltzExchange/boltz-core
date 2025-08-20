@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.30;
 
-import "./TransferHelper.sol";
-import "./EtherSwap.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {TransferHelper} from "./TransferHelper.sol";
+import {EtherSwap} from "./EtherSwap.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Router
 /// @dev A contract that enables atomic claiming from EtherSwap contracts followed by arbitrary call execution and fund sweeping.
@@ -52,7 +52,7 @@ contract Router {
     error InsufficientBalance();
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant version = 1;
+    uint8 public constant VERSION = 1;
 
     /// @dev The EtherSwap contract instance this router interacts with
     EtherSwap public immutable SWAP_CONTRACT;
@@ -61,7 +61,7 @@ contract Router {
         abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
             keccak256("Router"),
-            keccak256(abi.encode(version)),
+            keccak256("1"),
             block.chainid,
             address(this)
         )

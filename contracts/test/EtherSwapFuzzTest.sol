@@ -2,9 +2,8 @@
 
 pragma solidity ^0.8.30;
 
-import "forge-std/Test.sol";
-import "./SigUtils.sol";
-import "../EtherSwap.sol";
+import {Test} from "forge-std/Test.sol";
+import {EtherSwap} from "../EtherSwap.sol";
 
 contract EtherSwapFuzzTest is Test {
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);

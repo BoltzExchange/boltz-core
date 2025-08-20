@@ -2,11 +2,10 @@
 
 pragma solidity ^0.8.30;
 
-import "forge-std/Test.sol";
-import "./SigUtils.sol";
-import "../BadERC20.sol";
-import "../ERC20Swap.sol";
-import "../TestERC20.sol";
+import {Test} from "forge-std/Test.sol";
+import {ERC20Swap} from "../ERC20Swap.sol";
+import {TestERC20} from "../TestERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20SwapFuzzTest is Test {
     ERC20Swap internal swap = new ERC20Swap();

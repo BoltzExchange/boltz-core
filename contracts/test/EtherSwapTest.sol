@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.30;
 
-import "forge-std/Test.sol";
-import "./SigUtils.sol";
-import "../EtherSwap.sol";
+import {Test} from "forge-std/Test.sol";
+import {SigUtils} from "./SigUtils.sol";
+import {EtherSwap} from "../EtherSwap.sol";
 
 contract EtherSwapTest is Test {
     event Lockup(
@@ -25,7 +25,7 @@ contract EtherSwapTest is Test {
     uint256 internal lockupAmount = 1 ether;
     uint256 internal claimAddressKey = 0xA11CE;
     address internal claimAddress;
-    address payable internal constant destination = payable(0x3d9cc5780CA1db78760ad3D35458509178A85A4A);
+    address payable internal constant DESTINATION = payable(0x3d9cc5780CA1db78760ad3D35458509178A85A4A);
 
     SigUtils internal sigUtils;
 
@@ -37,7 +37,7 @@ contract EtherSwapTest is Test {
     receive() external payable {}
 
     function testCorrectVersion() external view {
-        assertEq(swap.version(), 5);
+        assertEq(swap.VERSION(), 5);
     }
 
     function testNoSendEtherWithoutFunctionSig() external {
@@ -48,10 +48,13 @@ contract EtherSwapTest is Test {
     function testHashSwapValues() external view {
         uint256 timelock = block.number;
 
-        assertEq(
-            swap.hashValues(preimageHash, lockupAmount, claimAddress, address(this), timelock),
-            keccak256(abi.encodePacked(preimageHash, lockupAmount, claimAddress, address(this), timelock))
-        );
+        bytes32 expected = 0x1cf0206db161d519bee54ef6d32a259f50ffba6b23323f843e018cd9e116b9dc;
+        assertEq(swap.hashValues(preimageHash, lockupAmount, claimAddress, address(this), timelock), expected);
+        assertNotEq(swap.hashValues(sha256("different"), lockupAmount, claimAddress, address(this), timelock), expected);
+        assertNotEq(swap.hashValues(preimageHash, lockupAmount + 1, claimAddress, address(this), timelock), expected);
+        assertNotEq(swap.hashValues(preimageHash, lockupAmount, address(this), address(this), timelock), expected);
+        assertNotEq(swap.hashValues(preimageHash, lockupAmount, claimAddress, claimAddress, timelock), expected);
+        assertNotEq(swap.hashValues(preimageHash, lockupAmount, claimAddress, address(this), timelock + 1), expected);
     }
 
     function testLockup0ValueFail() external {
@@ -134,13 +137,13 @@ contract EtherSwapTest is Test {
         uint256 timelock = block.number + 21;
         lock(timelock);
 
-        uint256 balanceBeforeClaim = address(destination).balance;
+        uint256 balanceBeforeClaim = address(DESTINATION).balance;
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
             sigUtils.getTypedDataHash(
                 sigUtils.hashEtherSwapClaim(
-                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(this), timelock, destination
+                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(this), timelock, DESTINATION
                 )
             )
         );
@@ -148,14 +151,14 @@ contract EtherSwapTest is Test {
         vm.expectEmit(true, false, false, false, address(swap));
         emit Claim(preimageHash, preimage);
 
-        vm.prank(destination);
+        vm.prank(DESTINATION);
         address recovered = swap.claim(preimage, lockupAmount, address(this), timelock, v, r, s);
         assertEq(recovered, claimAddress);
 
         assertFalse(querySwap(timelock));
 
         assertEq(address(swap).balance, 0);
-        assertEq(address(destination).balance - balanceBeforeClaim, lockupAmount);
+        assertEq(address(DESTINATION).balance - balanceBeforeClaim, lockupAmount);
     }
 
     function testClaimWithSignatureInvalid() external {
@@ -166,7 +169,7 @@ contract EtherSwapTest is Test {
             claimAddressKey,
             sigUtils.getTypedDataHash(
                 sigUtils.hashEtherSwapClaim(
-                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(this), timelock, destination
+                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(this), timelock, DESTINATION
                 )
             )
         );

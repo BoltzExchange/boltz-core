@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.30;
 
-import "./TransferHelper.sol";
+import {TransferHelper} from "./TransferHelper.sol";
 
 // @title Hash timelock contract for Ether
 contract EtherSwap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant version = 5;
+    uint8 public constant VERSION = 5;
 
     bytes32 public immutable DOMAIN_SEPARATOR;
     bytes32 public immutable TYPEHASH_CLAIM;
@@ -255,15 +255,23 @@ contract EtherSwap {
     /// @param claimAddress Address that can claim the locked Ether
     /// @param refundAddress Address that locked the Ether and can refund them
     /// @param timelock Block height after which the locked Ether can be refunded
-    /// @return Value hash of the swap
+    /// @return result Value hash of the swap
     function hashValues(
         bytes32 preimageHash,
         uint256 amount,
         address claimAddress,
         address refundAddress,
         uint256 timelock
-    ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(preimageHash, amount, claimAddress, refundAddress, timelock));
+    ) public pure returns (bytes32 result) {
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, preimageHash)
+            mstore(add(ptr, 0x20), amount)
+            mstore(add(ptr, 0x40), claimAddress)
+            mstore(add(ptr, 0x60), refundAddress)
+            mstore(add(ptr, 0x80), timelock)
+            result := keccak256(ptr, 0xa0)
+        }
     }
 
     // Private functions
