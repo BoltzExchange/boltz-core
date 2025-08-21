@@ -2,11 +2,12 @@
 
 pragma solidity ^0.8.30;
 
-import "forge-std/Test.sol";
-import "./SigUtils.sol";
-import "../BadERC20.sol";
-import "../ERC20Swap.sol";
-import "../TestERC20.sol";
+import {Test} from "forge-std/Test.sol";
+import {SigUtils} from "./SigUtils.sol";
+import {BadERC20} from "../BadERC20.sol";
+import {ERC20Swap} from "../ERC20Swap.sol";
+import {TestERC20} from "../TestERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20SwapTest is Test {
     event Lockup(
@@ -28,7 +29,7 @@ contract ERC20SwapTest is Test {
     uint256 internal lockupAmount = 1 ether;
     uint256 internal claimAddressKey = 0xA11CE;
     address internal claimAddress;
-    address internal constant destination = 0x3d9cc5780CA1db78760ad3D35458509178A85A4A;
+    address internal constant DESTINATION = 0x3d9cc5780CA1db78760ad3D35458509178A85A4A;
 
     uint256 internal mintAmount = lockupAmount * 2;
 
@@ -42,7 +43,7 @@ contract ERC20SwapTest is Test {
     }
 
     function testCorrectVersion() external view {
-        assertEq(swap.version(), 5);
+        assertEq(swap.VERSION(), 5);
     }
 
     function testShouldNotAcceptEther() external {
@@ -53,11 +54,31 @@ contract ERC20SwapTest is Test {
     function testHashSwapValues() external view {
         uint256 timelock = block.number;
 
+        bytes32 expected = 0xad8532e90332ace0cb288c646004af326b3c9ac0060cd804d4e8c7a597ad04ae;
         assertEq(
-            swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock),
-            keccak256(
-                abi.encodePacked(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock)
-            )
+            swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock), expected
+        );
+        assertNotEq(
+            swap.hashValues(sha256("different"), lockupAmount, address(token), claimAddress, address(this), timelock),
+            expected
+        );
+        assertNotEq(
+            swap.hashValues(preimageHash, lockupAmount + 1, address(token), claimAddress, address(this), timelock),
+            expected
+        );
+        assertNotEq(
+            swap.hashValues(preimageHash, lockupAmount, claimAddress, claimAddress, address(this), timelock), expected
+        );
+        assertNotEq(
+            swap.hashValues(preimageHash, lockupAmount, address(token), address(this), address(this), timelock),
+            expected
+        );
+        assertNotEq(
+            swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, claimAddress, timelock), expected
+        );
+        assertNotEq(
+            swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock + 1),
+            expected
         );
     }
 
@@ -154,21 +175,21 @@ contract ERC20SwapTest is Test {
         token.approve(address(swap), lockupAmount);
         lock(timelock);
 
-        uint256 balanceBeforeClaim = token.balanceOf(destination);
+        uint256 balanceBeforeClaim = token.balanceOf(DESTINATION);
 
         (uint8 v, bytes32 r, bytes32 s) = generateClaimSignature(timelock);
 
         vm.expectEmit(true, false, false, false, address(swap));
         emit Claim(preimageHash, preimage);
 
-        vm.prank(destination);
+        vm.prank(DESTINATION);
         address recovered = swap.claim(preimage, lockupAmount, address(token), address(this), timelock, v, r, s);
         assertEq(recovered, claimAddress);
 
         assertFalse(querySwap(timelock));
 
         assertEq(address(swap).balance, 0);
-        assertEq(token.balanceOf(destination) - balanceBeforeClaim, lockupAmount);
+        assertEq(token.balanceOf(DESTINATION) - balanceBeforeClaim, lockupAmount);
     }
 
     function testClaimWithSignatureInvalid() external {
@@ -413,7 +434,7 @@ contract ERC20SwapTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
             sigUtils.getTypedDataHash(
-                sigUtils.hashERC20SwapRefund(
+                sigUtils.hashErc20SwapRefund(
                     swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, address(token), claimAddress, block.number + 21
                 )
             )
@@ -502,8 +523,8 @@ contract ERC20SwapTest is Test {
         return vm.sign(
             claimAddressKey,
             sigUtils.getTypedDataHash(
-                sigUtils.hashERC20SwapClaim(
-                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(token), address(this), timelock, destination
+                sigUtils.hashErc20SwapClaim(
+                    swap.TYPEHASH_CLAIM(), preimage, lockupAmount, address(token), address(this), timelock, DESTINATION
                 )
             )
         );

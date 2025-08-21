@@ -5,8 +5,8 @@ pragma solidity ^0.8.30;
 contract SigUtils {
     bytes32 public immutable DOMAIN_SEPARATOR;
 
-    constructor(bytes32 _DOMAIN_SEPARATOR) {
-        DOMAIN_SEPARATOR = _DOMAIN_SEPARATOR;
+    constructor(bytes32 domainSeparator) {
+        DOMAIN_SEPARATOR = domainSeparator;
     }
 
     function getTypedDataHash(bytes32 message) public view returns (bytes32) {
@@ -34,7 +34,7 @@ contract SigUtils {
         return keccak256(abi.encode(typehash, preimageHash, amount, claimAddress, timelock));
     }
 
-    function hashERC20SwapClaim(
+    function hashErc20SwapClaim(
         bytes32 typehash,
         bytes32 preimage,
         uint256 amount,
@@ -46,7 +46,7 @@ contract SigUtils {
         return keccak256(abi.encode(typehash, preimage, amount, tokenAddress, refundAddress, timelock, destination));
     }
 
-    function hashERC20SwapRefund(
+    function hashErc20SwapRefund(
         bytes32 typehash,
         bytes32 preimageHash,
         uint256 amount,

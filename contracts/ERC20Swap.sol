@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.30;
 
-import "./TransferHelper.sol";
+import {TransferHelper} from "./TransferHelper.sol";
 
 // @title Hash timelock contract for ERC20 tokens
 contract ERC20Swap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant version = 5;
+    uint8 public constant VERSION = 5;
 
     bytes32 public immutable DOMAIN_SEPARATOR;
     bytes32 public immutable TYPEHASH_CLAIM;
@@ -304,7 +304,7 @@ contract ERC20Swap {
     /// @param claimAddress Address that can claim the locked tokens
     /// @param refundAddress Address that locked the tokens and can refund them
     /// @param timelock Block height after which the locked tokens can be refunded
-    /// @return Value hash of the swap
+    /// @return result hash of the swap
     function hashValues(
         bytes32 preimageHash,
         uint256 amount,
@@ -312,8 +312,17 @@ contract ERC20Swap {
         address claimAddress,
         address refundAddress,
         uint256 timelock
-    ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock));
+    ) public pure returns (bytes32 result) {
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, preimageHash)
+            mstore(add(ptr, 0x20), amount)
+            mstore(add(ptr, 0x40), tokenAddress)
+            mstore(add(ptr, 0x60), claimAddress)
+            mstore(add(ptr, 0x80), refundAddress)
+            mstore(add(ptr, 0xa0), timelock)
+            result := keccak256(ptr, 0xc0)
+        }
     }
 
     // Private functions

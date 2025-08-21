@@ -13,3 +13,9 @@ optimizer_runs = 10_000_000
 
 [fuzz]
 runs = 8192
+
+[fmt]
+ignore = ["contracts/lib/**/*"]
+
+[lint]
+ignore = ["contracts/lib/**/*"]
