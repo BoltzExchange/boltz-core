@@ -29,6 +29,9 @@ contract ERC20SwapTest is Test {
     uint256 internal lockupAmount = 1 ether;
     uint256 internal claimAddressKey = 0xA11CE;
     address internal claimAddress;
+    uint256 internal refundAddressKey = 0xB0B;
+    address internal refundAddress;
+
     address internal constant DESTINATION = 0x3d9cc5780CA1db78760ad3D35458509178A85A4A;
 
     uint256 internal mintAmount = lockupAmount * 2;
@@ -40,6 +43,9 @@ contract ERC20SwapTest is Test {
     function setUp() public {
         claimAddress = vm.addr(claimAddressKey);
         sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR());
+        refundAddress = vm.addr(refundAddressKey);
+
+        vm.deal(refundAddress, 10 ether);
     }
 
     function testCorrectVersion() external view {
@@ -105,6 +111,25 @@ contract ERC20SwapTest is Test {
         assertEq(token.balanceOf(address(swap)), lockupAmount);
         assertEq(token.balanceOf(address(this)), mintAmount - lockupAmount);
         assertTrue(querySwap(timelock));
+    }
+
+    function testLockupWithRefundAddress() external {
+        token.approve(address(swap), lockupAmount);
+
+        uint256 timelock = block.number;
+
+        vm.expectEmit(true, true, false, true, address(swap));
+        emit Lockup(preimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock);
+
+        swap.lock(preimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock);
+
+        assertEq(token.balanceOf(address(swap)), lockupAmount);
+        assertEq(token.balanceOf(address(this)), mintAmount - lockupAmount);
+        assertTrue(
+            swap.swaps(
+                swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock)
+            )
+        );
     }
 
     function testLockWithSameHashValueFail() external {
@@ -202,6 +227,94 @@ contract ERC20SwapTest is Test {
 
         vm.expectRevert("ERC20Swap: swap has no tokens locked in the contract");
         swap.claim(preimage, lockupAmount, address(token), address(this), timelock, v, r, s);
+    }
+
+    function testCommitClaim() external {
+        uint256 timelock = block.number + 21;
+
+        require(token.transfer(refundAddress, lockupAmount));
+
+        vm.startPrank(refundAddress);
+        token.approve(address(swap), lockupAmount);
+        swap.lock(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelock);
+        vm.stopPrank();
+
+        assertTrue(
+            swap.swaps(swap.hashValues(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelock))
+        );
+
+        bytes32 actualPreimageHash = sha256(abi.encodePacked(preimage));
+        (uint8 v, bytes32 r, bytes32 s) = generateCommitSignature(actualPreimageHash, lockupAmount, timelock);
+
+        // Signature should verify positively via the helper function
+        assertTrue(
+            swap.checkCommitmentSignature(
+                actualPreimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock, v, r, s
+            )
+        );
+
+        uint256 balanceBeforeClaim = token.balanceOf(claimAddress);
+
+        vm.prank(claimAddress);
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(actualPreimageHash, preimage);
+
+        swap.claim(preimage, lockupAmount, address(token), claimAddress, refundAddress, timelock, v, r, s);
+
+        assertEq(token.balanceOf(claimAddress) - balanceBeforeClaim, lockupAmount);
+        assertEq(token.balanceOf(address(swap)), 0);
+        assertFalse(
+            swap.swaps(swap.hashValues(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelock))
+        );
+    }
+
+    function testCommitClaimInvalidPreimage() external {
+        uint256 timelock = block.number + 21;
+
+        require(token.transfer(refundAddress, lockupAmount));
+
+        vm.startPrank(refundAddress);
+        token.approve(address(swap), lockupAmount);
+        swap.lock(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelock);
+        vm.stopPrank();
+
+        bytes32 actualPreimageHash = sha256(abi.encodePacked(preimage));
+
+        (uint8 v, bytes32 r, bytes32 s) = generateCommitSignature(actualPreimageHash, lockupAmount, timelock);
+
+        vm.prank(claimAddress);
+        vm.expectRevert("ERC20Swap: invalid signature");
+        swap.claim(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelock, v, r, s);
+    }
+
+    function testCommitClaimInvalidSignatureFail() external {
+        uint256 timelock = block.number + 21;
+
+        require(token.transfer(refundAddress, lockupAmount));
+
+        vm.startPrank(refundAddress);
+        token.approve(address(swap), lockupAmount);
+        swap.lock(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelock);
+        vm.stopPrank();
+
+        bytes32 actualPreimageHash = sha256(abi.encodePacked(preimage));
+
+        // Sign with the wrong key
+        bytes32 commitMsg = sigUtils.hashErc20SwapCommit(
+            swap.TYPEHASH_COMMIT(),
+            actualPreimageHash,
+            lockupAmount,
+            address(token),
+            claimAddress,
+            refundAddress,
+            timelock
+        );
+        bytes32 digest = sigUtils.getTypedDataHash(commitMsg);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(claimAddressKey, digest);
+
+        vm.prank(claimAddress);
+        vm.expectRevert("ERC20Swap: invalid signature");
+        swap.claim(preimage, lockupAmount, address(token), claimAddress, refundAddress, timelock, v, r, s);
     }
 
     function testClaimBatchTwo() external {
@@ -312,6 +425,75 @@ contract ERC20SwapTest is Test {
         assertEq(
             token.balanceOf(claimAddress) - balanceBeforeClaim, lockupAmount + lockupAmountSecond + lockupAmountThird
         );
+    }
+
+    function testClaimBatchCommitAndNormal() external {
+        uint256 timelockCommit = block.number + 21;
+        uint256 timelockNormal = block.number + 42;
+
+        require(token.transfer(refundAddress, lockupAmount * 2));
+
+        // Commitment swap
+        bytes32 commitPreimageHash = sha256(abi.encodePacked(preimage));
+
+        vm.startPrank(refundAddress);
+        token.approve(address(swap), lockupAmount * 2);
+        swap.lock(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelockCommit);
+
+        // Normal swap
+        bytes32 preimageNormal = sha256("2");
+        bytes32 preimageHashNormal = sha256(abi.encodePacked(preimageNormal));
+        swap.lock(preimageHashNormal, lockupAmount, address(token), claimAddress, refundAddress, timelockNormal);
+
+        vm.stopPrank();
+
+        uint256 balanceBefore = token.balanceOf(claimAddress);
+
+        {
+            (uint8 vCommit, bytes32 rCommit, bytes32 sCommit) =
+                generateCommitSignature(commitPreimageHash, lockupAmount, timelockCommit);
+
+            // Prepare batch entries
+            ERC20Swap.BatchClaimEntry[] memory entries = new ERC20Swap.BatchClaimEntry[](2);
+            entries[0] = ERC20Swap.BatchClaimEntry({
+                preimage: preimage,
+                amount: lockupAmount,
+                refundAddress: refundAddress,
+                timelock: timelockCommit,
+                v: vCommit,
+                r: rCommit,
+                s: sCommit
+            });
+            entries[1] = ERC20Swap.BatchClaimEntry({
+                preimage: preimageNormal,
+                amount: lockupAmount,
+                refundAddress: refundAddress,
+                timelock: timelockNormal,
+                v: 0,
+                r: bytes32(0),
+                s: bytes32(0)
+            });
+
+            vm.prank(claimAddress);
+            vm.expectEmit(true, false, false, true, address(swap));
+            emit Claim(commitPreimageHash, preimage);
+            vm.expectEmit(true, false, false, true, address(swap));
+            emit Claim(preimageHashNormal, preimageNormal);
+
+            swap.claimBatch(address(token), entries);
+        }
+
+        assertEq(token.balanceOf(claimAddress) - balanceBefore, lockupAmount * 2);
+        assertEq(token.balanceOf(address(swap)), 0);
+
+        // Verify that both swaps were removed
+        bytes32 valHashCommit =
+            swap.hashValues(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelockCommit);
+        bytes32 valHashNormal = swap.hashValues(
+            preimageHashNormal, lockupAmount, address(token), claimAddress, refundAddress, timelockNormal
+        );
+        assertFalse(swap.swaps(valHashCommit));
+        assertFalse(swap.swaps(valHashNormal));
     }
 
     function testClaimTwiceFail() external {
@@ -528,5 +710,19 @@ contract ERC20SwapTest is Test {
                 )
             )
         );
+    }
+
+    function generateCommitSignature(bytes32 _preimageHash, uint256 _amount, uint256 _timelock)
+        internal
+        view
+        returns (uint8, bytes32, bytes32)
+    {
+        bytes32 message = sigUtils.getTypedDataHash(
+            sigUtils.hashErc20SwapCommit(
+                swap.TYPEHASH_COMMIT(), _preimageHash, _amount, address(token), claimAddress, refundAddress, _timelock
+            )
+        );
+
+        return vm.sign(refundAddressKey, message);
     }
 }
