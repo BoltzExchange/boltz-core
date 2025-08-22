@@ -25,6 +25,9 @@ contract EtherSwapTest is Test {
     uint256 internal lockupAmount = 1 ether;
     uint256 internal claimAddressKey = 0xA11CE;
     address internal claimAddress;
+    uint256 internal refundAddressKey = 0xB0B;
+    address internal refundAddress;
+
     address payable internal constant DESTINATION = payable(0x3d9cc5780CA1db78760ad3D35458509178A85A4A);
 
     SigUtils internal sigUtils;
@@ -32,6 +35,9 @@ contract EtherSwapTest is Test {
     function setUp() public {
         claimAddress = vm.addr(claimAddressKey);
         sigUtils = new SigUtils(swap.DOMAIN_SEPARATOR());
+        refundAddress = vm.addr(refundAddressKey);
+        // Fund the refund address so it can lock Ether in the contract
+        vm.deal(refundAddress, 10 ether);
     }
 
     receive() external payable {}
@@ -71,6 +77,17 @@ contract EtherSwapTest is Test {
         lock(timelock);
         assertEq(address(swap).balance, lockupAmount);
         assertTrue(querySwap(timelock));
+    }
+
+    function testLockWithRefundAddress() external {
+        uint256 timelock = block.number;
+
+        vm.expectEmit(true, true, false, true, address(swap));
+        emit Lockup(preimageHash, lockupAmount, claimAddress, refundAddress, timelock);
+
+        swap.lock{value: lockupAmount}(preimageHash, claimAddress, refundAddress, timelock);
+        assertEq(address(swap).balance, lockupAmount);
+        assertTrue(swap.swaps(swap.hashValues(preimageHash, lockupAmount, claimAddress, refundAddress, timelock)));
     }
 
     function testLockWithSameHashValueFail() external {
@@ -178,6 +195,70 @@ contract EtherSwapTest is Test {
         swap.claim(preimage, lockupAmount, address(this), timelock, v, r, s);
     }
 
+    function testCommitClaim() external {
+        uint256 timelock = block.number + 21;
+
+        vm.prank(refundAddress);
+        swap.lock{value: lockupAmount}(bytes32(0), claimAddress, timelock);
+        assertTrue(swap.swaps(swap.hashValues(bytes32(0), lockupAmount, claimAddress, refundAddress, timelock)));
+
+        bytes32 actualPreimageHash = sha256(abi.encodePacked(preimage));
+        (uint8 v, bytes32 r, bytes32 s) = generateCommitSignature(actualPreimageHash, lockupAmount, timelock);
+
+        // Signature should verify positively via the helper function
+        assertTrue(
+            swap.checkCommitmentSignature(
+                actualPreimageHash, lockupAmount, claimAddress, refundAddress, timelock, v, r, s
+            )
+        );
+
+        uint256 balanceBefore = claimAddress.balance;
+
+        vm.prank(claimAddress);
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit Claim(actualPreimageHash, preimage);
+        swap.claim(preimage, lockupAmount, claimAddress, refundAddress, timelock, v, r, s);
+
+        assertEq(claimAddress.balance - balanceBefore, lockupAmount);
+        assertEq(address(swap).balance, 0);
+        assertFalse(swap.swaps(swap.hashValues(bytes32(0), lockupAmount, claimAddress, refundAddress, timelock)));
+    }
+
+    function testCommitClaimInvalidPreimage() external {
+        uint256 timelock = block.number + 21;
+
+        vm.prank(refundAddress);
+        swap.lock{value: lockupAmount}(bytes32(0), claimAddress, refundAddress, timelock);
+
+        bytes32 actualPreimageHash = sha256(abi.encodePacked(preimage));
+
+        (uint8 v, bytes32 r, bytes32 s) = generateCommitSignature(actualPreimageHash, lockupAmount, timelock);
+
+        vm.prank(claimAddress);
+        vm.expectRevert("EtherSwap: invalid signature");
+        swap.claim(bytes32(0), lockupAmount, claimAddress, refundAddress, timelock, v, r, s);
+    }
+
+    function testCommitClaimInvalidSignatureFail() external {
+        uint256 timelock = block.number + 21;
+
+        vm.prank(refundAddress);
+        swap.lock{value: lockupAmount}(bytes32(0), claimAddress, refundAddress, timelock);
+
+        bytes32 actualPreimageHash = sha256(abi.encodePacked(preimage));
+
+        // Sign with the wrong key
+        bytes32 commitMsg = sigUtils.hashEtherSwapCommit(
+            swap.TYPEHASH_COMMIT(), actualPreimageHash, lockupAmount, claimAddress, refundAddress, timelock
+        );
+        bytes32 digest = sigUtils.getTypedDataHash(commitMsg);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(claimAddressKey, digest);
+
+        vm.prank(claimAddress);
+        vm.expectRevert("EtherSwap: invalid signature");
+        swap.claim(preimage, lockupAmount, claimAddress, refundAddress, timelock, v, r, s);
+    }
+
     function testClaimBatchTwo() external {
         uint256 timelock = block.number;
         uint256 balanceBeforeClaim = claimAddress.balance;
@@ -279,6 +360,68 @@ contract EtherSwapTest is Test {
 
         assertEq(address(swap).balance, 0);
         assertEq(claimAddress.balance - balanceBeforeClaim, lockupAmount + lockupAmountSecond + lockupAmountThird);
+    }
+
+    function testClaimBatchCommitAndNormal() external {
+        uint256 timelockCommit = block.number + 21;
+        uint256 timelockNormal = block.number + 42;
+
+        // Commitment swap
+        vm.prank(refundAddress);
+        swap.lock{value: lockupAmount}(bytes32(0), claimAddress, refundAddress, timelockCommit);
+        bytes32 commitPreimageHash = sha256(abi.encodePacked(preimage));
+
+        // Normal swap
+        bytes32 preimageNormal = sha256("2");
+        bytes32 preimageHashNormal = sha256(abi.encodePacked(preimageNormal));
+        vm.prank(refundAddress);
+        swap.lock{value: lockupAmount}(preimageHashNormal, claimAddress, refundAddress, timelockNormal);
+
+        uint256 balanceBefore = claimAddress.balance;
+
+        {
+            (uint8 vCommit, bytes32 rCommit, bytes32 sCommit) =
+                generateCommitSignature(commitPreimageHash, lockupAmount, timelockCommit);
+
+            // Prepare batch entries
+            EtherSwap.BatchClaimEntry[] memory entries = new EtherSwap.BatchClaimEntry[](2);
+            entries[0] = EtherSwap.BatchClaimEntry({
+                preimage: preimage,
+                amount: lockupAmount,
+                refundAddress: refundAddress,
+                timelock: timelockCommit,
+                v: vCommit,
+                r: rCommit,
+                s: sCommit
+            });
+            entries[1] = EtherSwap.BatchClaimEntry({
+                preimage: preimageNormal,
+                amount: lockupAmount,
+                refundAddress: refundAddress,
+                timelock: timelockNormal,
+                v: 0,
+                r: bytes32(0),
+                s: bytes32(0)
+            });
+
+            vm.prank(claimAddress);
+            vm.expectEmit(true, false, false, true, address(swap));
+            emit Claim(commitPreimageHash, preimage);
+            vm.expectEmit(true, false, false, true, address(swap));
+            emit Claim(preimageHashNormal, preimageNormal);
+
+            swap.claimBatch(entries);
+        }
+
+        assertEq(claimAddress.balance - balanceBefore, lockupAmount * 2);
+        assertEq(address(swap).balance, 0);
+
+        // Verify that both swaps were removed
+        bytes32 valHashCommit = swap.hashValues(bytes32(0), lockupAmount, claimAddress, refundAddress, timelockCommit);
+        bytes32 valHashNormal =
+            swap.hashValues(preimageHashNormal, lockupAmount, claimAddress, refundAddress, timelockNormal);
+        assertFalse(swap.swaps(valHashCommit));
+        assertFalse(swap.swaps(valHashNormal));
     }
 
     function testClaimTwiceFail() external {
@@ -455,5 +598,20 @@ contract EtherSwapTest is Test {
 
     function querySwap(uint256 timelock) internal view returns (bool) {
         return swap.swaps(swap.hashValues(preimageHash, lockupAmount, claimAddress, address(this), timelock));
+    }
+
+    function generateCommitSignature(bytes32 _preimageHash, uint256 _amount, uint256 _timelock)
+        internal
+        view
+        returns (uint8, bytes32, bytes32)
+    {
+        return vm.sign(
+            refundAddressKey,
+            sigUtils.getTypedDataHash(
+                sigUtils.hashEtherSwapCommit(
+                    swap.TYPEHASH_COMMIT(), _preimageHash, _amount, claimAddress, refundAddress, _timelock
+                )
+            )
+        );
     }
 }
