@@ -54,6 +54,9 @@ contract Router {
     /// @dev Version of the contract used for compatibility checks
     uint8 public constant VERSION = 1;
 
+    bytes32 public constant TYPEHASH_CLAIM =
+        keccak256("Claim(bytes32 preimage,address token,uint256 minAmountOut,address destination)");
+
     /// @dev The EtherSwap contract instance this router interacts with
     EtherSwap public immutable SWAP_CONTRACT;
 
@@ -66,8 +69,6 @@ contract Router {
             address(this)
         )
     );
-    bytes32 public immutable TYPEHASH_CLAIM =
-        keccak256("Claim(bytes32 preimage,address token,uint256 minAmountOut,address destination)");
 
     /// @dev Constructor sets the EtherSwap contract address
     /// @param swapContract The address of the EtherSwap contract to interact with
