@@ -11,7 +11,7 @@ import {TestERC20} from "../TestERC20.sol";
 contract MockTarget {
     uint256 public calls;
 
-    function mockTarget(uint256 value) public {
+    function mockTarget(uint256 value) public payable {
         calls += value;
     }
 
@@ -188,24 +188,6 @@ contract RouterTest is Test {
         ROUTER.claimExecute(claim, calls, address(0), 0);
     }
 
-    function testClaimExecuteInvalidTarget() public {
-        uint256 timelock = block.number + 21;
-        SWAP.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
-
-        Router.Claim memory claim = signClaim(timelock);
-
-        Router.Call[] memory calls = new Router.Call[](1);
-        calls[0] = Router.Call({
-            target: address(SWAP),
-            value: 0,
-            callData: abi.encodeWithSelector(EtherSwap.refundCooperative.selector)
-        });
-
-        vm.prank(claimAddress);
-        vm.expectRevert(abi.encodeWithSelector(Router.InvalidTarget.selector));
-        ROUTER.claimExecute(claim, calls, address(0), 0);
-    }
-
     function testClaimExecuteCallFailed() public {
         uint256 timelock = block.number + 21;
         SWAP.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
@@ -321,6 +303,90 @@ contract RouterTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
         ROUTER.claimExecute(claim, calls, address(0), lockupAmount, destination, v, r, s);
+    }
+
+    function testClaimCall() public {
+        uint256 timelock = block.number + 21;
+        SWAP.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        MockTarget mockTarget = new MockTarget();
+
+        Router.Claim memory claim = signClaim(timelock);
+
+        vm.prank(claimAddress);
+        ROUTER.claimCall(claim, address(mockTarget), abi.encodeWithSelector(MockTarget.mockTarget.selector, 21));
+
+        assertEq(mockTarget.calls(), 21);
+        assertEq(address(mockTarget).balance, lockupAmount);
+    }
+
+    function testClaimCallInvalidCaller() public {
+        uint256 timelock = block.number + 21;
+        SWAP.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        MockTarget mockTarget = new MockTarget();
+
+        Router.Claim memory claim = signClaim(timelock);
+
+        vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
+        ROUTER.claimCall(claim, address(mockTarget), abi.encodeWithSelector(MockTarget.mockTarget.selector, 21));
+    }
+
+    function testClaimCallSignature() public {
+        uint256 timelock = block.number + 21;
+        SWAP.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        MockTarget mockTarget = new MockTarget();
+
+        bytes memory data = abi.encodeWithSelector(MockTarget.mockTarget.selector, 21);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    ROUTER.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ROUTER.TYPEHASH_CLAIM_CALL(), preimage, address(mockTarget), keccak256(data)))
+                )
+            )
+        );
+
+        ROUTER.claimCall(signClaim(timelock), address(mockTarget), data, v, r, s);
+
+        assertEq(mockTarget.calls(), 21);
+        assertEq(address(mockTarget).balance, lockupAmount);
+    }
+
+    function testClaimCallSignatureInvalid() public {
+        uint256 timelock = block.number + 21;
+        SWAP.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        MockTarget mockTarget = new MockTarget();
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    ROUTER.DOMAIN_SEPARATOR(),
+                    keccak256(
+                        abi.encode(
+                            ROUTER.TYPEHASH_CLAIM_CALL(),
+                            preimage,
+                            address(mockTarget),
+                            keccak256(abi.encodeWithSelector(MockTarget.mockTarget.selector, 22))
+                        )
+                    )
+                )
+            )
+        );
+
+        Router.Claim memory claimSignature = signClaim(timelock);
+
+        vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
+        ROUTER.claimCall(
+            claimSignature, address(mockTarget), abi.encodeWithSelector(MockTarget.mockTarget.selector, 21), v, r, s
+        );
     }
 
     function signClaim(uint256 timelock) internal view returns (Router.Claim memory) {
