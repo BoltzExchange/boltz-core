@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "3.0.0",
+  "version": "3.1.0-alpha.0",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -40,6 +40,7 @@
     "foundry.toml",
     "remappings.txt",
     "out/ERC20.sol/ERC20.json",
+    "out/Router.sol/Router.json",
     "out/TestERC20.sol/TestERC20.json",
     "out/EtherSwap.sol/EtherSwap.json",
     "out/ERC20Swap.sol/ERC20Swap.json",
