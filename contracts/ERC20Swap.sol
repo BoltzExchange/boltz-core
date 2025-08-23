@@ -23,10 +23,25 @@ contract ERC20Swap {
     /// @dev Version of the contract used for compatibility checks
     uint8 public constant VERSION = 5;
 
-    bytes32 public immutable DOMAIN_SEPARATOR;
-    bytes32 public immutable TYPEHASH_CLAIM;
-    bytes32 public immutable TYPEHASH_REFUND;
-    bytes32 public immutable TYPEHASH_COMMIT;
+    bytes32 public constant TYPEHASH_CLAIM = keccak256(
+        "Claim(bytes32 preimage,uint256 amount,address tokenAddress,address refundAddress,uint256 timelock,address destination)"
+    );
+    bytes32 public constant TYPEHASH_REFUND = keccak256(
+        "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,uint256 timelock)"
+    );
+    bytes32 public constant TYPEHASH_COMMIT = keccak256(
+        "Commit(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,address refundAddress,uint256 timelock)"
+    );
+
+    bytes32 public immutable DOMAIN_SEPARATOR = keccak256(
+        abi.encode(
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+            keccak256("ERC20Swap"),
+            keccak256("5"),
+            block.chainid,
+            address(this)
+        )
+    );
 
     // State variables
 
@@ -47,30 +62,13 @@ contract ERC20Swap {
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
     event Refund(bytes32 indexed preimageHash);
 
-    // Functions
-
-    constructor() {
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256("ERC20Swap"),
-                keccak256("5"),
-                block.chainid,
-                address(this)
-            )
-        );
-        TYPEHASH_CLAIM = keccak256(
-            "Claim(bytes32 preimage,uint256 amount,address tokenAddress,address refundAddress,uint256 timelock,address destination)"
-        );
-        TYPEHASH_REFUND = keccak256(
-            "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,uint256 timelock)"
-        );
-        TYPEHASH_COMMIT = keccak256(
-            "Commit(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,address refundAddress,uint256 timelock)"
-        );
-    }
-
     // External functions
+
+    /// @dev Returns the version of the contract
+    /// @notice For backwards compatibility
+    function version() external pure returns (uint8) {
+        return VERSION;
+    }
 
     /// Locks tokens for a swap in the contract and forwards a specified amount of Ether to the claim address
     /// @notice The amount of Ether forwarded to the claim address is the amount sent in the transaction and the refund address is the sender of the transaction

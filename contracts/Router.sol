@@ -41,9 +41,6 @@ contract Router {
     /// @dev Thrown when the claimer address doesn't match the transaction sender
     error ClaimInvalidAddress();
 
-    /// @dev Thrown when trying to call the swap contract in the arbitrary calls array
-    error InvalidTarget();
-
     /// @dev Thrown when one of the arbitrary calls fails
     /// @param index The index of the failed call in the calls array
     error CallFailed(uint256 index);
@@ -53,6 +50,11 @@ contract Router {
 
     /// @dev Version of the contract used for compatibility checks
     uint8 public constant VERSION = 1;
+
+    bytes32 public constant TYPEHASH_CLAIM =
+        keccak256("Claim(bytes32 preimage,address token,uint256 minAmountOut,address destination)");
+    bytes32 public constant TYPEHASH_CLAIM_CALL =
+        keccak256("ClaimCall(bytes32 preimage,address callee,bytes32 callData)");
 
     /// @dev The EtherSwap contract instance this router interacts with
     EtherSwap public immutable SWAP_CONTRACT;
@@ -66,8 +68,6 @@ contract Router {
             address(this)
         )
     );
-    bytes32 public immutable TYPEHASH_CLAIM =
-        keccak256("Claim(bytes32 preimage,address token,uint256 minAmountOut,address destination)");
 
     /// @dev Constructor sets the EtherSwap contract address
     /// @param swapContract The address of the EtherSwap contract to interact with
@@ -146,6 +146,66 @@ contract Router {
         sweep(destination, token, minAmountOut);
     }
 
+    /// @dev Claims funds from the EtherSwap contract and performs a single external call forwarding the claimed Ether
+    /// @param claim The claim parameters for the EtherSwap contract
+    /// @param callee The contract address to call after claiming
+    /// @param callData The encoded function calldata for the call
+    //
+    // Flow:
+    // 1. Claim funds from the EtherSwap contract
+    // 2. Verify the claimer is the transaction sender
+    // 3. Call the provided callee with `claim.amount` as value
+    function claimCall(Claim calldata claim, address callee, bytes calldata callData) external {
+        if (claimSwap(claim) != msg.sender) {
+            revert ClaimInvalidAddress();
+        }
+
+        (bool success,) = callee.call{value: claim.amount}(callData);
+        if (!success) {
+            revert CallFailed(0);
+        }
+    }
+
+    /// @dev Claims funds from the EtherSwap contract and performs a single external call, authorized via EIP-712 signature
+    /// @param claim The claim parameters for the EtherSwap contract
+    /// @param callee The contract address to call after claiming
+    /// @param callData The encoded function calldata for the call
+    /// @param v Final byte of the EIP-712 signature authorizing this call
+    /// @param r Second 32 bytes of the EIP-712 signature authorizing this call
+    /// @param s First 32 bytes of the EIP-712 signature authorizing this call
+    //
+    // Flow:
+    // 1. Claim funds from the EtherSwap contract
+    // 2. Verify the claimer has authorized this call via EIP-712 signature
+    // 3. Call the provided callee with `claim.amount` as value
+    function claimCall(Claim calldata claim, address callee, bytes calldata callData, uint8 v, bytes32 r, bytes32 s)
+        external
+    {
+        // Verify that the claimer has signed authorization for this specific call
+        if (
+            claimSwap(claim)
+                != ecrecover(
+                    keccak256(
+                        abi.encodePacked(
+                            "\x19\x01",
+                            DOMAIN_SEPARATOR,
+                            keccak256(abi.encode(TYPEHASH_CLAIM_CALL, claim.preimage, callee, keccak256(callData)))
+                        )
+                    ),
+                    v,
+                    r,
+                    s
+                )
+        ) {
+            revert ClaimInvalidAddress();
+        }
+
+        (bool success,) = callee.call{value: claim.amount}(callData);
+        if (!success) {
+            revert CallFailed(0);
+        }
+    }
+
     function claimSwap(Claim calldata claim) internal returns (address) {
         return SWAP_CONTRACT.claim(
             claim.preimage, claim.amount, claim.refundAddress, claim.timelock, claim.v, claim.r, claim.s
@@ -158,11 +218,6 @@ contract Router {
 
         for (uint256 i = 0; i < length; i++) {
             c = calls[i];
-
-            // Prevent calls to the swap contract to avoid potential reentrancy issues
-            if (c.target == address(SWAP_CONTRACT)) {
-                revert InvalidTarget();
-            }
 
             // Execute the call and revert if it fails
             (bool success,) = c.target.call{value: c.value}(c.callData);
