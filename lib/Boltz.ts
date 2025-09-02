@@ -1,6 +1,3 @@
-import ERC20ABI from '../out/ERC20.sol/ERC20.json';
-import ERC20SwapABI from '../out/ERC20Swap.sol/ERC20Swap.json';
-import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json';
 import { targetFee } from './TargetFee';
 import { OutputType } from './consts/Enums';
 import Networks from './consts/Networks';
@@ -33,18 +30,11 @@ import * as SwapTreeSerializer from './swap/SwapTreeSerializer';
 import * as SwapUtils from './swap/SwapUtils';
 import * as TaprootUtils from './swap/TaprootUtils';
 
-const ContractABIs = {
-  ERC20: ERC20ABI.abi,
-  EtherSwap: EtherSwapABI.abi,
-  ERC20Swap: ERC20SwapABI.abi,
-};
-
 export {
   Musig,
   Types,
   Networks,
   OutputType,
-  ContractABIs,
   ClaimDetails,
   ScriptElement,
   RefundDetails,

@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Scripts should get P2PKH output script 1`] = `"76a914000000000000000000000000000000000000000088ac"`;
 
