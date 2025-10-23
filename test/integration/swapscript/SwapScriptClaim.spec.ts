@@ -31,7 +31,7 @@ describe('SwapScript claim', () => {
 
     expect(actualError.code).toEqual(-26);
     expect(actualError.message).toContain(
-      'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
+      'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
     );
   });
 

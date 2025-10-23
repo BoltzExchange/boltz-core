@@ -27,7 +27,7 @@ contract ERC20Swap {
         "Claim(bytes32 preimage,uint256 amount,address tokenAddress,address refundAddress,uint256 timelock,address destination)"
     );
     bytes32 public constant TYPEHASH_REFUND = keccak256(
-        "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,uint256 timelock)"
+        "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,address refundAddress,uint256 timelock)"
     );
     bytes32 public constant TYPEHASH_COMMIT = keccak256(
         "Commit(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,address refundAddress,uint256 timelock)"
@@ -263,9 +263,9 @@ contract ERC20Swap {
     /// @param tokenAddress Address of the token locked for the swap
     /// @param claimAddress Address that that was destined to claim the funds
     /// @param timelock Block height after which the locked tokens can be refunded
-    /// @param v final byte of the signature
-    /// @param r second 32 bytes of the signature
-    /// @param s first 32 bytes of the signature
+    /// @param v Final byte of the signature
+    /// @param r Second 32 bytes of the signature
+    /// @param s First 32 bytes of the signature
     function refundCooperative(
         bytes32 preimageHash,
         uint256 amount,
@@ -276,12 +276,41 @@ contract ERC20Swap {
         bytes32 r,
         bytes32 s
     ) external {
+        refundCooperative(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock, v, r, s);
+    }
+
+    /// Refunds tokens locked in the contract with an EIP-712 signature of the claimAddress
+    /// @dev This function allows cooperative refunds to be executed on someone else's behalf by a sponsor
+    /// @param preimageHash Preimage hash of the swap
+    /// @param amount Amount locked in the contract for the swap in the smallest denomination of the token
+    /// @param tokenAddress Address of the token locked for the swap
+    /// @param claimAddress Address that that was destined to claim the funds
+    /// @param refundAddress Address that locked the tokens in the contract
+    /// @param timelock Block height after which the locked tokens can be refunded
+    /// @param v Final byte of the signature
+    /// @param r Second 32 bytes of the signature
+    /// @param s First 32 bytes of the signature
+    function refundCooperative(
+        bytes32 preimageHash,
+        uint256 amount,
+        address tokenAddress,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
         address recoveredAddress = ecrecover(
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
                     DOMAIN_SEPARATOR,
-                    keccak256(abi.encode(TYPEHASH_REFUND, preimageHash, amount, tokenAddress, claimAddress, timelock))
+                    keccak256(
+                        abi.encode(
+                            TYPEHASH_REFUND, preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock
+                        )
+                    )
                 )
             ),
             v,
@@ -290,7 +319,7 @@ contract ERC20Swap {
         );
         require(recoveredAddress != address(0) && recoveredAddress == claimAddress, "ERC20Swap: invalid signature");
 
-        refundInternal(preimageHash, amount, tokenAddress, claimAddress, msg.sender, timelock);
+        refundInternal(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
     }
 
     // Public functions
@@ -508,7 +537,9 @@ contract ERC20Swap {
         // If the preimage is wrong, so will be its hash which results in an invalid signature
         bytes32 preimageHash = sha256(abi.encodePacked(preimage));
         require(
-            checkCommitmentSignature(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock, v, r, s),
+            checkCommitmentSignature(
+                preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock, v, r, s
+            ),
             "ERC20Swap: invalid signature"
         );
 

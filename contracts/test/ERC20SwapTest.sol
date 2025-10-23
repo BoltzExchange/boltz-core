@@ -617,7 +617,13 @@ contract ERC20SwapTest is Test {
             claimAddressKey,
             sigUtils.getTypedDataHash(
                 sigUtils.hashErc20SwapRefund(
-                    swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, address(token), claimAddress, block.number + 21
+                    swap.TYPEHASH_REFUND(),
+                    preimageHash,
+                    lockupAmount,
+                    address(token),
+                    claimAddress,
+                    address(this),
+                    block.number + 21
                 )
             )
         );
@@ -645,6 +651,38 @@ contract ERC20SwapTest is Test {
 
         vm.expectRevert("ERC20Swap: invalid signature");
         swap.refundCooperative(preimageHash, lockupAmount, address(token), claimAddress, timelock, v, r, s);
+    }
+
+    function testRefundCooperativeWithRefundAddress() external {
+        uint256 timelock = block.number + 21;
+
+        require(token.transfer(refundAddress, lockupAmount));
+
+        vm.startPrank(refundAddress);
+        token.approve(address(swap), lockupAmount);
+        swap.lock(preimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock);
+        vm.stopPrank();
+
+        uint256 balanceBeforeRefund = token.balanceOf(refundAddress);
+
+        (uint8 v, bytes32 r, bytes32 s) = generateRefundSignature(timelock, refundAddress);
+
+        vm.expectEmit(true, false, false, false, address(swap));
+        emit Refund(preimageHash);
+
+        vm.prank(DESTINATION);
+        swap.refundCooperative(
+            preimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock, v, r, s
+        );
+
+        assertFalse(
+            swap.swaps(
+                swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock)
+            )
+        );
+        assertEq(token.balanceOf(address(swap)), 0);
+        assertEq(token.balanceOf(refundAddress) - balanceBeforeRefund, lockupAmount);
+        assertEq(token.balanceOf(DESTINATION), 0);
     }
 
     function testBadERC20Token() external {
@@ -696,9 +734,10 @@ contract ERC20SwapTest is Test {
     }
 
     function querySwap(uint256 timelock) internal view returns (bool) {
-        return swap.swaps(
-            swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock)
-        );
+        return
+            swap.swaps(
+                swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock)
+            );
     }
 
     function generateClaimSignature(uint256 timelock) internal view returns (uint8, bytes32, bytes32) {
@@ -724,5 +763,17 @@ contract ERC20SwapTest is Test {
         );
 
         return vm.sign(refundAddressKey, message);
+    }
+
+    function generateRefundSignature(uint256 _timelock, address _refundAddress)
+        internal
+        view
+        returns (uint8, bytes32, bytes32)
+    {
+        bytes32 refundHash = sigUtils.hashErc20SwapRefund(
+            swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, address(token), claimAddress, _refundAddress, _timelock
+        );
+        bytes32 digest = sigUtils.getTypedDataHash(refundHash);
+        return vm.sign(claimAddressKey, digest);
     }
 }

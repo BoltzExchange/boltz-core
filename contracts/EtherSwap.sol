@@ -25,8 +25,9 @@ contract EtherSwap {
 
     bytes32 public constant TYPEHASH_CLAIM =
         keccak256("Claim(bytes32 preimage,uint256 amount,address refundAddress,uint256 timelock,address destination)");
-    bytes32 public constant TYPEHASH_REFUND =
-        keccak256("Refund(bytes32 preimageHash,uint256 amount,address claimAddress,uint256 timelock)");
+    bytes32 public constant TYPEHASH_REFUND = keccak256(
+        "Refund(bytes32 preimageHash,uint256 amount,address claimAddress,address refundAddress,uint256 timelock)"
+    );
     bytes32 public constant TYPEHASH_COMMIT = keccak256(
         "Commit(bytes32 preimageHash,uint256 amount,address claimAddress,address refundAddress,uint256 timelock)"
     );
@@ -265,12 +266,35 @@ contract EtherSwap {
         bytes32 r,
         bytes32 s
     ) external {
+        refundCooperative(preimageHash, amount, claimAddress, msg.sender, timelock, v, r, s);
+    }
+
+    /// Refunds Ether locked in the contract with an EIP-712 signature of the claimAddress
+    /// @dev This function allows cooperative refunds to be executed on someone else's behalf by a sponsor
+    /// @param preimageHash Preimage hash of the swap
+    /// @param amount Amount locked in the contract for the swap in WEI
+    /// @param claimAddress Address that that was destined to claim the funds
+    /// @param refundAddress Address that locked the Ether in the contract
+    /// @param timelock Block height after which the locked Ether can be refunded
+    /// @param v Final byte of the signature
+    /// @param r Second 32 bytes of the signature
+    /// @param s First 32 bytes of the signature
+    function refundCooperative(
+        bytes32 preimageHash,
+        uint256 amount,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
         address recoveredAddress = ecrecover(
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
                     DOMAIN_SEPARATOR,
-                    keccak256(abi.encode(TYPEHASH_REFUND, preimageHash, amount, claimAddress, timelock))
+                    keccak256(abi.encode(TYPEHASH_REFUND, preimageHash, amount, claimAddress, refundAddress, timelock))
                 )
             ),
             v,
@@ -279,7 +303,7 @@ contract EtherSwap {
         );
         require(recoveredAddress != address(0) && recoveredAddress == claimAddress, "EtherSwap: invalid signature");
 
-        refundInternal(preimageHash, amount, claimAddress, msg.sender, timelock);
+        refundInternal(preimageHash, amount, claimAddress, refundAddress, timelock);
     }
 
     // Public functions
@@ -333,9 +357,13 @@ contract EtherSwap {
     /// @param claimAddress Address that that was destined to claim the funds
     /// @param refundAddress Address that locked the Ether in the contract
     /// @param timelock Block height after which the locked Ether can be refunded
-    function refund(bytes32 preimageHash, uint256 amount, address claimAddress, address refundAddress, uint256 timelock)
-        public
-    {
+    function refund(
+        bytes32 preimageHash,
+        uint256 amount,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock
+    ) public {
         // Make sure the timelock has expired already
         // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
         require(timelock <= block.number, "EtherSwap: swap has not timed out yet");
