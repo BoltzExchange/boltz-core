@@ -508,7 +508,9 @@ contract ERC20Swap {
         // If the preimage is wrong, so will be its hash which results in an invalid signature
         bytes32 preimageHash = sha256(abi.encodePacked(preimage));
         require(
-            checkCommitmentSignature(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock, v, r, s),
+            checkCommitmentSignature(
+                preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock, v, r, s
+            ),
             "ERC20Swap: invalid signature"
         );
 

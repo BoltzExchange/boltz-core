@@ -77,7 +77,8 @@ contract SigUtils {
         address refundAddress,
         uint256 timelock
     ) public pure returns (bytes32) {
-        return
-            keccak256(abi.encode(typehash, preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock));
+        return keccak256(
+            abi.encode(typehash, preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock)
+        );
     }
 }

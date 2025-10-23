@@ -696,9 +696,10 @@ contract ERC20SwapTest is Test {
     }
 
     function querySwap(uint256 timelock) internal view returns (bool) {
-        return swap.swaps(
-            swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock)
-        );
+        return
+            swap.swaps(
+                swap.hashValues(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock)
+            );
     }
 
     function generateClaimSignature(uint256 timelock) internal view returns (uint8, bytes32, bytes32) {

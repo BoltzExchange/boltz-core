@@ -61,9 +61,7 @@ contract RouterTest is Test {
         MockTarget mockTarget = new MockTarget();
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(mockTarget),
-            value: 0,
-            callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
         });
 
         vm.prank(claimAddress);
@@ -84,9 +82,7 @@ contract RouterTest is Test {
         MockTarget mockTarget = new MockTarget();
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(mockTarget),
-            value: 0,
-            callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
         });
 
         vm.prank(claimAddress);
@@ -107,14 +103,10 @@ contract RouterTest is Test {
         MockTarget mockTarget = new MockTarget();
         Router.Call[] memory calls = new Router.Call[](2);
         calls[0] = Router.Call({
-            target: address(mockTarget),
-            value: 0,
-            callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
         });
         calls[1] = Router.Call({
-            target: address(mockTarget),
-            value: 0,
-            callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 18)
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 18)
         });
 
         vm.prank(claimAddress);
@@ -136,9 +128,7 @@ contract RouterTest is Test {
         require(TOKEN.transfer(address(dex), lockupAmount));
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(dex),
-            value: lockupAmount,
-            callData: abi.encodeWithSelector(MockDex.swap.selector)
+            target: address(dex), value: lockupAmount, callData: abi.encodeWithSelector(MockDex.swap.selector)
         });
 
         vm.prank(claimAddress);
@@ -159,9 +149,7 @@ contract RouterTest is Test {
         require(TOKEN.transfer(address(dex), lockupAmount));
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(dex),
-            value: lockupAmount,
-            callData: abi.encodeWithSelector(MockDex.swap.selector)
+            target: address(dex), value: lockupAmount, callData: abi.encodeWithSelector(MockDex.swap.selector)
         });
 
         vm.prank(claimAddress);
@@ -179,9 +167,7 @@ contract RouterTest is Test {
         MockTarget mockTarget = new MockTarget();
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(mockTarget),
-            value: 0,
-            callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
         });
 
         vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
@@ -197,9 +183,7 @@ contract RouterTest is Test {
         MockTarget mockTarget = new MockTarget();
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(mockTarget),
-            value: 0,
-            callData: abi.encodeWithSelector(MockTarget.revertTarget.selector)
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.revertTarget.selector)
         });
 
         vm.prank(claimAddress);
@@ -216,9 +200,7 @@ contract RouterTest is Test {
         MockTarget mockTarget = new MockTarget();
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(mockTarget),
-            value: 0,
-            callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
         });
 
         vm.prank(claimAddress);
@@ -236,9 +218,7 @@ contract RouterTest is Test {
         require(TOKEN.transfer(address(dex), lockupAmount));
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(dex),
-            value: lockupAmount,
-            callData: abi.encodeWithSelector(MockDex.swap.selector)
+            target: address(dex), value: lockupAmount, callData: abi.encodeWithSelector(MockDex.swap.selector)
         });
 
         vm.prank(claimAddress);
@@ -255,9 +235,7 @@ contract RouterTest is Test {
         MockTarget mockTarget = new MockTarget();
         Router.Call[] memory calls = new Router.Call[](1);
         calls[0] = Router.Call({
-            target: address(mockTarget),
-            value: 0,
-            callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
         });
 
         address destination = 0x3DdB7340B5657C37a338D83c99Bb72151ef9cBB0;
@@ -400,13 +378,7 @@ contract RouterTest is Test {
         );
 
         return Router.Claim({
-            preimage: preimage,
-            amount: lockupAmount,
-            refundAddress: address(this),
-            timelock: timelock,
-            v: v,
-            r: r,
-            s: s
+            preimage: preimage, amount: lockupAmount, refundAddress: address(this), timelock: timelock, v: v, r: r, s: s
         });
     }
 }

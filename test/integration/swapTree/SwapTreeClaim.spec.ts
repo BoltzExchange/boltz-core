@@ -88,7 +88,7 @@ describe.each`
     } catch (error: any) {
       expect(error.code).toBe(-26);
       expect(error.message).toContain(
-        'mandatory-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
+        'mempool-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
       );
     }
   });
@@ -107,7 +107,7 @@ describe.each`
     } catch (error: any) {
       expect(error.code).toBe(-26);
       expect(error.message).toContain(
-        'mandatory-script-verify-flag-failed (Invalid Schnorr signature)',
+        'mempool-script-verify-flag-failed (Invalid Schnorr signature)',
       );
     }
   });

@@ -47,7 +47,7 @@ describe('ReverseSwapScript refund', () => {
       } catch (error: any) {
         expect(error.code).toBe(-26);
         expect(error.message).toContain(
-          'mandatory-script-verify-flag-failed (Locktime requirement not satisfied)',
+          'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
         );
       }
     },
