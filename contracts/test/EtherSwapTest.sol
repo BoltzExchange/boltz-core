@@ -532,14 +532,16 @@ contract EtherSwapTest is Test {
 
         lock(timelock);
 
-        uint256 balanceBeforeRefund = address(this).balance;
-
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
             sigUtils.getTypedDataHash(
-                sigUtils.hashEtherSwapRefund(swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, claimAddress, timelock)
+                sigUtils.hashEtherSwapRefund(
+                    swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, claimAddress, address(this), timelock
+                )
             )
         );
+
+        uint256 balanceBeforeRefund = address(this).balance;
 
         vm.expectEmit(true, false, false, false, address(swap));
         emit Refund(preimageHash);
@@ -563,6 +565,35 @@ contract EtherSwapTest is Test {
 
         vm.expectRevert("EtherSwap: invalid signature");
         swap.refundCooperative(preimageHash, lockupAmount, claimAddress, timelock, v, r, s);
+    }
+
+    function testRefundCooperativeWithRefundAddress() external {
+        uint256 timelock = block.number + 21;
+
+        vm.prank(refundAddress);
+        swap.lock{value: lockupAmount}(preimageHash, claimAddress, refundAddress, timelock);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            sigUtils.getTypedDataHash(
+                sigUtils.hashEtherSwapRefund(
+                    swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, claimAddress, refundAddress, timelock
+                )
+            )
+        );
+
+        uint256 balanceBeforeRefund = refundAddress.balance;
+
+        vm.expectEmit(true, false, false, false, address(swap));
+        emit Refund(preimageHash);
+
+        vm.prank(DESTINATION);
+        swap.refundCooperative(preimageHash, lockupAmount, claimAddress, refundAddress, timelock, v, r, s);
+
+        assertFalse(swap.swaps(swap.hashValues(preimageHash, lockupAmount, claimAddress, refundAddress, timelock)));
+        assertEq(address(swap).balance, 0);
+        assertEq(refundAddress.balance - balanceBeforeRefund, lockupAmount);
+        assertEq(DESTINATION.balance, 0);
     }
 
     function testLockupPrepayMinerFee() external {
