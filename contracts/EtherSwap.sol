@@ -25,9 +25,8 @@ contract EtherSwap {
 
     bytes32 public constant TYPEHASH_CLAIM =
         keccak256("Claim(bytes32 preimage,uint256 amount,address refundAddress,uint256 timelock,address destination)");
-    bytes32 public constant TYPEHASH_REFUND = keccak256(
-        "Refund(bytes32 preimageHash,uint256 amount,address claimAddress,address refundAddress,uint256 timelock)"
-    );
+    bytes32 public constant TYPEHASH_REFUND =
+        keccak256("Refund(bytes32 preimageHash,uint256 amount,address claimAddress,uint256 timelock)");
     bytes32 public constant TYPEHASH_COMMIT = keccak256(
         "Commit(bytes32 preimageHash,uint256 amount,address claimAddress,address refundAddress,uint256 timelock)"
     );
@@ -294,7 +293,7 @@ contract EtherSwap {
                 abi.encodePacked(
                     "\x19\x01",
                     DOMAIN_SEPARATOR,
-                    keccak256(abi.encode(TYPEHASH_REFUND, preimageHash, amount, claimAddress, refundAddress, timelock))
+                    keccak256(abi.encode(TYPEHASH_REFUND, preimageHash, amount, claimAddress, timelock))
                 )
             ),
             v,

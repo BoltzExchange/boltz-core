@@ -617,13 +617,7 @@ contract ERC20SwapTest is Test {
             claimAddressKey,
             sigUtils.getTypedDataHash(
                 sigUtils.hashErc20SwapRefund(
-                    swap.TYPEHASH_REFUND(),
-                    preimageHash,
-                    lockupAmount,
-                    address(token),
-                    claimAddress,
-                    address(this),
-                    block.number + 21
+                    swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, address(token), claimAddress, block.number + 21
                 )
             )
         );
@@ -665,7 +659,7 @@ contract ERC20SwapTest is Test {
 
         uint256 balanceBeforeRefund = token.balanceOf(refundAddress);
 
-        (uint8 v, bytes32 r, bytes32 s) = generateRefundSignature(timelock, refundAddress);
+        (uint8 v, bytes32 r, bytes32 s) = generateRefundSignature(timelock);
 
         vm.expectEmit(true, false, false, false, address(swap));
         emit Refund(preimageHash);
@@ -765,13 +759,9 @@ contract ERC20SwapTest is Test {
         return vm.sign(refundAddressKey, message);
     }
 
-    function generateRefundSignature(uint256 _timelock, address _refundAddress)
-        internal
-        view
-        returns (uint8, bytes32, bytes32)
-    {
+    function generateRefundSignature(uint256 _timelock) internal view returns (uint8, bytes32, bytes32) {
         bytes32 refundHash = sigUtils.hashErc20SwapRefund(
-            swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, address(token), claimAddress, _refundAddress, _timelock
+            swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, address(token), claimAddress, _timelock
         );
         bytes32 digest = sigUtils.getTypedDataHash(refundHash);
         return vm.sign(claimAddressKey, digest);

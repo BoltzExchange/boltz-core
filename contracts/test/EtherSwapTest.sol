@@ -535,9 +535,7 @@ contract EtherSwapTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
             sigUtils.getTypedDataHash(
-                sigUtils.hashEtherSwapRefund(
-                    swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, claimAddress, address(this), timelock
-                )
+                sigUtils.hashEtherSwapRefund(swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, claimAddress, timelock)
             )
         );
 
@@ -576,9 +574,7 @@ contract EtherSwapTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             claimAddressKey,
             sigUtils.getTypedDataHash(
-                sigUtils.hashEtherSwapRefund(
-                    swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, claimAddress, refundAddress, timelock
-                )
+                sigUtils.hashEtherSwapRefund(swap.TYPEHASH_REFUND(), preimageHash, lockupAmount, claimAddress, timelock)
             )
         );
 

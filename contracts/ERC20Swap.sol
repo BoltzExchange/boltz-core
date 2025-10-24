@@ -27,7 +27,7 @@ contract ERC20Swap {
         "Claim(bytes32 preimage,uint256 amount,address tokenAddress,address refundAddress,uint256 timelock,address destination)"
     );
     bytes32 public constant TYPEHASH_REFUND = keccak256(
-        "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,address refundAddress,uint256 timelock)"
+        "Refund(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,uint256 timelock)"
     );
     bytes32 public constant TYPEHASH_COMMIT = keccak256(
         "Commit(bytes32 preimageHash,uint256 amount,address tokenAddress,address claimAddress,address refundAddress,uint256 timelock)"
@@ -306,11 +306,7 @@ contract ERC20Swap {
                 abi.encodePacked(
                     "\x19\x01",
                     DOMAIN_SEPARATOR,
-                    keccak256(
-                        abi.encode(
-                            TYPEHASH_REFUND, preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock
-                        )
-                    )
+                    keccak256(abi.encode(TYPEHASH_REFUND, preimageHash, amount, tokenAddress, claimAddress, timelock))
                 )
             ),
             v,
