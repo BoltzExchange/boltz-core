@@ -29,10 +29,9 @@ contract SigUtils {
         bytes32 preimageHash,
         uint256 amount,
         address claimAddress,
-        address refundAddress,
         uint256 timelock
     ) public pure returns (bytes32) {
-        return keccak256(abi.encode(typehash, preimageHash, amount, claimAddress, refundAddress, timelock));
+        return keccak256(abi.encode(typehash, preimageHash, amount, claimAddress, timelock));
     }
 
     function hashEtherSwapCommit(
@@ -64,12 +63,9 @@ contract SigUtils {
         uint256 amount,
         address tokenAddress,
         address claimAddress,
-        address refundAddress,
         uint256 timelock
     ) public pure returns (bytes32) {
-        return keccak256(
-            abi.encode(typehash, preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock)
-        );
+        return keccak256(abi.encode(typehash, preimageHash, amount, tokenAddress, claimAddress, timelock));
     }
 
     function hashErc20SwapCommit(
