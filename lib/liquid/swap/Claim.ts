@@ -18,14 +18,14 @@ import {
   witnessStackToScriptWitness,
 } from 'liquidjs-lib';
 import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
-import { Network } from 'liquidjs-lib/src/networks';
+import type { Network } from 'liquidjs-lib/src/networks';
 import { getHexString } from '../../Utils';
 import { OutputType } from '../../consts/Enums';
 import { isRelevantTaprootOutput, validateInputs } from '../../swap/Claim';
 import { scriptBuffersToScript } from '../../swap/SwapUtils';
 import { getOutputValue } from '../Utils';
 import Networks from '../consts/Networks';
-import { LiquidClaimDetails } from '../consts/Types';
+import type { LiquidClaimDetails } from '../consts/Types';
 import { ecpair, secp } from '../init';
 import { createControlBlock, tapLeafHash, toHashTree } from './TaprootUtils';
 

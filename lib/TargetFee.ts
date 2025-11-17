@@ -1,4 +1,4 @@
-import { Transaction } from 'bitcoinjs-lib';
+import type { Transaction } from 'bitcoinjs-lib';
 
 interface ITransaction {
   ins: any[];

@@ -1,5 +1,5 @@
 import { getHexBuffer, getHexString } from '../Utils';
-import { LiquidSwapTree, SwapTree, Tapleaf } from '../consts/Types';
+import type { LiquidSwapTree, SwapTree, Tapleaf } from '../consts/Types';
 import { assignTreeProbabilities, sortTree } from './TreeSort';
 
 type SerializedLeaf = {

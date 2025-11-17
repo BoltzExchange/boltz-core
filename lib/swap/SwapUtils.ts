@@ -8,8 +8,9 @@ import { script } from 'bitcoinjs-lib';
 import Bn from 'bn.js';
 import * as varuint from 'varuint-bitcoin';
 import { getHexBuffer, getHexString } from '../Utils';
-import { Output, OutputType } from '../consts/Enums';
-import { ScriptElement } from '../consts/Types';
+import type { Output } from '../consts/Enums';
+import { OutputType } from '../consts/Enums';
+import type { ScriptElement } from '../consts/Types';
 
 const zeroHexBuffer = getHexBuffer('00');
 

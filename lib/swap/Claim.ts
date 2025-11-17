@@ -8,7 +8,7 @@ import { tapleafHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341';
 import * as varuint from 'varuint-bitcoin';
 import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
-import { ClaimDetails } from '../consts/Types';
+import type { ClaimDetails } from '../consts/Types';
 import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
 import { createControlBlock, hashForWitnessV1 } from './TaprootUtils';
 

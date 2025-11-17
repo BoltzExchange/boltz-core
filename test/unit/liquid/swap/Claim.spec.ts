@@ -1,11 +1,8 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { getHexBuffer } from '../../../../lib/Utils';
 import { OutputType } from '../../../../lib/consts/Enums';
-import {
-  LiquidClaimDetails,
-  constructClaimTransaction,
-  init,
-} from '../../../../lib/liquid';
+import type { LiquidClaimDetails } from '../../../../lib/liquid';
+import { constructClaimTransaction, init } from '../../../../lib/liquid';
 import { liquidClaimDetailsMap } from './ClaimDetails';
 
 describe('Liquid Claim', () => {

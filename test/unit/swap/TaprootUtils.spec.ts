@@ -10,10 +10,10 @@ import {
   tweakKey,
 } from 'bitcoinjs-lib/src/payments/bip341';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { Taptree } from 'bitcoinjs-lib/src/types';
+import type { Taptree } from 'bitcoinjs-lib/src/types';
 import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';
-import { RefundDetails, Tapleaf } from '../../../lib/consts/Types';
+import type { RefundDetails, Tapleaf } from '../../../lib/consts/Types';
 import Musig from '../../../lib/musig/Musig';
 import { p2trOutput } from '../../../lib/swap/Scripts';
 import { toPushdataScript } from '../../../lib/swap/SwapUtils';

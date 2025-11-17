@@ -1,7 +1,7 @@
 import ops from '@boltz/bitcoin-ops';
 import { crypto, script } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { SwapTree } from '../consts/Types';
+import type { SwapTree } from '../consts/Types';
 import {
   createRefundLeaf,
   extractRefundPublicKeyFromSwapTree,

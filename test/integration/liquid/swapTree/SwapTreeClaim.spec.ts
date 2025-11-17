@@ -1,8 +1,9 @@
-import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { randomBytes } from 'crypto';
 import { OutputType } from '../../../../lib/Boltz';
+import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import {
-  LiquidClaimDetails,
   Networks,
   constructClaimTransaction,
   init,

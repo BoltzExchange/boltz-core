@@ -1,9 +1,9 @@
 /**
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
-import { Transaction } from 'bitcoinjs-lib';
+import type { Transaction } from 'bitcoinjs-lib';
 import { getHexBuffer } from '../Utils';
-import { ClaimDetails, RefundDetails } from '../consts/Types';
+import type { ClaimDetails, RefundDetails } from '../consts/Types';
 import { constructClaimTransaction } from './Claim';
 
 const dummyPreimage = getHexBuffer('0x00');

@@ -1,7 +1,7 @@
 /**
  * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
  */
-import { Transaction, TxOutput } from 'bitcoinjs-lib';
+import type { Transaction, TxOutput } from 'bitcoinjs-lib';
 import { OutputType } from '../consts/Enums';
 import {
   p2shOutput,
