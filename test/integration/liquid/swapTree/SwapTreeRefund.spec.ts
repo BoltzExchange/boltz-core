@@ -1,6 +1,7 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { OutputType } from '../../../../lib/consts/Enums';
-import { LiquidClaimDetails, init } from '../../../../lib/liquid';
+import type { LiquidClaimDetails } from '../../../../lib/liquid';
+import { init } from '../../../../lib/liquid';
 import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../../lib/swap/SwapTree';
 import { ECPair, slip77 } from '../../../unit/Utils';

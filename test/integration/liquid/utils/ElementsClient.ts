@@ -1,4 +1,5 @@
-import ChainClient, { AddressType } from '../../utils/ChainClient';
+import type { AddressType } from '../../utils/ChainClient';
+import ChainClient from '../../utils/ChainClient';
 
 enum LiquidAddressType {
   Blech32 = 'blech32',

@@ -3,8 +3,8 @@ import { crypto } from 'bitcoinjs-lib';
 import { randomBytes } from 'crypto';
 import { Transaction, address, networks } from 'liquidjs-lib';
 import { OutputType } from '../../../../lib/consts/Enums';
+import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import {
-  LiquidClaimDetails,
   constructClaimTransaction,
   constructRefundTransaction,
   init,

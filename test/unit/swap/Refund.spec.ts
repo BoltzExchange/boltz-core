@@ -2,7 +2,7 @@ import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
-import { RefundDetails } from '../../../lib/consts/Types';
+import type { RefundDetails } from '../../../lib/consts/Types';
 import { constructRefundTransaction } from '../../../lib/swap/Refund';
 
 const bip32 = BIP32Factory(ecc);

@@ -1,5 +1,6 @@
-import { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { ECPairAPI, ECPairFactory } from 'ecpair';
+import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import type { ECPairAPI } from 'ecpair';
+import { ECPairFactory } from 'ecpair';
 import { confidential } from 'liquidjs-lib';
 
 export let secp: Secp256k1ZKP;

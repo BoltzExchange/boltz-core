@@ -2,7 +2,7 @@ import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
-import { ClaimDetails } from '../../../lib/consts/Types';
+import type { ClaimDetails } from '../../../lib/consts/Types';
 
 const bip32 = BIP32Factory(ecc);
 

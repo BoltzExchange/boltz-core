@@ -2,12 +2,12 @@ import ops from '@boltz/bitcoin-ops';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { initEccLib } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { Taptree } from 'bitcoinjs-lib/src/types';
+import type { Taptree } from 'bitcoinjs-lib/src/types';
 import { randomBytes } from 'crypto';
 import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341';
 import * as ecc from 'tiny-secp256k1';
 import { getHexBuffer } from '../../../../lib/Utils';
-import { Tapleaf } from '../../../../lib/consts/Types';
+import type { Tapleaf } from '../../../../lib/consts/Types';
 import { init } from '../../../../lib/liquid';
 import { secp } from '../../../../lib/liquid/init';
 import {

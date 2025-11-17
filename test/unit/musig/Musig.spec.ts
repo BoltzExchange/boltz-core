@@ -1,4 +1,5 @@
-import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { randomBytes } from 'crypto';
 import Musig from '../../../lib/musig/Musig';

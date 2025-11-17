@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
-import { ClaimDetails } from '../../../lib/consts/Types';
+import type { ClaimDetails } from '../../../lib/consts/Types';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import { p2trOutput } from '../../../lib/swap/Scripts';
 import { ECPair } from '../Utils';

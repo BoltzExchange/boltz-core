@@ -1,7 +1,7 @@
-import { BIP32Interface } from 'bip32';
-import { ECPairInterface } from 'ecpair';
-import { Transaction, TxOutput } from 'liquidjs-lib';
-import { LiquidSwapTree, RefundDetails } from '../../consts/Types';
+import type { BIP32Interface } from 'bip32';
+import type { ECPairInterface } from 'ecpair';
+import type { Transaction, TxOutput } from 'liquidjs-lib';
+import type { LiquidSwapTree, RefundDetails } from '../../consts/Types';
 
 export type LiquidRefundDetails = Omit<RefundDetails, 'value' | 'swapTree'> &
   TxOutput & {

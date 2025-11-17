@@ -1,5 +1,5 @@
-import { Taptree } from 'bitcoinjs-lib/src/types';
-import { SwapTree, Tapleaf } from '../consts/Types';
+import type { Taptree } from 'bitcoinjs-lib/src/types';
+import type { SwapTree, Tapleaf } from '../consts/Types';
 
 const compareLeaf = (leaf: Tapleaf, compareLeaf: Tapleaf) =>
   leaf.version === compareLeaf.version &&

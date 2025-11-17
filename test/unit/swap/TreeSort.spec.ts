@@ -1,4 +1,4 @@
-import { LiquidSwapTree } from '../../../lib/consts/Types';
+import type { LiquidSwapTree } from '../../../lib/consts/Types';
 import { createLeaf } from '../../../lib/swap/TaprootUtils';
 import { assignTreeProbabilities, sortTree } from '../../../lib/swap/TreeSort';
 

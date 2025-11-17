@@ -1,4 +1,5 @@
-import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address, initEccLib } from 'bitcoinjs-lib';
 import { randomBytes } from 'crypto';
 import * as ecc from 'tiny-secp256k1';

@@ -1,8 +1,8 @@
-import { BIP32Interface } from 'bip32';
-import { TxOutput } from 'bitcoinjs-lib';
-import { Taptree } from 'bitcoinjs-lib/src/types';
-import { ECPairInterface } from 'ecpair';
-import { OutputType } from './Enums';
+import type { BIP32Interface } from 'bip32';
+import type { TxOutput } from 'bitcoinjs-lib';
+import type { Taptree } from 'bitcoinjs-lib/src/types';
+import type { ECPairInterface } from 'ecpair';
+import type { OutputType } from './Enums';
 
 export type Error = {
   message: string;

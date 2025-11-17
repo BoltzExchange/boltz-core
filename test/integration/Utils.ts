@@ -1,16 +1,12 @@
-import zkp, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import {
-  Transaction,
-  TxOutput,
-  address,
-  crypto,
-  initEccLib,
-} from 'bitcoinjs-lib';
+import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import zkp from '@vulpemventures/secp256k1-zkp';
+import type { TxOutput } from 'bitcoinjs-lib';
+import { Transaction, address, crypto, initEccLib } from 'bitcoinjs-lib';
 import { randomBytes } from 'crypto';
-import { ECPairInterface } from 'ecpair';
+import type { ECPairInterface } from 'ecpair';
+import type { TxOutput as LiquidTxOutput } from 'liquidjs-lib';
 import {
   Transaction as LiquidTransaction,
-  TxOutput as LiquidTxOutput,
   address as liquidAddress,
 } from 'liquidjs-lib';
 import * as ecc from 'tiny-secp256k1';
@@ -22,11 +18,14 @@ import {
   detectSwap,
   targetFee,
 } from '../../lib/Boltz';
-import { ClaimDetails, RefundDetails, SwapTree } from '../../lib/consts/Types';
+import type {
+  ClaimDetails,
+  RefundDetails,
+  SwapTree,
+} from '../../lib/consts/Types';
+import type { LiquidClaimDetails, LiquidRefundDetails } from '../../lib/liquid';
 import {
-  LiquidClaimDetails,
   Networks as LiquidNetworks,
-  LiquidRefundDetails,
   constructClaimTransaction as liquidConstructClaimTransaction,
   constructRefundTransaction as liquidConstructRefundTransaction,
 } from '../../lib/liquid';
@@ -37,8 +36,8 @@ import {
   p2trOutput,
   p2wpkhOutput,
 } from '../../lib/swap/Scripts';
-import swapScript from '../../lib/swap/SwapScript';
-import swapTree from '../../lib/swap/SwapTree';
+import type swapScript from '../../lib/swap/SwapScript';
+import type swapTree from '../../lib/swap/SwapTree';
 import { tweakMusig } from '../../lib/swap/TaprootUtils';
 import { ECPair, slip77 } from '../unit/Utils';
 import ElementsClient from './liquid/utils/ElementsClient';

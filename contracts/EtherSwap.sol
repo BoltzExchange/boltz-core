@@ -356,13 +356,9 @@ contract EtherSwap {
     /// @param claimAddress Address that that was destined to claim the funds
     /// @param refundAddress Address that locked the Ether in the contract
     /// @param timelock Block height after which the locked Ether can be refunded
-    function refund(
-        bytes32 preimageHash,
-        uint256 amount,
-        address claimAddress,
-        address refundAddress,
-        uint256 timelock
-    ) public {
+    function refund(bytes32 preimageHash, uint256 amount, address claimAddress, address refundAddress, uint256 timelock)
+        public
+    {
         // Make sure the timelock has expired already
         // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
         require(timelock <= block.number, "EtherSwap: swap has not timed out yet");
