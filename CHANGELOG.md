@@ -3,6 +3,52 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [3.1.0](https://github.com/BoltzExchange/boltz-core/compare/v3.0.0..v3.1.0) - 2025-12-09
+
+### Bug Fixes
+
+- version in domain separator - ([bf33636](https://github.com/BoltzExchange/boltz-core/commit/bf336365d3f06ba2c69bd136c55796be419e1f2d))
+
+### Features
+
+- Router contract to claim and execute arbitrary logic - ([edcb276](https://github.com/BoltzExchange/boltz-core/commit/edcb276d261fb3fa739b498bdc293c0cabe27a96))
+- ERC20Swap claim with signature - ([8a281a5](https://github.com/BoltzExchange/boltz-core/commit/8a281a5bf65d5bee170656903cbcbc04345680ae))
+- commitment swaps - ([c2f00d4](https://github.com/BoltzExchange/boltz-core/commit/c2f00d496e642540473359e064e5e1ea7d86f171))
+- ERC20 commitment swaps - ([66c6c4b](https://github.com/BoltzExchange/boltz-core/commit/66c6c4b893a593bb94c3ba82c555603733484669))
+- claimCall in Router - ([b559aa0](https://github.com/BoltzExchange/boltz-core/commit/b559aa02adfc505cee4ea2d7e5ca5e52035d570b))
+- refund address parameter for cooperative refund - ([bc6a07e](https://github.com/BoltzExchange/boltz-core/commit/bc6a07ea645e968c650cdc5d915b8a925fa6e08c))
+
+### Miscellaneous Chores
+
+- bump dependencies - ([a499dc0](https://github.com/BoltzExchange/boltz-core/commit/a499dc03ff475011b64142ac9cbf26b86d556944))
+- bump Bitcoin Core v29.0 - ([f9a2491](https://github.com/BoltzExchange/boltz-core/commit/f9a24918bbf95b94b25594f0674030b056eeb57e))
+- update dependencies - ([7713b5a](https://github.com/BoltzExchange/boltz-core/commit/7713b5afe317de08ea9b71171365fa519267a181))
+- bump CI Node.js to v24 (#136) - ([298a78a](https://github.com/BoltzExchange/boltz-core/commit/298a78a9af78d2b77b89890721dfb40f56d4fe37))
+- bump @openzeppelin/contracts from 5.3.0 to 5.4.0 (#138) - ([541d95d](https://github.com/BoltzExchange/boltz-core/commit/541d95d1c733991eaf1e79685c7c7d9f31bbb6ff))
+- update dependencies - ([04f917f](https://github.com/BoltzExchange/boltz-core/commit/04f917f5281647db3cf4a63f4f939e13c1f3dae9))
+- update dependencies (#140) - ([3baceee](https://github.com/BoltzExchange/boltz-core/commit/3baceee8a512fa8b8a8d14495ff861d71a6ca430))
+- bump cipher-base from 1.0.4 to 1.0.6 (#141) - ([04cfb05](https://github.com/BoltzExchange/boltz-core/commit/04cfb05dcd38350fc838e3a217ec32b8ee75cdaa))
+- bump sha.js from 2.4.11 to 2.4.12 (#142) - ([81af494](https://github.com/BoltzExchange/boltz-core/commit/81af4941f2962e5d84a6f06dc90e2b83796b6e23))
+- deploy Router in script - ([e8cee26](https://github.com/BoltzExchange/boltz-core/commit/e8cee268267497fd556fcaeb8dfa35b1736375b9))
+- bump version to 3.1.0-alpha.0 - ([e3f9d40](https://github.com/BoltzExchange/boltz-core/commit/e3f9d40ed102dc46ff54d0b8fd44813a40b8e837))
+- version getter for backwards compatibility - ([dadc341](https://github.com/BoltzExchange/boltz-core/commit/dadc3412cbb225f1ff634ab16e23898222f9d5ff))
+- bump version to v3.1.0-alpha.1 - ([87c142b](https://github.com/BoltzExchange/boltz-core/commit/87c142b90441114f34ef0bbbe4e5a3fa73cb8ea0))
+- bump dependencies - ([81d01e2](https://github.com/BoltzExchange/boltz-core/commit/81d01e2526985c036535a0352de3cabbff47ef15))
+- export Router ABIs - ([2e8a24e](https://github.com/BoltzExchange/boltz-core/commit/2e8a24e719a71539950fce83e4092fea830e75a3))
+- bump version to v3.1.0-alpha.2 - ([e5e775a](https://github.com/BoltzExchange/boltz-core/commit/e5e775a6ac8165f27c988bb130f56d66f51cda9d))
+- update dependencies - ([bd43a8b](https://github.com/BoltzExchange/boltz-core/commit/bd43a8bc54a41725fd0dedad1f938d2d2c632746))
+- update dependencies (#148) - ([a805e78](https://github.com/BoltzExchange/boltz-core/commit/a805e7882ae1026717065366b01da24af9a7e77c))
+- bump js-yaml from 3.14.1 to 3.14.2 (#147) - ([98af791](https://github.com/BoltzExchange/boltz-core/commit/98af791869ae7753453b3785d7e284ffddaa3828))
+- update dependencies (#149) - ([404f800](https://github.com/BoltzExchange/boltz-core/commit/404f8000513a27a8b1536656dd8546f3d1706b8a))
+- bump version to v3.1.0 - ([5c6c636](https://github.com/BoltzExchange/boltz-core/commit/5c6c6365b03bb62e7b4ca5f23bc23b1b1b34eeec))
+
+### Refactoring
+
+- Router to minAmountOut - ([6371515](https://github.com/BoltzExchange/boltz-core/commit/6371515099ec251848bdaf2291153cbb84162cef))
+- fix forge lint - ([8b7aa0c](https://github.com/BoltzExchange/boltz-core/commit/8b7aa0ce149afb7cfae70ca58447466f8e997bb1))
+- remove refund address from signature (#146) - ([63bffca](https://github.com/BoltzExchange/boltz-core/commit/63bffcad77cc357e69d98fe4de2fe3858755d694))
+
+---
 ## [3.0.0](https://github.com/BoltzExchange/boltz-core/compare/v2.2.2..v3.0.0) - 2025-04-03
 
 ### Miscellaneous Chores
@@ -11,6 +57,7 @@ All notable changes to this project will be documented in this file. See [conven
 - minor dependency bumps - ([b720631](https://github.com/BoltzExchange/boltz-core/commit/b720631bb577fb7928a9de5dd8202e2f1ce21265))
 - bump version to v3.0.0 - ([12d1084](https://github.com/BoltzExchange/boltz-core/commit/12d10846d1ba68f7fcd5f2c0379283420f8513d0))
 - drop support for Node.js v18 - ([3a5ad7c](https://github.com/BoltzExchange/boltz-core/commit/3a5ad7c20d7260018bd6212acd08cddde580fe30))
+- update CHANGELOG.md for v3.0.0 - ([77a11b3](https://github.com/BoltzExchange/boltz-core/commit/77a11b35cb408fa31b060d9d3f74e0bcaf8c9981))
 
 ### Refactoring
 
