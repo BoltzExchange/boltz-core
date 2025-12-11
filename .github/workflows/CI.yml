@@ -41,7 +41,7 @@ jobs:
         run: npm run prettier:check
 
       - name: Forge lint
-        run: forge lint
+        run: forge lint --severity gas --no-cache --deny notes
 
       - name: Forge fmt
         run: forge fmt --check contracts/*.sol contracts/script/ contracts/test/
