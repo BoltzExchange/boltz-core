@@ -199,4 +199,16 @@ contract EtherSwapFuzzTest is Test {
         assertEq(address(swap).balance, 0);
         assertEq(claimAddress.balance - balanceBeforeClaim, totalLockupAmount);
     }
+
+    function testHashValuesMatchesKeccak256(
+        bytes32 preimageHash,
+        uint256 amount,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock
+    ) external view {
+        bytes32 assemblyHash = swap.hashValues(preimageHash, amount, claimAddress, refundAddress, timelock);
+        bytes32 solidityHash = keccak256(abi.encode(preimageHash, amount, claimAddress, refundAddress, timelock));
+        assertEq(assemblyHash, solidityHash);
+    }
 }

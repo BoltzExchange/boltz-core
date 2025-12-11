@@ -180,4 +180,20 @@ contract ERC20SwapFuzzTest is Test {
             swap.swaps(swap.hashValues(preimageHash, amount, address(token), claimAddress, address(this), timelock))
         );
     }
+
+    function testHashValuesMatchesKeccak256(
+        bytes32 preimageHash,
+        uint256 amount,
+        address tokenAddress,
+        address claimAddress,
+        address refundAddress,
+        uint256 timelock
+    ) external view {
+        bytes32 assemblyHash = swap.hashValues(
+            preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock
+        );
+        bytes32 solidityHash =
+            keccak256(abi.encode(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock));
+        assertEq(assemblyHash, solidityHash);
+    }
 }
