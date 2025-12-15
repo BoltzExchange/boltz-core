@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "npm run compile:solidity && npm run compile:typescript",
     "compile:solidity": "forge compile && npm run compile:solidity:ethers",
-    "compile:solidity:ethers": "ts-node typechain.ts",
+    "compile:solidity:ethers": "node typechain.js",
     "compile:typescript": "tsc",
     "compile:typescript:watch": "tsc --watch",
     "lint": "eslint --max-warnings 0 .",
@@ -64,6 +64,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@swc/core": "^1.15.4",
+    "@swc/jest": "^0.2.39",
     "@trivago/prettier-plugin-sort-imports": "^6.0.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/jest": "^30.0.0",
@@ -81,8 +83,6 @@
     "prettier": "^3.7.4",
     "slip77": "^0.2.0",
     "tiny-secp256k1": "^2.2.4",
-    "ts-jest": "^29.4.6",
-    "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.49.0",
