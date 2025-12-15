@@ -9,7 +9,6 @@ import {
   constructRefundTransaction,
   init,
 } from '../../../../lib/liquid';
-import { secp } from '../../../../lib/liquid/init';
 import liquidReverseSwapTree, {
   Feature,
 } from '../../../../lib/liquid/swap/ReverseSwapTree';
@@ -78,16 +77,17 @@ describe.each`
           },
         ],
       );
-      const musig = new Musig(
-        secp,
-        ourKeys,
-        randomBytes(32),
-        [ourKeys.publicKey, theirKeys.publicKey].map(Buffer.from),
+      const tweakedMusig = tweakMusig(
+        new Musig(
+          ourKeys,
+          [ourKeys.publicKey, theirKeys.publicKey].map(Buffer.from),
+          randomBytes(32),
+        ),
+        tree.tree,
       );
-      const tweakedKey = tweakMusig(musig, tree.tree);
 
       let swapAddress = address.fromOutputScript(
-        p2trOutput(tweakedKey),
+        p2trOutput(Buffer.from(tweakedMusig.pubkeyAgg)),
         networks.regtest,
       );
       let blindingPrivateKey: Buffer | undefined = undefined;
@@ -108,11 +108,11 @@ describe.each`
         ),
       );
 
-      const output = detectSwap(tweakedKey, tx)!;
+      const output = detectSwap(Buffer.from(tweakedMusig.pubkeyAgg), tx)!;
 
       return {
         tree,
-        musig,
+        musig: tweakedMusig,
         output,
         ourKeys,
         preimage,
@@ -130,7 +130,7 @@ describe.each`
             swapTree: tree,
             blindingPrivateKey,
             txHash: tx.getHash(),
-            internalKey: musig.getAggregatedPublicKey(),
+            internalKey: Buffer.from(tweakedMusig.internalKey),
           },
         ] as LiquidClaimDetails[],
       };
@@ -149,26 +149,29 @@ describe.each`
         networks.regtest,
       );
 
-      const theirNonce = secp.musig.nonceGen(
-        randomBytes(32),
-        theirKeys.publicKey,
-      );
-      musig.aggregateNonces([[theirKeys.publicKey, theirNonce.pubNonce]]);
-      musig.initializeSession(
-        hashForWitnessV1(networks.regtest, utxos, claimTx, 0),
-      );
-      musig.signPartial();
-      musig.addPartial(
-        Buffer.from(theirKeys.publicKey),
-        secp.musig.partialSign(
-          theirNonce.secNonce,
-          theirKeys.privateKey!,
-          musig['pubkeyAgg'].keyaggCache,
-          musig['session']!,
-        ),
+      const sigHash = hashForWitnessV1(networks.regtest, utxos, claimTx, 0);
+
+      const updatedMusig = Musig.updateMessage(musig, sigHash);
+      const theirMusig = new Musig(
+        theirKeys,
+        [updatedMusig.publicKeys[0], theirKeys.publicKey].map(Buffer.from),
+        sigHash,
+        updatedMusig.tweak,
       );
 
-      claimTx.setWitness(0, [musig.aggregatePartials()]);
+      updatedMusig.aggregateNonces([
+        [theirKeys.publicKey, theirMusig.getPublicNonce()],
+      ]);
+      theirMusig.aggregateNonces([
+        [updatedMusig.publicKeys[0], updatedMusig.getPublicNonce()],
+      ]);
+      updatedMusig.signPartial();
+      updatedMusig.addPartial(
+        Buffer.from(theirKeys.publicKey),
+        theirMusig.signPartial(),
+      );
+
+      claimTx.setWitness(0, [Buffer.from(updatedMusig.aggregatePartials())]);
 
       await elementsClient.sendRawTransaction(claimTx.toHex());
     });
@@ -273,7 +276,7 @@ describe.each`
               swapTree: tree,
               cooperative: false,
               txHash: lockupTx.getHash(),
-              internalKey: musig.getAggregatedPublicKey(),
+              internalKey: Buffer.from(musig.internalKey),
             },
           ],
           expectedOutput,
@@ -312,7 +315,7 @@ describe.each`
               swapTree: tree,
               cooperative: false,
               txHash: lockupTx.getHash(),
-              internalKey: musig.getAggregatedPublicKey(),
+              internalKey: Buffer.from(musig.internalKey),
             },
           ],
           expectedOutput,
@@ -350,7 +353,7 @@ describe.each`
             cooperative: false,
             txHash: lockupTx.getHash(),
             preimage: randomBytes(32),
-            internalKey: musig.getAggregatedPublicKey(),
+            internalKey: Buffer.from(musig.internalKey),
           },
         ],
         expectedOutput,
@@ -387,7 +390,7 @@ describe.each`
             swapTree: tree,
             cooperative: false,
             txHash: lockupTx.getHash(),
-            internalKey: musig.getAggregatedPublicKey(),
+            internalKey: Buffer.from(musig.internalKey),
           },
         ],
         address.toOutputScript(
@@ -436,7 +439,7 @@ describe.each`
               swapTree: tree,
               cooperative: false,
               txHash: lockupTx.getHash(),
-              internalKey: musig.getAggregatedPublicKey(),
+              internalKey: Buffer.from(musig.internalKey),
             },
           ],
           expectedOutput,

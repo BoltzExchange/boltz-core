@@ -1,7 +1,7 @@
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { randomBytes } from 'crypto';
-import { OutputType } from '../../../../lib/Boltz';
+import { Musig, OutputType } from '../../../../lib/Boltz';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import {
   Networks,
@@ -42,7 +42,8 @@ describe.each`
     beforeAll(async () => {
       secp = await zkp();
       init(secp);
-      await Promise.all([utilsInit(), elementsClient.init()]);
+      utilsInit();
+      await elementsClient.init();
     });
 
     afterEach(async () => {
@@ -75,26 +76,30 @@ describe.each`
 
       expect(tx.outs[0].rangeProof!.length !== 0).toEqual(blindOutput);
 
-      const theirNonce = secp.musig.nonceGen(
-        randomBytes(32),
-        refundKeys.publicKey,
-      );
-      musig!.aggregateNonces([[refundKeys.publicKey, theirNonce.pubNonce]]);
-      musig!.initializeSession(
-        hashForWitnessV1(Networks.liquidRegtest, [utxo], tx, 0),
-      );
-      musig!.signPartial();
-      musig!.addPartial(
-        Buffer.from(refundKeys.publicKey),
-        secp.musig.partialSign(
-          theirNonce.secNonce,
-          refundKeys.privateKey!,
-          musig!['pubkeyAgg'].keyaggCache,
-          musig!['session']!,
-        ),
+      const sigHash = hashForWitnessV1(Networks.liquidRegtest, [utxo], tx, 0);
+
+      const updatedMusig = Musig.updateMessage(musig!, sigHash);
+      const theirMusig = new Musig(
+        refundKeys,
+        [updatedMusig!.publicKeys[0], refundKeys.publicKey].map(Buffer.from),
+        sigHash,
+        updatedMusig!.tweak,
       );
 
-      tx.setWitness(0, [musig!.aggregatePartials()]);
+      updatedMusig.aggregateNonces([
+        [refundKeys.publicKey, theirMusig.getPublicNonce()],
+      ]);
+      theirMusig.aggregateNonces([
+        [updatedMusig.publicKeys[0], updatedMusig.getPublicNonce()],
+      ]);
+
+      updatedMusig.signPartial();
+      updatedMusig.addPartial(
+        Buffer.from(refundKeys.publicKey),
+        theirMusig.signPartial(),
+      );
+
+      tx.setWitness(0, [Buffer.from(updatedMusig!.aggregatePartials())]);
 
       await elementsClient.sendRawTransaction(tx.toHex());
       const info = await elementsClient.getRawTransactionVerbose(tx.getId());

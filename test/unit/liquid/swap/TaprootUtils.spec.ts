@@ -67,25 +67,24 @@ describe('TaprootUtils', () => {
   });
 
   test('should tweak Musig', async () => {
-    const secp = await zkp();
     const ourMusigKey = ECPair.makeRandom();
 
     const musig = new Musig(
-      secp,
       ourMusigKey,
+      [
+        Buffer.from(ourMusigKey.publicKey),
+        Buffer.from(ECPair.makeRandom().publicKey),
+        Buffer.from(ECPair.makeRandom().publicKey),
+      ],
       randomBytes(32),
-      [ourMusigKey.publicKey, ECPair.makeRandom().publicKey].map(Buffer.from),
     );
-    const tweakedKey = tweakMusig(musig, taptree);
+    const tweakedMusig = tweakMusig(musig, taptree);
 
-    expect(tweakedKey).toEqual(
+    expect(Buffer.from(tweakedMusig.pubkeyAgg)).toEqual(
       Buffer.from(
         secp.ecc.xOnlyPointAddTweak(
-          toXOnly(musig.getAggregatedPublicKey()),
-          tapTweakHash(
-            musig.getAggregatedPublicKey(),
-            toHashTree(taptree).hash,
-          ),
+          toXOnly(Buffer.from(musig.pubkeyAgg)),
+          tapTweakHash(Buffer.from(musig.pubkeyAgg), toHashTree(taptree).hash),
         )!.xOnlyPubkey,
       ),
     );

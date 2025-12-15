@@ -8,10 +8,9 @@ import {
   toHashTree,
   tweakKey,
 } from 'bitcoinjs-lib/src/payments/bip341';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import type { Taptree } from 'bitcoinjs-lib/src/types';
 import type { RefundDetails, ScriptElement, Tapleaf } from '../consts/Types';
-import type Musig from '../musig/Musig';
+import Musig from '../musig/Musig';
 import { toPushdataScript } from './SwapUtils';
 
 export const leafVersionLiquid = 196;
@@ -62,9 +61,7 @@ export const hashForWitnessV1 = (
   );
 };
 
-export const tweakMusig = (musig: Musig, tree: Taptree): Buffer =>
-  toXOnly(
-    musig.tweakKey(
-      tapTweakHash(musig.getAggregatedPublicKey(), toHashTree(tree).hash),
-    ),
-  );
+export const tweakMusig = (musig: Musig, tree: Taptree): Musig => {
+  const tweak = toHashTree(tree).hash;
+  return Musig.tweak(musig, tapTweakHash(Buffer.from(musig.pubkeyAgg), tweak));
+};

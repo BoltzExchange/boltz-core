@@ -1,19 +1,14 @@
-import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import zkp from '@vulpemventures/secp256k1-zkp';
+import { nonceGen } from '@scure/btc-signer/musig2.js';
+import zkpInit from '@vulpemventures/secp256k1-zkp';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { randomBytes } from 'crypto';
+import * as ecc from 'tiny-secp256k1';
 import Musig from '../../../lib/musig/Musig';
 import { ECPair } from '../Utils';
 
 describe('Musig', () => {
-  let secp: Secp256k1ZKP;
-
-  beforeAll(async () => {
-    secp = await zkp();
-  });
-
   test('should init', () => {
-    const sessionId = randomBytes(32);
+    const msg = randomBytes(32);
     const ourKey = ECPair.makeRandom();
     const otherKeys = [
       ECPair.makeRandom().publicKey,
@@ -21,21 +16,18 @@ describe('Musig', () => {
     ].map(Buffer.from);
 
     const publicKeys = [Buffer.from(ourKey.publicKey), ...otherKeys];
-    const musig = new Musig(secp, ourKey, sessionId, publicKeys);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
     expect(musig['myIndex']).toEqual(0);
     expect(
-      new Musig(secp, ourKey, sessionId, [
-        ...otherKeys,
-        Buffer.from(ourKey.publicKey),
-      ])['myIndex'],
+      new Musig(ourKey, [...otherKeys, Buffer.from(ourKey.publicKey)], msg)[
+        'myIndex'
+      ],
     ).toEqual(2);
-    expect(musig['pubkeyAgg']).toEqual(
-      secp.musig.pubkeyAgg([ourKey.publicKey, ...otherKeys]),
-    );
-    expect(musig['nonce']).toEqual(
-      secp.musig.nonceGen(sessionId, ourKey.publicKey),
-    );
+    expect(musig.pubkeyAgg).toBeDefined();
+    expect(musig['nonce']).toBeDefined();
+    expect(musig['nonce'].public).toBeDefined();
+    expect(musig['nonce'].secret).toBeDefined();
     expect(musig['partialSignatures']).toHaveLength(3);
     expect(musig['partialSignatures']).toEqual([null, null, null]);
   });
@@ -44,89 +36,217 @@ describe('Musig', () => {
     expect(
       () =>
         new Musig(
-          secp,
           ECPair.makeRandom(),
-          randomBytes(32),
           [ECPair.makeRandom().publicKey, ECPair.makeRandom().publicKey].map(
             Buffer.from,
           ),
+          randomBytes(32),
         ),
     ).toThrow('our key is not publicKeys');
+  });
+
+  test('should not init when key has no private key', () => {
+    const publicOnlyKey = ECPair.fromPublicKey(
+      Buffer.from(ECPair.makeRandom().publicKey),
+    );
+    const otherKey = ECPair.makeRandom();
+
+    expect(
+      () =>
+        new Musig(
+          publicOnlyKey,
+          [
+            Buffer.from(publicOnlyKey.publicKey),
+            Buffer.from(otherKey.publicKey),
+          ],
+          randomBytes(32),
+        ),
+    ).toThrow('key has no private key');
   });
 
   test('should not init when less than 2 keys are provided', () => {
     const ourKey = ECPair.makeRandom();
 
-    expect(() => new Musig(secp, ourKey, randomBytes(32), [])).toThrow(
+    expect(() => new Musig(ourKey, [], randomBytes(32))).toThrow(
       'need at least 2 keys to aggregate',
     );
     expect(
-      () =>
-        new Musig(secp, ourKey, randomBytes(32), [
-          Buffer.from(ourKey.publicKey),
-        ]),
+      () => new Musig(ourKey, [Buffer.from(ourKey.publicKey)], randomBytes(32)),
     ).toThrow('need at least 2 keys to aggregate');
   });
 
   test('should get number of participants', () => {
     const ourKey = ECPair.makeRandom();
     expect(
-      new Musig(secp, ourKey, randomBytes(32), [
-        Buffer.from(ourKey.publicKey),
-        Buffer.from(ECPair.makeRandom().publicKey),
-        Buffer.from(ECPair.makeRandom().publicKey),
-        Buffer.from(ECPair.makeRandom().publicKey),
-      ]).numParticipants(),
+      new Musig(
+        ourKey,
+        [
+          Buffer.from(ourKey.publicKey),
+          Buffer.from(ECPair.makeRandom().publicKey),
+          Buffer.from(ECPair.makeRandom().publicKey),
+          Buffer.from(ECPair.makeRandom().publicKey),
+        ],
+        randomBytes(32),
+      ).numParticipants(),
     ).toEqual(4);
   });
 
   test('should tweak', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(secp, ourKey, randomBytes(32), [
+    const publicKeys = [
       Buffer.from(ourKey.publicKey),
       Buffer.from(ECPair.makeRandom().publicKey),
       Buffer.from(ECPair.makeRandom().publicKey),
-    ]);
+    ];
+    const msg = randomBytes(32);
+
+    const musigNoTweak = new Musig(ourKey, publicKeys, msg);
+    const tweak = randomBytes(32);
+    const musigWithTweak = new Musig(ourKey, publicKeys, msg, tweak);
+
+    // Verify that tweaked pubkey is different from untweaked
+    expect(Buffer.from(musigWithTweak.pubkeyAgg)).not.toEqual(
+      Buffer.from(musigNoTweak.pubkeyAgg),
+    );
+
+    // Verify that tweaking produces the expected result
+    const expectedTweaked = ecc.xOnlyPointAddTweak(
+      toXOnly(Buffer.from(musigNoTweak.pubkeyAgg)),
+      tweak,
+    );
+    expect(expectedTweaked).not.toBeNull();
+    expect(Buffer.from(musigWithTweak.pubkeyAgg)).toEqual(
+      Buffer.from(expectedTweaked!.xOnlyPubkey),
+    );
+  });
+
+  test('should tweak using static method', () => {
+    const ourKey = ECPair.makeRandom();
+    const publicKeys = [
+      Buffer.from(ourKey.publicKey),
+      Buffer.from(ECPair.makeRandom().publicKey),
+      Buffer.from(ECPair.makeRandom().publicKey),
+    ];
+    const msg = randomBytes(32);
+
+    const musigNoTweak = new Musig(ourKey, publicKeys, msg);
+    const tweak = randomBytes(32);
+    const musigWithTweak = Musig.tweak(musigNoTweak, tweak);
+
+    expect(Buffer.from(musigWithTweak.pubkeyAgg)).not.toEqual(
+      Buffer.from(musigNoTweak.pubkeyAgg),
+    );
+
+    const expectedTweaked = ecc.xOnlyPointAddTweak(
+      toXOnly(Buffer.from(musigNoTweak.pubkeyAgg)),
+      tweak,
+    );
+    expect(expectedTweaked).not.toBeNull();
+    expect(Buffer.from(musigWithTweak.pubkeyAgg)).toEqual(
+      Buffer.from(expectedTweaked!.xOnlyPubkey),
+    );
+
+    expect(musigNoTweak['tweak']).toBeUndefined();
+    expect(musigWithTweak['tweak']).toEqual(tweak);
+  });
+
+  test('should update message using static method', () => {
+    const ourKey = ECPair.makeRandom();
+    const publicKeys = [
+      Buffer.from(ourKey.publicKey),
+      Buffer.from(ECPair.makeRandom().publicKey),
+      Buffer.from(ECPair.makeRandom().publicKey),
+    ];
+    const msg1 = randomBytes(32);
+    const msg2 = randomBytes(32);
+    const tweak = randomBytes(32);
+
+    const musigOriginal = new Musig(ourKey, publicKeys, msg1, tweak);
+    const musigUpdated = Musig.updateMessage(musigOriginal, msg2);
+
+    expect(Buffer.from(musigUpdated.pubkeyAgg)).toEqual(
+      Buffer.from(musigOriginal.pubkeyAgg),
+    );
+    expect(Buffer.from(musigUpdated.getPublicNonce())).not.toEqual(
+      Buffer.from(musigOriginal.getPublicNonce()),
+    );
+    expect(musigUpdated['tweak']).toEqual(tweak);
+    expect(musigUpdated['publicKeys']).toEqual(musigOriginal['publicKeys']);
+    expect(musigUpdated['partialSignatures']).toEqual([null, null, null]);
+  });
+
+  test('should aggregate keys matching secp zkp library', async () => {
+    const zkpSecp = await zkpInit();
+
+    const publicKeys = [
+      Buffer.from(ECPair.makeRandom().publicKey),
+      Buffer.from(ECPair.makeRandom().publicKey),
+      Buffer.from(ECPair.makeRandom().publicKey),
+    ];
+
+    const aggregated = Musig.aggregateKeys(publicKeys);
+    const zkpAggregated = zkpSecp.musig.pubkeyAgg(publicKeys);
+
+    expect(Buffer.from(aggregated)).toEqual(
+      Buffer.from(zkpAggregated.aggPubkey),
+    );
 
     const tweak = randomBytes(32);
-    const tweakedKey = musig.tweakKey(tweak);
+    const aggregatedWithTweak = Musig.aggregateKeys(publicKeys, tweak);
+    const zkpAggregatedWithTweak = zkpSecp.musig.pubkeyXonlyTweakAdd(
+      zkpAggregated.keyaggCache,
+      tweak,
+      true,
+    );
 
-    expect(toXOnly(tweakedKey)).toEqual(
-      Buffer.from(
-        secp.ecc.xOnlyPointAddTweak(
-          toXOnly(musig.getAggregatedPublicKey()),
-          tweak,
-        )!.xOnlyPubkey,
-      ),
+    expect(Buffer.from(aggregatedWithTweak)).toEqual(
+      toXOnly(Buffer.from(zkpAggregatedWithTweak.pubkey)),
     );
   });
 
   test('should aggregate ordered nonces', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(secp, ourKey, randomBytes(32), [
+    const otherKeys = [ECPair.makeRandom(), ECPair.makeRandom()];
+    const publicKeys = [
       Buffer.from(ourKey.publicKey),
-      Buffer.from(ECPair.makeRandom().publicKey),
-      Buffer.from(ECPair.makeRandom().publicKey),
-    ]);
+      Buffer.from(otherKeys[0].publicKey),
+      Buffer.from(otherKeys[1].publicKey),
+    ];
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
     const nonces = [
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
+      nonceGen(
+        otherKeys[0].publicKey,
+        otherKeys[0].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
+      nonceGen(
+        otherKeys[1].publicKey,
+        otherKeys[1].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
     ];
     musig.aggregateNoncesOrdered(nonces);
 
     expect(musig['pubNonces']).toEqual(nonces);
-    expect(musig['nonceAgg']).toEqual(secp.musig.nonceAgg(nonces));
+    expect(musig['session']).toBeDefined();
   });
 
   test('should not aggregate ordered nonces when length mismatches', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(secp, ourKey, randomBytes(32), [
-      Buffer.from(ourKey.publicKey),
-      Buffer.from(ECPair.makeRandom().publicKey),
-      Buffer.from(ECPair.makeRandom().publicKey),
-    ]);
+    const musig = new Musig(
+      ourKey,
+      [
+        Buffer.from(ourKey.publicKey),
+        Buffer.from(ECPair.makeRandom().publicKey),
+        Buffer.from(ECPair.makeRandom().publicKey),
+      ],
+      randomBytes(32),
+    );
 
     expect(() => musig.aggregateNoncesOrdered([])).toThrow(
       'number of nonces != number of public keys',
@@ -146,40 +266,74 @@ describe('Musig', () => {
 
   test('should not aggregate ordered nonces when our nonce is at wrong index', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(secp, ourKey, randomBytes(32), [
+    const otherKeys = [ECPair.makeRandom(), ECPair.makeRandom()];
+    const publicKeys = [
       Buffer.from(ourKey.publicKey),
-      Buffer.from(ECPair.makeRandom().publicKey),
-      Buffer.from(ECPair.makeRandom().publicKey),
-    ]);
+      Buffer.from(otherKeys[0].publicKey),
+      Buffer.from(otherKeys[1].publicKey),
+    ];
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
+
+    const nonce1 = nonceGen(
+      otherKeys[0].publicKey,
+      otherKeys[0].privateKey,
+      musig.pubkeyAgg,
+      msg,
+    );
+    const nonce2 = nonceGen(
+      otherKeys[1].publicKey,
+      otherKeys[1].privateKey,
+      musig.pubkeyAgg,
+      msg,
+    );
 
     expect(() =>
       musig.aggregateNoncesOrdered([
-        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+        nonce1.public,
         musig.getPublicNonce(),
-        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
+        nonce2.public,
       ]),
     ).toThrow('our nonce is at incorrect index');
     expect(() =>
       musig.aggregateNoncesOrdered([
-        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-        secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
+        nonce1.public,
+        nonce1.public,
+        nonce2.public,
       ]),
     ).toThrow('our nonce is at incorrect index');
   });
 
   test('should aggregate nonces', () => {
     const ourKey = ECPair.makeRandom();
+    const otherKeys = [ECPair.makeRandom(), ECPair.makeRandom()];
     const pubKeys = [
       ourKey.publicKey,
-      ECPair.makeRandom().publicKey,
-      ECPair.makeRandom().publicKey,
+      otherKeys[0].publicKey,
+      otherKeys[1].publicKey,
     ].map(Buffer.from);
-    const musig = new Musig(secp, ourKey, randomBytes(32), pubKeys);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, pubKeys, msg);
 
     const nonces = new Map([
-      [pubKeys[1], secp.musig.nonceGen(randomBytes(32), pubKeys[1]).pubNonce],
-      [pubKeys[2], secp.musig.nonceGen(randomBytes(32), pubKeys[2]).pubNonce],
+      [
+        pubKeys[1],
+        nonceGen(
+          otherKeys[0].publicKey,
+          otherKeys[0].privateKey,
+          musig.pubkeyAgg,
+          msg,
+        ).public,
+      ],
+      [
+        pubKeys[2],
+        nonceGen(
+          otherKeys[1].publicKey,
+          otherKeys[1].privateKey,
+          musig.pubkeyAgg,
+          msg,
+        ).public,
+      ],
     ]);
     musig.aggregateNonces(Array.from(nonces.entries()));
 
@@ -188,22 +342,15 @@ describe('Musig', () => {
       nonces.get(pubKeys[1])!,
       nonces.get(pubKeys[2])!,
     ]);
-    expect(musig['nonceAgg']).toEqual(
-      secp.musig.nonceAgg([
-        musig.getPublicNonce(),
-        nonces.get(pubKeys[1])!,
-        nonces.get(pubKeys[2])!,
-      ]),
-    );
+    expect(musig['session']).toBeDefined();
   });
 
   test('should not aggregate nonces when size mismatches', () => {
     const ourKey = ECPair.makeRandom();
     const musig = new Musig(
-      secp,
       ourKey,
-      randomBytes(32),
       [ourKey.publicKey, ECPair.makeRandom().publicKey].map(Buffer.from),
+      randomBytes(32),
     );
     expect(() => musig.aggregateNonces([])).toThrow(
       'number of nonces != number of public keys',
@@ -212,19 +359,23 @@ describe('Musig', () => {
 
   test('should not aggregate nonces when nonce for public key is missing', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [ourKey.publicKey, ECPair.makeRandom().publicKey].map(Buffer.from),
-    );
+    const otherKey = ECPair.makeRandom();
+    const publicKeys = [ourKey.publicKey, otherKey.publicKey].map(Buffer.from);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
+    const wrongKey = ECPair.makeRandom();
     expect(() =>
       musig.aggregateNonces([
         [ourKey.publicKey, musig.getPublicNonce()],
         [
-          ECPair.makeRandom().publicKey,
-          secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+          wrongKey.publicKey,
+          nonceGen(
+            wrongKey.publicKey,
+            wrongKey.privateKey,
+            musig.pubkeyAgg,
+            msg,
+          ).public,
         ],
       ]),
     ).toThrow(
@@ -234,92 +385,95 @@ describe('Musig', () => {
     );
   });
 
-  test('should initialize a session', () => {
+  test('should initialize a session when aggregating nonces', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [
-        ourKey.publicKey,
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
-      ].map(Buffer.from),
-    );
+    const otherKeys = [ECPair.makeRandom(), ECPair.makeRandom()];
+    const publicKeys = [
+      ourKey.publicKey,
+      otherKeys[0].publicKey,
+      otherKeys[1].publicKey,
+    ].map(Buffer.from);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
+      nonceGen(
+        otherKeys[0].publicKey,
+        otherKeys[0].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
+      nonceGen(
+        otherKeys[1].publicKey,
+        otherKeys[1].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
     ]);
-    musig.initializeSession(randomBytes(32));
 
     expect(musig['session']).not.toBeUndefined();
   });
 
-  test('should not initialize session when nonce aggregate is missing', () => {
+  test('should not aggregate nonces twice', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [
-        ourKey.publicKey,
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
-      ].map(Buffer.from),
-    );
+    const otherKeys = [ECPair.makeRandom(), ECPair.makeRandom()];
+    const publicKeys = [
+      ourKey.publicKey,
+      otherKeys[0].publicKey,
+      otherKeys[1].publicKey,
+    ].map(Buffer.from);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
-    expect(() => musig.initializeSession(randomBytes(32))).toThrow(
-      'nonces not aggregated',
-    );
-  });
-
-  test('should not initialize a session twice', () => {
-    const ourKey = ECPair.makeRandom();
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [
-        ourKey.publicKey,
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
-      ].map(Buffer.from),
-    );
-
-    musig.aggregateNoncesOrdered([
+    const nonces = [
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
-    ]);
+      nonceGen(
+        otherKeys[0].publicKey,
+        otherKeys[0].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
+      nonceGen(
+        otherKeys[1].publicKey,
+        otherKeys[1].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
+    ];
 
-    musig.initializeSession(randomBytes(32));
-    expect(() => musig.initializeSession(randomBytes(32))).toThrow(
-      'session already initialized',
+    musig.aggregateNoncesOrdered(nonces);
+    expect(() => musig.aggregateNoncesOrdered(nonces)).toThrow(
+      'nonces already aggregated',
     );
   });
 
   test('should create partial signatures', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [
-        ourKey.publicKey,
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
-      ].map(Buffer.from),
-    );
+    const otherKeys = [ECPair.makeRandom(), ECPair.makeRandom()];
+    const publicKeys = [
+      ourKey.publicKey,
+      otherKeys[0].publicKey,
+      otherKeys[1].publicKey,
+    ].map(Buffer.from);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
+      nonceGen(
+        otherKeys[0].publicKey,
+        otherKeys[0].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
+      nonceGen(
+        otherKeys[1].publicKey,
+        otherKeys[1].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
     ]);
-
-    musig.initializeSession(randomBytes(32));
 
     const sig = musig.signPartial();
     expect(musig['partialSignatures'][0]).toEqual(sig);
@@ -328,14 +482,13 @@ describe('Musig', () => {
   test('should not create partial signatures when session is not initialized', () => {
     const ourKey = ECPair.makeRandom();
     const musig = new Musig(
-      secp,
       ourKey,
-      randomBytes(32),
       [
         ourKey.publicKey,
         ECPair.makeRandom().publicKey,
         ECPair.makeRandom().publicKey,
       ].map(Buffer.from),
+      randomBytes(32),
     );
 
     expect(() => musig.signPartial()).toThrow('session not initialized');
@@ -343,45 +496,52 @@ describe('Musig', () => {
 
   test('should verify partial signatures', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [
-        ourKey.publicKey,
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
-      ].map(Buffer.from),
-    );
+    const otherKeys = [ECPair.makeRandom(), ECPair.makeRandom()];
+    const publicKeys = [
+      ourKey.publicKey,
+      otherKeys[0].publicKey,
+      otherKeys[1].publicKey,
+    ].map(Buffer.from);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
+      nonceGen(
+        otherKeys[0].publicKey,
+        otherKeys[0].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
+      nonceGen(
+        otherKeys[1].publicKey,
+        otherKeys[1].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
     ]);
 
-    musig.initializeSession(randomBytes(32));
+    const sig = musig.signPartial();
 
     // By key
-    expect(
-      musig.verifyPartial(Buffer.from(ourKey.publicKey), musig.signPartial()),
-    ).toEqual(true);
+    expect(musig.verifyPartial(Buffer.from(ourKey.publicKey), sig)).toEqual(
+      true,
+    );
 
     // By index
-    expect(musig.verifyPartial(0, musig.signPartial())).toEqual(true);
+    expect(musig.verifyPartial(0, sig)).toEqual(true);
   });
 
   test('should not verify signatures when public nonces are missing', () => {
     const ourKey = ECPair.makeRandom();
     const musig = new Musig(
-      secp,
       ourKey,
-      randomBytes(32),
       [
         ourKey.publicKey,
         ECPair.makeRandom().publicKey,
         ECPair.makeRandom().publicKey,
       ].map(Buffer.from),
+      randomBytes(32),
     );
 
     expect(() =>
@@ -389,57 +549,39 @@ describe('Musig', () => {
     ).toThrow('public nonces missing');
   });
 
-  test('should not verify signatures session is missing', () => {
-    const ourKey = ECPair.makeRandom();
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [
-        ourKey.publicKey,
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
-      ].map(Buffer.from),
-    );
-    musig.aggregateNoncesOrdered([
-      musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
-    ]);
-
-    expect(() =>
-      musig.verifyPartial(Buffer.from(ourKey.publicKey), new Uint8Array()),
-    ).toThrow('session not initialized');
-  });
-
   test('should add partial signatures', () => {
     const ourKey = ECPair.makeRandom();
     const otherKey = ECPair.makeRandom();
+    const thirdKey = ECPair.makeRandom();
 
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [ourKey.publicKey, otherKey.publicKey, ECPair.makeRandom().publicKey].map(
-        Buffer.from,
-      ),
+    const publicKeys = [
+      ourKey.publicKey,
+      otherKey.publicKey,
+      thirdKey.publicKey,
+    ].map(Buffer.from);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
+
+    const otherNonce = nonceGen(
+      otherKey.publicKey,
+      otherKey.privateKey,
+      musig.pubkeyAgg,
+      msg,
+    );
+    const thirdNonce = nonceGen(
+      thirdKey.publicKey,
+      thirdKey.privateKey,
+      musig.pubkeyAgg,
+      msg,
     );
 
-    const otherNonce = secp.musig.nonceGen(randomBytes(32), otherKey.publicKey);
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      otherNonce.pubNonce,
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
+      otherNonce.public,
+      thirdNonce.public,
     ]);
 
-    musig.initializeSession(randomBytes(32));
-
-    const sig = secp.musig.partialSign(
-      otherNonce.secNonce,
-      otherKey.privateKey!,
-      musig['pubkeyAgg'].keyaggCache,
-      musig['session']!,
-    );
+    const sig = musig['session']!.sign(otherNonce.secret, otherKey.privateKey!);
 
     // By key
     musig.addPartial(Buffer.from(otherKey.publicKey), sig);
@@ -454,26 +596,33 @@ describe('Musig', () => {
 
   test('should not add invalid partial signatures', () => {
     const ourKey = ECPair.makeRandom();
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [
-        ourKey.publicKey,
-        ECPair.makeRandom().publicKey,
-        ECPair.makeRandom().publicKey,
-      ].map(Buffer.from),
-    );
+    const otherKeys = [ECPair.makeRandom(), ECPair.makeRandom()];
+    const publicKeys = [
+      ourKey.publicKey,
+      otherKeys[0].publicKey,
+      otherKeys[1].publicKey,
+    ].map(Buffer.from);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[2]).pubNonce,
+      nonceGen(
+        otherKeys[0].publicKey,
+        otherKeys[0].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
+      nonceGen(
+        otherKeys[1].publicKey,
+        otherKeys[1].privateKey,
+        musig.pubkeyAgg,
+        msg,
+      ).public,
     ]);
 
-    musig.initializeSession(randomBytes(32));
     expect(() =>
-      musig.addPartial(Buffer.from(ourKey.publicKey), new Uint8Array()),
+      musig.addPartial(Buffer.from(ourKey.publicKey), randomBytes(32)),
     ).toThrow('invalid partial signature');
   });
 
@@ -481,49 +630,42 @@ describe('Musig', () => {
     const ourKey = ECPair.makeRandom();
     const otherKey = ECPair.makeRandom();
 
+    const msg = randomBytes(32);
     const musig = new Musig(
-      secp,
       ourKey,
-      randomBytes(32),
       [ourKey.publicKey, otherKey.publicKey].map(Buffer.from),
+      msg,
     );
 
-    const otherNonce = secp.musig.nonceGen(randomBytes(32), otherKey.publicKey);
-    musig.aggregateNoncesOrdered([musig.getPublicNonce(), otherNonce.pubNonce]);
+    const otherNonce = nonceGen(
+      otherKey.publicKey,
+      otherKey.privateKey,
+      musig.pubkeyAgg,
+      msg,
+    );
+    musig.aggregateNoncesOrdered([musig.getPublicNonce(), otherNonce.public]);
 
-    const msg = randomBytes(32);
-    musig.initializeSession(msg);
     musig.signPartial();
 
-    const sig = secp.musig.partialSign(
-      otherNonce.secNonce,
-      otherKey.privateKey!,
-      musig['pubkeyAgg'].keyaggCache,
-      musig['session']!,
-    );
+    const sig = musig['session']!.sign(otherNonce.secret, otherKey.privateKey!);
 
     musig.addPartial(Buffer.from(otherKey.publicKey), sig);
 
     expect(
-      secp.ecc.verifySchnorr(
-        msg,
-        musig.getAggregatedPublicKey(),
-        musig.aggregatePartials(),
-      ),
+      ecc.verifySchnorr(msg, musig.pubkeyAgg, musig.aggregatePartials()),
     ).toEqual(true);
   });
 
   test('should not aggregate partial signatures when session is missing', () => {
     const ourKey = ECPair.makeRandom();
     const musig = new Musig(
-      secp,
       ourKey,
-      randomBytes(32),
       [
         ourKey.publicKey,
         ECPair.makeRandom().publicKey,
         ECPair.makeRandom().publicKey,
       ].map(Buffer.from),
+      randomBytes(32),
     );
 
     expect(() => musig.aggregatePartials()).toThrow('session not initialized');
@@ -531,19 +673,17 @@ describe('Musig', () => {
 
   test('should not aggregate partial signatures when not all are set', () => {
     const ourKey = ECPair.makeRandom();
+    const otherKey = ECPair.makeRandom();
 
-    const musig = new Musig(
-      secp,
-      ourKey,
-      randomBytes(32),
-      [ourKey.publicKey, ECPair.makeRandom().publicKey].map(Buffer.from),
-    );
+    const publicKeys = [ourKey.publicKey, otherKey.publicKey].map(Buffer.from);
+    const msg = randomBytes(32);
+    const musig = new Musig(ourKey, publicKeys, msg);
 
     musig.aggregateNoncesOrdered([
       musig.getPublicNonce(),
-      secp.musig.nonceGen(randomBytes(32), musig.publicKeys[1]).pubNonce,
+      nonceGen(otherKey.publicKey, otherKey.privateKey, musig.pubkeyAgg, msg)
+        .public,
     ]);
-    musig.initializeSession(randomBytes(32));
     musig.signPartial();
 
     expect(() => musig.aggregatePartials()).toThrow(
@@ -555,10 +695,9 @@ describe('Musig', () => {
     const ourKey = ECPair.makeRandom();
     const otherKey = ECPair.makeRandom();
     const musig = new Musig(
-      secp,
       ourKey,
-      randomBytes(32),
       [ourKey.publicKey, otherKey.publicKey].map(Buffer.from),
+      randomBytes(32),
     );
 
     expect(
@@ -587,65 +726,36 @@ describe('Musig', () => {
 
     const counterparties = Array(count)
       .fill(null)
-      .map(() => {
-        const key = ECPair.makeRandom();
-        return {
-          key,
-          nonce: secp.musig.nonceGen(randomBytes(32), key.publicKey),
-        };
-      });
+      .map(() => ECPair.makeRandom());
 
-    const publicKeys = [ourKey, ...counterparties.map((party) => party.key)]
+    const publicKeys = [ourKey, ...counterparties]
       .map((key) => key.publicKey)
       .map(Buffer.from);
-    const musig = new Musig(secp, ourKey, randomBytes(32), publicKeys);
+    const musig = new Musig(ourKey, publicKeys, toSign, tweak);
 
-    if (tweak) {
-      musig.tweakKey(tweak);
-    }
+    const counterpartyNonces = counterparties.map((party) =>
+      nonceGen(party.publicKey, party.privateKey, musig.pubkeyAgg, toSign),
+    );
 
     musig.aggregateNonces(
-      counterparties.map((party) => [
-        party.key.publicKey,
-        party.nonce.pubNonce,
+      counterparties.map((party, i) => [
+        party.publicKey,
+        counterpartyNonces[i].public,
       ]),
     );
 
-    musig.initializeSession(toSign);
     musig.signPartial();
 
-    counterparties.forEach((party) => {
-      const pubkeyAgg = secp.musig.pubkeyAgg(publicKeys);
-
-      if (tweak) {
-        pubkeyAgg.keyaggCache = secp.musig.pubkeyXonlyTweakAdd(
-          pubkeyAgg.keyaggCache,
-          tweak,
-          true,
-        ).keyaggCache;
-      }
-
-      const session = secp.musig.nonceProcess(
-        secp.musig.nonceAgg([
-          musig.getPublicNonce(),
-          ...counterparties.map((party) => party.nonce.pubNonce),
-        ]),
-        toSign,
-        pubkeyAgg.keyaggCache,
+    counterparties.forEach((party, i) => {
+      const sig = musig['session']!.sign(
+        counterpartyNonces[i].secret,
+        party.privateKey!,
       );
 
-      musig.addPartial(
-        Buffer.from(party.key.publicKey),
-        secp.musig.partialSign(
-          party.nonce.secNonce,
-          party.key.privateKey!,
-          pubkeyAgg.keyaggCache,
-          session,
-        ),
-      );
+      musig.addPartial(Buffer.from(party.publicKey), sig);
     });
 
-    return musig;
+    return { musig, untweakedMusig: new Musig(ourKey, publicKeys, toSign) };
   };
 
   test.each`
@@ -656,16 +766,14 @@ describe('Musig', () => {
     ${4}
     ${5}
     ${6}
+    ${10}
+    ${20}
   `('full example with $count counterparties', ({ count }) => {
     const toSign = randomBytes(32);
-    const musig = fullExample(count, toSign);
+    const { musig } = fullExample(count, toSign);
 
     expect(
-      secp.ecc.verifySchnorr(
-        toSign,
-        musig.getAggregatedPublicKey(),
-        musig.aggregatePartials(),
-      ),
+      ecc.verifySchnorr(toSign, musig.pubkeyAgg, musig.aggregatePartials()),
     ).toEqual(true);
   });
 
@@ -677,19 +785,18 @@ describe('Musig', () => {
     ${4}
     ${5}
     ${6}
+    ${10}
+    ${20}
   `('full tweaked example with $count counterparties', ({ count }) => {
     const toSign = randomBytes(32);
     const tweak = randomBytes(32);
 
-    const musig = fullExample(count, toSign, tweak);
+    const { musig, untweakedMusig } = fullExample(count, toSign, tweak);
 
     expect(
-      secp.ecc.verifySchnorr(
+      ecc.verifySchnorr(
         toSign,
-        secp.ecc.xOnlyPointAddTweak(
-          toXOnly(musig.getAggregatedPublicKey()),
-          tweak,
-        )!.xOnlyPubkey,
+        ecc.xOnlyPointAddTweak(untweakedMusig.pubkeyAgg, tweak)!.xOnlyPubkey,
         musig.aggregatePartials(),
       ),
     ).toEqual(true);

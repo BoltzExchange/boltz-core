@@ -1,7 +1,9 @@
-import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { randomBytes } from 'crypto';
-import { OutputType, constructClaimTransaction } from '../../../lib/Boltz';
+import {
+  Musig,
+  OutputType,
+  constructClaimTransaction,
+} from '../../../lib/Boltz';
 import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../lib/swap/SwapTree';
 import { hashForWitnessV1 } from '../../../lib/swap/TaprootUtils';
@@ -19,10 +21,7 @@ describe.each`
   ${'SwapTree'}        | ${swapTree}
   ${'ReverseSwapTree'} | ${reverseSwapTree}
 `('$name claim', ({ treeFunc }) => {
-  let secp: Secp256k1ZKP;
-
   beforeAll(async () => {
-    secp = await zkp();
     await Promise.all([init(), bitcoinClient.init()]);
   });
 
@@ -44,24 +43,30 @@ describe.each`
     expect(tx.ins[0].witness).toHaveLength(1);
     expect(tx.ins[0].witness[0].equals(Buffer.alloc(64))).toEqual(true);
 
-    const theirNonce = secp.musig.nonceGen(
-      randomBytes(32),
-      refundKeys.publicKey,
-    );
-    musig!.aggregateNonces([[refundKeys.publicKey, theirNonce.pubNonce]]);
-    musig!.initializeSession(hashForWitnessV1([utxo], tx, 0));
-    musig!.signPartial();
-    musig!.addPartial(
-      Buffer.from(refundKeys.publicKey),
-      secp.musig.partialSign(
-        theirNonce.secNonce,
-        refundKeys.privateKey!,
-        musig!['pubkeyAgg'].keyaggCache,
-        musig!['session']!,
-      ),
+    const sigHash = hashForWitnessV1([utxo], tx, 0);
+
+    const updatedMusig = Musig.updateMessage(musig!, sigHash);
+    const theirMusig = new Musig(
+      refundKeys,
+      [updatedMusig!.publicKeys[0], refundKeys.publicKey].map(Buffer.from),
+      sigHash,
+      updatedMusig.tweak,
     );
 
-    tx.setWitness(0, [musig!.aggregatePartials()]);
+    updatedMusig.aggregateNonces([
+      [refundKeys.publicKey, theirMusig.getPublicNonce()],
+    ]);
+    theirMusig.aggregateNonces([
+      [updatedMusig!.publicKeys[0], updatedMusig.getPublicNonce()],
+    ]);
+
+    updatedMusig.signPartial();
+    updatedMusig.addPartial(
+      Buffer.from(refundKeys.publicKey),
+      theirMusig.signPartial(),
+    );
+
+    tx.setWitness(0, [Buffer.from(updatedMusig.aggregatePartials())]);
 
     await bitcoinClient.sendRawTransaction(tx.toHex());
   });

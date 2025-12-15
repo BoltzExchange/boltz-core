@@ -12,7 +12,7 @@ import { taggedHash } from 'liquidjs-lib/src/crypto';
 import type { Network } from 'liquidjs-lib/src/networks';
 import { getHexString } from '../../Utils';
 import type { Tapleaf } from '../../consts/Types';
-import type Musig from '../../musig/Musig';
+import Musig from '../../musig/Musig';
 import { secp } from '../init';
 
 const convertLeaf = (leaf: Tapleaf) => ({
@@ -66,12 +66,10 @@ export function toHashTree(scriptTree: Taptree): HashTree {
   };
 }
 
-export const tweakMusig = (musig: Musig, tree: Taptree): Buffer =>
-  toXOnly(
-    musig.tweakKey(
-      tapTweakHash(musig.getAggregatedPublicKey(), toHashTree(tree).hash),
-    ),
-  );
+export const tweakMusig = (musig: Musig, tree: Taptree): Musig => {
+  const tweak = toHashTree(tree).hash;
+  return Musig.tweak(musig, tapTweakHash(Buffer.from(musig.pubkeyAgg), tweak));
+};
 
 export const createControlBlock = (
   hashTree: HashTree,
