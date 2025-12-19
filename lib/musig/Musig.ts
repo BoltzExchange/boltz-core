@@ -1,107 +1,137 @@
-import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
+import {
+  type Nonces,
+  Session,
+  keyAggExport,
+  keyAggregate,
+  nonceAggregate,
+  nonceGen,
+} from '@scure/btc-signer/musig2.js';
 import type { ECPairInterface } from 'ecpair';
-import { getHexBuffer, getHexString } from '../Utils';
+import { uint8ArrayEqual, uint8ArrayToHex } from '../Utils';
 
 class Musig {
-  private readonly pubkeyAgg: {
-    aggPubkey: Uint8Array;
-    keyaggCache: Uint8Array;
-  };
-  private readonly nonce: {
-    pubNonce: Uint8Array;
-    secNonce: Uint8Array;
-  };
+  public readonly pubkeyAgg: Uint8Array;
+  public readonly internalKey: Uint8Array;
+
+  private readonly nonce: Nonces;
 
   private readonly myIndex: number;
   private readonly partialSignatures: (Uint8Array | null)[];
 
   private pubNonces?: Uint8Array[];
 
-  private nonceAgg?: Uint8Array;
-  private session?: Uint8Array;
+  private session?: Session;
 
   constructor(
-    private readonly secp: Secp256k1ZKP,
     private readonly key: ECPairInterface,
-    public readonly sessionId: Buffer,
-    public readonly publicKeys: Buffer[],
+    public readonly publicKeys: Uint8Array[],
+    public readonly msg: Uint8Array,
+    public readonly tweak?: Uint8Array,
   ) {
+    if (key.privateKey === undefined) {
+      throw new Error('key has no private key');
+    }
+
     if (publicKeys.length < 2) {
-      throw 'need at least 2 keys to aggregate';
+      throw new Error('need at least 2 keys to aggregate');
     }
 
     this.myIndex = this.publicKeys.findIndex((key) =>
-      Buffer.from(this.key.publicKey).equals(key),
+      uint8ArrayEqual(this.key.publicKey, key),
     );
 
     if (this.myIndex === -1) {
-      throw 'our key is not publicKeys';
+      throw new Error('our key is not publicKeys');
     }
 
-    this.pubkeyAgg = this.secp.musig.pubkeyAgg(publicKeys);
-    this.nonce = this.secp.musig.nonceGen(sessionId, this.key.publicKey);
+    this.pubkeyAgg = Musig.aggregateKeys(publicKeys, tweak);
+    this.internalKey =
+      tweak !== undefined ? Musig.aggregateKeys(publicKeys) : this.pubkeyAgg;
+    this.nonce = nonceGen(
+      this.key.publicKey,
+      this.key.privateKey,
+      this.pubkeyAgg,
+      this.msg,
+    );
     this.partialSignatures = Array(publicKeys.length).fill(null);
   }
 
-  public static parsePubNonce = (nonce: string) => getHexBuffer(nonce);
+  public static aggregateKeys = (
+    publicKeys: Uint8Array[],
+    tweak?: Uint8Array,
+  ) =>
+    keyAggExport(
+      keyAggregate(publicKeys, tweak ? [tweak] : [], tweak ? [true] : []),
+    );
+
+  public static tweak = (musig: Musig, tweak: Uint8Array) => {
+    return new Musig(musig.key, musig.publicKeys, musig.msg, tweak);
+  };
+
+  /**
+   * Updates the message and regenerates the nonce because it depends on the message
+   */
+  public static updateMessage = (musig: Musig, msg: Uint8Array) => {
+    return new Musig(musig.key, musig.publicKeys, msg, musig.tweak);
+  };
 
   public numParticipants = (): number => {
     return this.publicKeys.length;
   };
 
-  public getAggregatedPublicKey = (): Buffer => {
-    return Buffer.from(this.pubkeyAgg.aggPubkey);
-  };
-
   public getPublicNonce = (): Uint8Array => {
-    return this.nonce.pubNonce;
-  };
-
-  public tweakKey = (tweak: Uint8Array): Buffer => {
-    const tweaked = this.secp.musig.pubkeyXonlyTweakAdd(
-      this.pubkeyAgg.keyaggCache,
-      tweak,
-      true,
-    );
-    this.pubkeyAgg.keyaggCache = tweaked.keyaggCache;
-    return Buffer.from(tweaked.pubkey);
+    return this.nonce.public;
   };
 
   public aggregateNoncesOrdered = (nonces: Uint8Array[]) => {
+    if (this.session !== undefined) {
+      throw new Error('nonces already aggregated');
+    }
+
     if (this.publicKeys.length !== nonces.length) {
-      throw 'number of nonces != number of public keys';
+      throw new Error('number of nonces != number of public keys');
     }
 
     const myNonceIndex = nonces.findIndex((nonce) =>
-      Buffer.from(this.nonce.pubNonce).equals(Buffer.from(nonce)),
+      uint8ArrayEqual(this.nonce.public, nonce),
     );
     if (myNonceIndex !== this.myIndex) {
-      throw 'our nonce is at incorrect index';
+      throw new Error('our nonce is at incorrect index');
     }
 
     this.pubNonces = nonces;
-    this.nonceAgg = this.secp.musig.nonceAgg(nonces);
+    this.session = new Session(
+      nonceAggregate(nonces),
+      this.publicKeys,
+      this.msg,
+      this.tweak ? [this.tweak] : [],
+      this.tweak ? [true] : [],
+    );
   };
 
   public aggregateNonces = (nonces: [Uint8Array, Uint8Array][]) => {
+    let noncesToUse = nonces;
     if (
-      nonces.find(([keyCmp]) =>
-        Buffer.from(this.key.publicKey).equals(keyCmp),
-      ) === undefined
+      nonces.find(([keyCmp]) => uint8ArrayEqual(this.key.publicKey, keyCmp)) ===
+      undefined
     ) {
-      nonces.push([this.key.publicKey, this.getPublicNonce()]);
+      noncesToUse = [...nonces, [this.key.publicKey, this.getPublicNonce()]];
     }
 
-    if (this.publicKeys.length !== nonces.length) {
-      throw 'number of nonces != number of public keys';
+    if (this.publicKeys.length !== noncesToUse.length) {
+      throw new Error('number of nonces != number of public keys');
     }
 
     const ordered: Uint8Array[] = [];
 
     for (const key of this.publicKeys) {
-      const nonce = nonces.find(([keyCmp]) => Buffer.from(key).equals(keyCmp));
+      const nonce = noncesToUse.find(([keyCmp]) =>
+        uint8ArrayEqual(key, keyCmp),
+      );
       if (nonce === undefined) {
-        throw `could not find nonce for public key ${getHexString(key)}`;
+        throw new Error(
+          `could not find nonce for public key ${uint8ArrayToHex(key)}`,
+        );
       }
 
       ordered.push(nonce[1]);
@@ -110,35 +140,18 @@ class Musig {
     this.aggregateNoncesOrdered(ordered);
   };
 
-  public initializeSession = (msg: Uint8Array) => {
-    if (this.nonceAgg === undefined) {
-      throw 'nonces not aggregated';
-    }
-
-    if (this.session !== undefined) {
-      throw 'session already initialized';
-    }
-
-    this.session = this.secp.musig.nonceProcess(
-      this.nonceAgg,
-      msg,
-      this.pubkeyAgg.keyaggCache,
-    );
-  };
-
   /**
    * Returns our partial signature and adds it to the internal list
    */
   public signPartial = () => {
     if (this.session === undefined) {
-      throw 'session not initialized';
+      throw new Error('session not initialized');
     }
 
-    const sig = this.secp.musig.partialSign(
-      this.nonce.secNonce,
+    const sig = this.session.sign(
+      this.nonce.secret,
       this.key.privateKey!,
-      this.pubkeyAgg.keyaggCache,
-      this.session,
+      true,
     );
     this.partialSignatures[this.myIndex] = sig;
 
@@ -146,15 +159,15 @@ class Musig {
   };
 
   public verifyPartial = (
-    publicKeyOrIndex: Buffer | number,
+    publicKeyOrIndex: Uint8Array | number,
     signature: Uint8Array,
   ): boolean => {
     if (this.pubNonces === undefined) {
-      throw 'public nonces missing';
+      throw new Error('public nonces missing');
     }
 
     if (this.session === undefined) {
-      throw 'session not initialized';
+      throw new Error('session not initialized');
     }
 
     const publicKey =
@@ -163,63 +176,54 @@ class Musig {
         : publicKeyOrIndex;
     const index = this.indexOfPublicKeyOrIndex(publicKey);
 
-    return this.secp.musig.partialVerify(
-      signature,
-      this.pubNonces[index],
-      publicKey,
-      this.pubkeyAgg.keyaggCache,
-      this.session,
-    );
+    return this.session.partialSigVerify(signature, this.pubNonces, index);
   };
 
   /**
    * Adds a partial signature after verifying it
    */
   public addPartial = (
-    publicKeyOrIndex: Buffer | number,
+    publicKeyOrIndex: Uint8Array | number,
     signature: Uint8Array,
   ) => {
     if (!this.verifyPartial(publicKeyOrIndex, signature)) {
-      throw 'invalid partial signature';
+      throw new Error('invalid partial signature');
     }
 
     this.partialSignatures[this.indexOfPublicKeyOrIndex(publicKeyOrIndex)] =
       signature;
   };
 
-  public aggregatePartials = (): Buffer => {
+  public aggregatePartials = (): Uint8Array => {
     if (this.session === undefined) {
-      throw 'session not initialized';
+      throw new Error('session not initialized');
     }
 
     if (this.partialSignatures.some((partial) => partial === null)) {
-      throw 'not all partial signatures are set';
+      throw new Error('not all partial signatures are set');
     }
 
-    return Buffer.from(
-      this.secp.musig.partialSigAgg(
-        this.session,
-        this.partialSignatures as Uint8Array[],
-      ),
-    );
+    return this.session.partialSigAgg(this.partialSignatures as Uint8Array[]);
   };
 
   private indexOfPublicKeyOrIndex = (
-    publicKeyOrIndex: Buffer | number,
+    publicKeyOrIndex: Uint8Array | number,
   ): number => {
     const index =
       typeof publicKeyOrIndex === 'number'
         ? publicKeyOrIndex
-        : this.publicKeys.findIndex((key) => publicKeyOrIndex.equals(key));
+        : this.publicKeys.findIndex((key) =>
+            uint8ArrayEqual(publicKeyOrIndex, key),
+          );
 
     if (index === -1) {
-      throw `could not find index of public key ${getHexString(
-        Buffer.from(publicKeyOrIndex as Uint8Array),
-      )}`;
+      throw new Error(
+        `could not find index of public key ${uint8ArrayToHex(publicKeyOrIndex as Uint8Array)}`,
+      );
     }
 
     if (index > this.publicKeys.length - 1) {
-      throw 'index out of range';
+      throw new Error('index out of range');
     }
 
     return index;

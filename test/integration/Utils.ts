@@ -1,5 +1,3 @@
-import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import zkp from '@vulpemventures/secp256k1-zkp';
 import type { TxOutput } from 'bitcoinjs-lib';
 import { Transaction, address, crypto, initEccLib } from 'bitcoinjs-lib';
 import { randomBytes } from 'crypto';
@@ -42,8 +40,6 @@ import { tweakMusig } from '../../lib/swap/TaprootUtils';
 import { ECPair, slip77 } from '../unit/Utils';
 import ElementsClient from './liquid/utils/ElementsClient';
 import ChainClient from './utils/ChainClient';
-
-let secp: Secp256k1ZKP;
 
 export const generateKeys = (): ECPairInterface => {
   return ECPair.makeRandom({ network: Networks.bitcoinRegtest });
@@ -104,9 +100,8 @@ export const elementsClient = new ElementsClient({
   rpcpass: 'elements',
 });
 
-export const init = async () => {
+export const init = () => {
   initEccLib(ecc);
-  secp = await zkp();
 };
 
 export const destinationOutput = p2wpkhOutput(
@@ -224,7 +219,7 @@ export const createSwapOutput = async <
   const timeout = timeoutBlockHeight || blocks + 1;
 
   let utxo: T;
-  let musig: Musig | undefined;
+  let tweakedMusig: Musig | undefined;
 
   if (outputType === OutputType.Taproot) {
     const tree = (generateScript as typeof swapTree)(
@@ -235,14 +230,13 @@ export const createSwapOutput = async <
       timeout,
     ) as SwapTree;
 
-    musig = new Musig(
-      secp,
+    const musig = new Musig(
       isRefund ? refundKeys : claimKeys,
-      randomBytes(32),
       [claimKeys.publicKey, refundKeys.publicKey].map(Buffer.from),
+      randomBytes(32),
     );
 
-    const tweakedKey = (isBitcoin ? tweakMusig : liquidTweakMusig)(
+    tweakedMusig = (isBitcoin ? tweakMusig : liquidTweakMusig)(
       musig,
       tree.tree,
     );
@@ -250,14 +244,14 @@ export const createSwapOutput = async <
     utxo = {
       ...(await sendFundsToOutput(
         outputType,
-        p2trOutput(tweakedKey),
-        tweakedKey,
+        p2trOutput(Buffer.from(tweakedMusig.pubkeyAgg)),
+        Buffer.from(tweakedMusig.pubkeyAgg),
         confidential,
       )),
       preimage,
       swapTree: tree,
       keys: isRefund ? refundKeys : claimKeys,
-      internalKey: musig.getAggregatedPublicKey(),
+      internalKey: Buffer.from(musig.pubkeyAgg),
     };
   } else {
     const redeemScript = (generateScript as typeof swapScript)(
@@ -282,8 +276,8 @@ export const createSwapOutput = async <
 
   return {
     utxo,
-    musig,
     claimKeys,
     refundKeys,
+    musig: tweakedMusig,
   };
 };

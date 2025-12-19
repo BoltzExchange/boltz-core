@@ -52,14 +52,15 @@ describe('ExplicitOutputWithNonce', () => {
       Buffer.from(refundKeys.publicKey),
       timeoutBlockHeight,
     );
-    const musig = new Musig(
-      secp,
-      claimKeys,
-      randomBytes(32),
-      [claimKeys.publicKey, refundKeys.publicKey].map(Buffer.from),
+    const musig = tweakMusig(
+      new Musig(
+        claimKeys,
+        [claimKeys.publicKey, refundKeys.publicKey].map(Buffer.from),
+        randomBytes(32),
+      ),
+      tree.tree,
     );
-    const tweakedKey = tweakMusig(musig, tree.tree);
-    const swapOutputScript = p2trOutput(tweakedKey);
+    const swapOutputScript = p2trOutput(Buffer.from(musig.pubkeyAgg));
 
     const swapTx = new Transaction();
     swapTx.addInput(transaction.getHash(), vout);
@@ -114,7 +115,7 @@ describe('ExplicitOutputWithNonce', () => {
           cooperative: false,
           type: OutputType.Taproot,
           txHash: swapTx.getHash(),
-          internalKey: musig.getAggregatedPublicKey(),
+          internalKey: Buffer.from(musig.internalKey),
         },
       ],
       outputScript,
