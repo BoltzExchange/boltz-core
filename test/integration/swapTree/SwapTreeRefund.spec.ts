@@ -1,7 +1,7 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { OutputType } from '../../../lib/consts/Enums';
 import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../lib/swap/SwapTree';
-import { ECPair } from '../../unit/Utils';
 import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils';
 
 describe.each`
@@ -56,7 +56,7 @@ describe.each`
       treeFunc,
       timeout,
     );
-    utxo.keys = ECPair.makeRandom();
+    utxo.privateKey = secp256k1.utils.randomPrivateKey();
 
     try {
       await refundSwap([utxo], timeout);

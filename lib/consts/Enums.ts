@@ -4,8 +4,3 @@ export enum OutputType {
   Legacy = 2,
   Taproot = 3,
 }
-
-export type Output = {
-  type: OutputType;
-  isSh?: boolean;
-};

@@ -1,5 +1,9 @@
 import ops from '@boltz/bitcoin-ops';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { hex } from '@scure/base';
+import { Script } from '@scure/btc-signer';
+import { signSchnorr } from '@scure/btc-signer/utils.js';
 import {
   Blinder,
   Creator,
@@ -13,20 +17,20 @@ import {
   Updater,
   ZKPGenerator,
   ZKPValidator,
-  crypto,
-  script,
   witnessStackToScriptWitness,
 } from 'liquidjs-lib';
-import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
 import type { Network } from 'liquidjs-lib/src/networks';
-import { getHexString } from '../../Utils';
 import { OutputType } from '../../consts/Enums';
-import { isRelevantTaprootOutput, validateInputs } from '../../swap/Claim';
-import { scriptBuffersToScript } from '../../swap/SwapUtils';
+import {
+  isRelevantTaprootOutput,
+  signLegacy,
+  validateInputs,
+} from '../../swap/Claim';
+import { toXOnly } from '../../swap/TaprootUtils';
 import { getOutputValue } from '../Utils';
 import Networks from '../consts/Networks';
 import type { LiquidClaimDetails } from '../consts/Types';
-import { ecpair, secp } from '../init';
+import { secp } from '../init';
 import { createControlBlock, tapLeafHash, toHashTree } from './TaprootUtils';
 
 const dummyTaprootSignature = Buffer.alloc(64);
@@ -44,14 +48,14 @@ const validateLiquidInputs = (
 
   const taprootInputs = utxos.filter(isRelevantTaprootOutput);
 
-  if (isRefund && taprootInputs.some((utxo) => utxo.keys === undefined)) {
+  if (isRefund && taprootInputs.some((utxo) => utxo.privateKey === undefined)) {
     throw 'not all Taproot refund inputs have keys';
   }
 
   if (
     taprootInputs.some(
       (utxo) =>
-        utxo.keys === undefined &&
+        utxo.privateKey === undefined &&
         utxo.swapTree!.covenantClaimLeaf === undefined,
     )
   ) {
@@ -74,7 +78,7 @@ const validateLiquidInputs = (
 export const constructClaimTransaction = (
   utxos: LiquidClaimDetails[],
   destinationScript: Buffer,
-  fee: number,
+  fee: bigint,
   isRbf = true,
   network: Network = Networks.liquidMainnet,
   blindingKey?: Buffer,
@@ -110,9 +114,10 @@ export const constructClaimTransaction = (
   for (const [i, utxo] of utxos.entries()) {
     utxoValueSum += BigInt(getOutputValue(utxo));
 
-    const txHash = Buffer.alloc(utxo.txHash.length);
-    utxo.txHash.copy(txHash);
-    const txid = getHexString(reverseBuffer(txHash));
+    const transactionId = Buffer.from(utxo.transactionId, 'hex');
+    const txHash = Buffer.alloc(transactionId.length);
+    transactionId.copy(txHash);
+    const txid = hex.encode(txHash);
 
     pset.addInput(
       new CreatorInput(
@@ -126,23 +131,23 @@ export const constructClaimTransaction = (
 
     if (utxo.type === OutputType.Legacy) {
       updater.addInNonWitnessUtxo(i, utxo.legacyTx!);
-      updater.addInRedeemScript(i, utxo.redeemScript!);
+      updater.addInRedeemScript(i, Buffer.from(utxo.redeemScript!));
     } else if (utxo.type === OutputType.Compatibility) {
       updater.addInNonWitnessUtxo(i, utxo.legacyTx!);
       updater.addInRedeemScript(
         i,
-        scriptBuffersToScript([
-          scriptBuffersToScript([
-            getHexString(varuint.encode(ops.OP_0)),
-            crypto.sha256(utxo.redeemScript!),
-          ]),
-        ]),
+        Buffer.from(
+          Script.encode([Script.encode(['OP_0', sha256(utxo.redeemScript!)])]),
+        ),
       );
     }
 
     if (utxo.type !== OutputType.Legacy) {
       updater.addInWitnessUtxo(i, utxo);
-      updater.addInWitnessScript(i, utxo.redeemScript!);
+
+      if (utxo.type !== OutputType.Taproot) {
+        updater.addInWitnessScript(i, Buffer.from(utxo.redeemScript!));
+      }
     }
   }
 
@@ -159,7 +164,7 @@ export const constructClaimTransaction = (
   const addFeeOutput = (isUnblinded = false) => {
     updater.addOutputs([
       {
-        amount: isUnblinded ? fee - 1 : fee,
+        amount: isUnblinded ? Number(fee - BigInt(1)) : Number(fee),
         asset: network.assetHash,
       },
     ]);
@@ -175,7 +180,9 @@ export const constructClaimTransaction = (
           // TODO: figure out flakiness with blinding 0 amount outputs
           1,
           Buffer.of(ops.OP_RETURN),
-          Buffer.from(ecpair.makeRandom().publicKey),
+          Buffer.from(
+            secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+          ),
           0,
         ).toPartialOutput(),
       );
@@ -196,7 +203,7 @@ export const constructClaimTransaction = (
 
   for (const [i, utxo] of utxos.entries()) {
     if (utxo.type === OutputType.Taproot) {
-      if (utxo.cooperative || utxo.keys === undefined) {
+      if (utxo.cooperative || utxo.privateKey === undefined) {
         signatures.push(dummyTaprootSignature);
         continue;
       }
@@ -204,13 +211,14 @@ export const constructClaimTransaction = (
       const leafHash = tapLeafHash(
         isRefund ? utxo.swapTree!.refundLeaf : utxo.swapTree!.claimLeaf,
       );
-      const signature = utxo.keys!.signSchnorr(
+      const signature = signSchnorr(
         pset.getInputPreimage(
           i,
           getSighashType(utxo.type),
           network.genesisBlockHash,
           leafHash,
         ),
+        utxo.privateKey!,
       );
       signatures.push(Buffer.from(signature));
       signer.addSignature(
@@ -220,7 +228,9 @@ export const constructClaimTransaction = (
           tapScriptSigs: [
             {
               signature: Buffer.from(signature),
-              pubkey: toXOnly(Buffer.from(utxo.keys!.publicKey)),
+              pubkey: Buffer.from(
+                toXOnly(secp256k1.getPublicKey(utxo.privateKey!)),
+              ),
               leafHash,
             },
           ],
@@ -228,13 +238,11 @@ export const constructClaimTransaction = (
         Pset.SchnorrSigValidator(secp.ecc),
       );
     } else {
-      const signature = script.signature.encode(
-        Buffer.from(
-          utxo.keys!.sign(
-            Buffer.from(pset.getInputPreimage(i, getSighashType(utxo.type))),
-          ),
+      const signature = Buffer.from(
+        signLegacy(
+          pset.getInputPreimage(i, getSighashType(utxo.type)),
+          utxo.privateKey!,
         ),
-        getSighashType(utxo.type),
       );
       signatures.push(signature);
 
@@ -242,7 +250,7 @@ export const constructClaimTransaction = (
         i,
         {
           partialSig: {
-            pubkey: Buffer.from(utxo.keys!.publicKey),
+            pubkey: Buffer.from(secp256k1.getPublicKey(utxo.privateKey!)),
             signature,
           },
         },
@@ -261,19 +269,18 @@ export const constructClaimTransaction = (
       } = {};
 
       if (utxo.type === OutputType.Legacy) {
-        finals.finalScriptSig = scriptBuffersToScript([
-          signatures[i],
-          utxo.preimage,
-          ops.OP_PUSHDATA1,
-          utxo.redeemScript!,
-        ]);
-      } else if (utxo.type === OutputType.Compatibility) {
-        finals.finalScriptSig = scriptBuffersToScript([
-          scriptBuffersToScript([
-            getHexString(varuint.encode(ops.OP_0)),
-            crypto.sha256(utxo.redeemScript!),
+        finals.finalScriptSig = Buffer.from(
+          Script.encode([
+            signatures[i],
+            utxo.preimage,
+            'PUSHDATA1',
+            utxo.redeemScript!,
           ]),
-        ]);
+        );
+      } else if (utxo.type === OutputType.Compatibility) {
+        finals.finalScriptSig = Buffer.from(
+          Script.encode([Script.encode(['OP_0', sha256(utxo.redeemScript!)])]),
+        );
       }
 
       if (utxo.type === OutputType.Taproot) {
@@ -283,7 +290,7 @@ export const constructClaimTransaction = (
             dummyTaprootSignature,
           ]);
         } else {
-          const isCovenantClaim = utxo.keys === undefined;
+          const isCovenantClaim = utxo.privateKey === undefined;
 
           const tapleaf = isRefund
             ? utxo.swapTree!.refundLeaf
@@ -294,16 +301,16 @@ export const constructClaimTransaction = (
           const witness = isRefund
             ? [signatures[i]]
             : isCovenantClaim
-              ? [utxo.preimage]
-              : [signatures[i], utxo.preimage];
+              ? [Buffer.from(utxo.preimage)]
+              : [signatures[i], Buffer.from(utxo.preimage)];
 
           finals.finalScriptWitness = witnessStackToScriptWitness(
             witness.concat([
-              tapleaf.output,
+              Buffer.from(tapleaf.output),
               createControlBlock(
                 toHashTree(utxo.swapTree!.tree),
                 tapleaf,
-                utxo.internalKey!,
+                Buffer.from(utxo.internalKey!),
               ),
             ]),
           );
@@ -311,8 +318,8 @@ export const constructClaimTransaction = (
       } else if (utxo.type !== OutputType.Legacy) {
         finals.finalScriptWitness = witnessStackToScriptWitness([
           signatures[i],
-          utxo.preimage,
-          utxo.redeemScript!,
+          Buffer.from(utxo.preimage),
+          Buffer.from(utxo.redeemScript!),
         ]);
       }
 
@@ -327,7 +334,9 @@ const blindPset = (pset: Pset, utxos: LiquidClaimDetails[]) => {
   const zkpGenerator = new ZKPGenerator(
     secp as any,
     ZKPGenerator.WithBlindingKeysOfInputs(
-      utxos.map((utxo) => utxo.blindingPrivateKey!),
+      utxos
+        .map((utxo) => utxo.blindingPrivateKey)
+        .map((key) => (key ? Buffer.from(key) : undefined)) as Buffer[],
     ),
   );
   const zkpValidator = new ZKPValidator(secp as any);

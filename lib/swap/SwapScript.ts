@@ -1,9 +1,5 @@
-/**
- * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
- */
-import ops from '@boltz/bitcoin-ops';
-import { crypto } from 'bitcoinjs-lib';
-import { encodeCltv, toPushdataScript } from './SwapUtils';
+import { ripemd160 } from '@noble/hashes/legacy.js';
+import { Script } from '@scure/btc-signer';
 
 /**
  * Generate a swap redeem script
@@ -16,30 +12,28 @@ import { encodeCltv, toPushdataScript } from './SwapUtils';
  * @returns redeem script
  */
 const swapScript = (
-  preimageHash: Buffer,
-  claimPublicKey: Buffer,
-  refundPublicKey: Buffer,
+  preimageHash: Uint8Array,
+  claimPublicKey: Uint8Array,
+  refundPublicKey: Uint8Array,
   timeoutBlockHeight: number,
-): Buffer => {
-  const cltv = encodeCltv(timeoutBlockHeight);
+): Uint8Array => {
+  return Script.encode([
+    'HASH160',
+    ripemd160(preimageHash),
+    'EQUAL',
 
-  return toPushdataScript([
-    ops.OP_HASH160,
-    crypto.ripemd160(preimageHash),
-    ops.OP_EQUAL,
-
-    ops.OP_IF,
+    'IF',
     claimPublicKey,
 
-    ops.OP_ELSE,
-    cltv,
-    ops.OP_CHECKLOCKTIMEVERIFY,
-    ops.OP_DROP,
+    'ELSE',
+    timeoutBlockHeight,
+    'CHECKLOCKTIMEVERIFY',
+    'DROP',
     refundPublicKey,
 
-    ops.OP_ENDIF,
+    'ENDIF',
 
-    ops.OP_CHECKSIG,
+    'CHECKSIG',
   ]);
 };
 

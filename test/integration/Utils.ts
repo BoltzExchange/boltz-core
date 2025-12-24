@@ -1,13 +1,17 @@
-import type { TxOutput } from 'bitcoinjs-lib';
-import { Transaction, address, crypto, initEccLib } from 'bitcoinjs-lib';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { hex } from '@scure/base';
+import { Address, OutScript, Transaction } from '@scure/btc-signer';
+import type { TransactionOutput } from '@scure/btc-signer/psbt.js';
+import { hash160 } from '@scure/btc-signer/utils.js';
+import initZkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { randomBytes } from 'crypto';
-import type { ECPairInterface } from 'ecpair';
 import type { TxOutput as LiquidTxOutput } from 'liquidjs-lib';
 import {
   Transaction as LiquidTransaction,
+  address,
   address as liquidAddress,
 } from 'liquidjs-lib';
-import * as ecc from 'tiny-secp256k1';
 import {
   Networks,
   OutputType,
@@ -37,54 +41,9 @@ import {
 import type swapScript from '../../lib/swap/SwapScript';
 import type swapTree from '../../lib/swap/SwapTree';
 import { tweakMusig } from '../../lib/swap/TaprootUtils';
-import { ECPair, slip77 } from '../unit/Utils';
+import { slip77 } from '../unit/Utils';
 import ElementsClient from './liquid/utils/ElementsClient';
 import ChainClient from './utils/ChainClient';
-
-export const generateKeys = (): ECPairInterface => {
-  return ECPair.makeRandom({ network: Networks.bitcoinRegtest });
-};
-
-const sendFundsToOutput = async <
-  T extends
-    | TxOutput
-    | (LiquidTxOutput & {
-        blindingPrivateKey?: Buffer;
-      }),
->(
-  outputType: OutputType,
-  outputScript: Buffer,
-  redeemScriptOrTweakedKey: Buffer,
-  confidential?: boolean,
-): Promise<T> => {
-  const isBitcoin = confidential === undefined;
-  const network = isBitcoin
-    ? Networks.bitcoinRegtest
-    : LiquidNetworks.liquidRegtest;
-
-  let swapAddress = address.fromOutputScript(outputScript, network);
-
-  let blindingPrivateKey: Buffer | undefined;
-
-  if (confidential) {
-    const enc = blindWitnessAddress(swapAddress, outputType);
-    swapAddress = enc.address;
-    blindingPrivateKey = enc.blindingKey.privateKey;
-  }
-
-  const chainClient = isBitcoin ? bitcoinClient : elementsClient;
-  const transactionId = await chainClient.sendToAddress(swapAddress, 10000);
-  const transaction = (isBitcoin ? Transaction : LiquidTransaction).fromHex(
-    await chainClient.getRawTransaction(transactionId),
-  );
-
-  return {
-    ...detectSwap(redeemScriptOrTweakedKey, transaction)!,
-    blindingPrivateKey,
-    type: outputType,
-    txHash: transaction.getHash(),
-  } as unknown as T;
-};
 
 export const bitcoinClient = new ChainClient({
   host: '127.0.0.1',
@@ -100,19 +59,71 @@ export const elementsClient = new ElementsClient({
   rpcpass: 'elements',
 });
 
-export const init = () => {
-  initEccLib(ecc);
+let zkp: Secp256k1ZKP;
+
+export const init = async () => {
+  zkp = await initZkp();
+};
+
+export const generateKeys = () => {
+  return secp256k1.utils.randomPrivateKey();
+};
+
+export const encodeAddress = (outputScript: Uint8Array) => {
+  return Address(Networks.regtest).encode(OutScript.decode(outputScript));
+};
+
+const sendFundsToOutput = async <
+  T extends
+    | TransactionOutput
+    | (LiquidTxOutput & {
+        blindingPrivateKey?: Buffer;
+      }),
+>(
+  outputType: OutputType,
+  outputScript: Buffer,
+  redeemScriptOrTweakedKey: Buffer,
+  confidential?: boolean,
+): Promise<T> => {
+  const isBitcoin = confidential === undefined;
+
+  let swapAddress = isBitcoin
+    ? encodeAddress(outputScript)
+    : address.fromOutputScript(outputScript, LiquidNetworks.liquidRegtest);
+
+  let blindingPrivateKey: Buffer | undefined;
+
+  if (confidential) {
+    const enc = blindWitnessAddress(swapAddress, outputType);
+    swapAddress = enc.address;
+    blindingPrivateKey = enc.blindingKey.privateKey;
+  }
+
+  const chainClient = isBitcoin ? bitcoinClient : elementsClient;
+  const transactionId = await chainClient.sendToAddress(swapAddress, 10000);
+
+  const txHex = await chainClient.getRawTransaction(transactionId);
+  const transaction = isBitcoin
+    ? Transaction.fromRaw(hex.decode(txHex))
+    : LiquidTransaction.fromHex(txHex);
+
+  return {
+    ...detectSwap(redeemScriptOrTweakedKey, transaction)!,
+    blindingPrivateKey,
+    type: outputType,
+    transactionId,
+  } as unknown as T;
 };
 
 export const destinationOutput = p2wpkhOutput(
-  crypto.hash160(Buffer.from(generateKeys().publicKey)),
+  hash160(secp256k1.getPublicKey(generateKeys())),
 );
 
 export const blindWitnessAddress = (
   address: string,
   outputType: OutputType,
 ) => {
-  const slip = slip77.derive(liquidAddress.toOutputScript(address));
+  const slip = slip77(zkp).derive(liquidAddress.toOutputScript(address));
   const dec = liquidAddress.fromBech32(address);
 
   return {
@@ -130,20 +141,20 @@ export const claimSwap = async (
   claimDetails: (ClaimDetails | LiquidClaimDetails)[],
   outputBlindingKey?: Buffer,
 ): Promise<void> => {
-  const isBitcoin = typeof claimDetails[0].value === 'number';
+  const isBitcoin = 'amount' in claimDetails[0];
 
   const claimTransaction = targetFee(1, (fee) => {
     if (isBitcoin) {
       return constructClaimTransaction(
         claimDetails as ClaimDetails[],
-        destinationOutput,
+        Buffer.from(destinationOutput),
         fee,
         true,
       );
     } else {
       return liquidConstructClaimTransaction(
         claimDetails as LiquidClaimDetails[],
-        destinationOutput,
+        Buffer.from(destinationOutput),
         fee,
         true,
         LiquidNetworks.liquidRegtest,
@@ -153,7 +164,9 @@ export const claimSwap = async (
   });
 
   await (isBitcoin ? bitcoinClient : elementsClient).sendRawTransaction(
-    claimTransaction.toHex(),
+    claimTransaction instanceof Transaction
+      ? claimTransaction.hex
+      : (claimTransaction as LiquidTransaction).toHex(),
   );
 };
 
@@ -162,20 +175,20 @@ export const refundSwap = async (
   blockHeight: number,
   outputBlindingKey?: Buffer,
 ): Promise<void> => {
-  const isBitcoin = typeof refundDetails[0].value === 'number';
+  const isBitcoin = 'amount' in refundDetails[0];
 
   const refundTransaction = targetFee(1, (fee) => {
     if (isBitcoin) {
       return constructRefundTransaction(
         refundDetails as RefundDetails[],
-        destinationOutput,
+        Buffer.from(destinationOutput),
         blockHeight,
         fee,
       );
     } else {
       return liquidConstructRefundTransaction(
         refundDetails as LiquidRefundDetails[],
-        destinationOutput,
+        Buffer.from(destinationOutput),
         blockHeight,
         fee,
         true,
@@ -186,7 +199,9 @@ export const refundSwap = async (
   });
 
   await (isBitcoin ? bitcoinClient : elementsClient).sendRawTransaction(
-    refundTransaction.toHex(),
+    refundTransaction instanceof Transaction
+      ? refundTransaction.hex
+      : (refundTransaction as LiquidTransaction).toHex(),
   );
 };
 
@@ -202,8 +217,8 @@ export const createSwapOutput = async <
 ): Promise<{
   utxo: T;
   musig?: Musig;
-  claimKeys: ECPairInterface;
-  refundKeys: ECPairInterface;
+  claimKeys: Uint8Array;
+  refundKeys: Uint8Array;
 }> => {
   const claimKeys = generateKeys();
   const refundKeys = generateKeys();
@@ -224,15 +239,15 @@ export const createSwapOutput = async <
   if (outputType === OutputType.Taproot) {
     const tree = (generateScript as typeof swapTree)(
       !isBitcoin,
-      crypto.sha256(preimage),
-      Buffer.from(claimKeys.publicKey),
-      Buffer.from(refundKeys.publicKey),
+      sha256(preimage),
+      secp256k1.getPublicKey(claimKeys),
+      secp256k1.getPublicKey(refundKeys),
       timeout,
     ) as SwapTree;
 
     const musig = new Musig(
       isRefund ? refundKeys : claimKeys,
-      [claimKeys.publicKey, refundKeys.publicKey].map(Buffer.from),
+      [claimKeys, refundKeys].map((k) => secp256k1.getPublicKey(k)),
       randomBytes(32),
     );
 
@@ -244,33 +259,33 @@ export const createSwapOutput = async <
     utxo = {
       ...(await sendFundsToOutput(
         outputType,
-        p2trOutput(Buffer.from(tweakedMusig.pubkeyAgg)),
+        Buffer.from(p2trOutput(tweakedMusig.pubkeyAgg)),
         Buffer.from(tweakedMusig.pubkeyAgg),
         confidential,
       )),
       preimage,
       swapTree: tree,
-      keys: isRefund ? refundKeys : claimKeys,
+      privateKey: isRefund ? refundKeys : claimKeys,
       internalKey: Buffer.from(musig.pubkeyAgg),
     };
   } else {
     const redeemScript = (generateScript as typeof swapScript)(
-      crypto.sha256(preimage),
-      Buffer.from(claimKeys.publicKey),
-      Buffer.from(refundKeys.publicKey),
+      sha256(preimage),
+      secp256k1.getPublicKey(claimKeys),
+      secp256k1.getPublicKey(refundKeys),
       timeout,
     ) as Buffer;
 
     utxo = {
       ...(await sendFundsToOutput(
         outputType,
-        outputFunctionForType(outputType)!(redeemScript),
+        Buffer.from(outputFunctionForType(outputType)!(redeemScript)),
         redeemScript,
         confidential,
       )),
       preimage,
       redeemScript,
-      keys: isRefund ? refundKeys : claimKeys,
+      privateKey: isRefund ? refundKeys : claimKeys,
     };
   }
 

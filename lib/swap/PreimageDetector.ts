@@ -1,24 +1,40 @@
-import { script } from 'bitcoinjs-lib';
+import { Script, Transaction } from '@scure/btc-signer';
+
+type BitcoinJsStyleInput = { script?: Uint8Array; witness?: Uint8Array[] };
 
 /**
  * Detects the preimage from a claim transaction
  */
 export const detectPreimage = (
   vin: number,
-  claimTransaction: { ins: { script: Buffer; witness: Buffer[] }[] },
-): Buffer => {
-  const input = claimTransaction.ins[vin];
+  claimTransaction: Transaction | { ins: BitcoinJsStyleInput[] },
+): Uint8Array => {
+  let input: BitcoinJsStyleInput;
+
+  if (claimTransaction instanceof Transaction) {
+    const txInput = claimTransaction.getInput(vin);
+    input = {
+      script: txInput.finalScriptSig,
+      witness: txInput.finalScriptWitness,
+    };
+  } else {
+    input = claimTransaction.ins[vin];
+  }
 
   // Get the preimage for P2TR, P2WSH and nested P2SH-P2WSH
-  if (input.witness.length !== 0) {
+  if (input.witness !== undefined && input.witness.length !== 0) {
     // The second element of the witness is the preimage for claims with signature
     // The first element in case of claims with covenant
     return input.witness[0].length === 32 ? input.witness[0] : input.witness[1];
-  } else {
+  } else if (input.script !== undefined) {
     // Get the preimage of legacy P2SH
-    const scriptBuffers = script.decompile(input.script) as (Buffer | number)[];
+    const scriptBuffers = Script.decode(input.script);
 
-    // The second element of the script is the preimage
-    return scriptBuffers[1] as Buffer;
+    if (scriptBuffers.length >= 2) {
+      // The second element of the script is the preimage
+      return scriptBuffers[1] as Uint8Array;
+    }
   }
+
+  throw new Error('no preimage found');
 };

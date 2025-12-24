@@ -1,8 +1,8 @@
-import { crypto, initEccLib } from 'bitcoinjs-lib';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { hex } from '@scure/base';
+import { hash160 } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'crypto';
-import * as ecc from 'tiny-secp256k1';
-import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import { detectPreimage } from '../../../lib/swap/PreimageDetector';
@@ -15,17 +15,13 @@ import {
 } from '../../../lib/swap/Scripts';
 import swapScript from '../../../lib/swap/SwapScript';
 import swapTree from '../../../lib/swap/SwapTree';
-import { ECPair } from '../Utils';
+import { toXOnly } from '../../../lib/swap/TaprootUtils';
 
 describe('PreimageDetector', () => {
-  beforeAll(() => {
-    initEccLib(ecc);
-  });
+  const claimKeys = secp256k1.utils.randomPrivateKey();
+  const refundKeys = secp256k1.utils.randomPrivateKey();
 
-  const claimKeys = ECPair.makeRandom();
-  const refundKeys = ECPair.makeRandom();
-
-  const preimage = getHexBuffer(
+  const preimage = hex.decode(
     '7568110bcf788e974f918332f357dec2c33b2d76b2f61f9873afcb8f1598c91e',
   );
 
@@ -39,28 +35,27 @@ describe('PreimageDetector', () => {
     ${OutputType.Legacy}        | ${reverseSwapScript} | ${'P2SH reverse swap'}
   `('should detect preimage of $name input', ({ type, scriptFunc }) => {
     const redeemScript = scriptFunc(
-      crypto.sha256(preimage),
-      Buffer.from(claimKeys.publicKey),
-      Buffer.from(refundKeys.publicKey),
+      sha256(preimage),
+      secp256k1.getPublicKey(claimKeys),
+      secp256k1.getPublicKey(refundKeys),
       1,
     );
     const claimTransaction = constructClaimTransaction(
       [
         {
           preimage,
-          redeemScript,
+          redeemScript: Buffer.from(redeemScript),
           type: type,
-          keys: claimKeys,
+          privateKey: claimKeys,
           vout: 0,
-          value: 123123,
+          amount: 123123n,
           script: outputFunctionForType(type)!(redeemScript),
-          txHash: getHexBuffer(
+          transactionId:
             '287d2e3a5726710c2b6c94084c28789b250d703feb1e10012921cc2d4ab7f277',
-          ),
         },
       ],
-      p2wpkhOutput(crypto.hash160(Buffer.from(claimKeys.publicKey))),
-      2,
+      p2wpkhOutput(hash160(secp256k1.getPublicKey(claimKeys))),
+      2n,
       false,
     );
 
@@ -77,24 +72,24 @@ describe('PreimageDetector', () => {
         {
           preimage,
           type: OutputType.Taproot,
-          value: 123,
+          amount: 123n,
           vout: 0,
-          txHash: randomBytes(32),
+          transactionId: randomBytes(32).toString('hex'),
           cooperative: false,
           swapTree: treeFunc(
             false,
-            crypto.sha256(preimage),
-            claimKeys.publicKey,
-            refundKeys.publicKey,
+            sha256(preimage),
+            secp256k1.getPublicKey(claimKeys),
+            secp256k1.getPublicKey(refundKeys),
             1,
           ),
-          internalKey: toXOnly(Buffer.from(claimKeys.publicKey)),
-          keys: claimKeys,
-          script: p2trOutput(Buffer.from(claimKeys.publicKey)),
+          internalKey: toXOnly(secp256k1.getPublicKey(claimKeys)),
+          privateKey: claimKeys,
+          script: p2trOutput(secp256k1.getPublicKey(claimKeys)),
         },
       ],
-      p2wpkhOutput(crypto.hash160(Buffer.from(claimKeys.publicKey))),
-      2,
+      p2wpkhOutput(hash160(secp256k1.getPublicKey(claimKeys))),
+      2n,
       false,
     );
 

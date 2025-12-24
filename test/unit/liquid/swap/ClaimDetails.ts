@@ -16,7 +16,7 @@ export const liquidClaimDetails = claimDetails.map((details) => ({
   ...details,
   nonce,
   asset: lbtcRegtest,
-  value: confidential.satoshiToConfidentialValue(details.value),
+  value: confidential.satoshiToConfidentialValue(Number(details.amount)),
 }));
 
 export const liquidClaimDetailsMap = new Map<OutputType, LiquidClaimDetails>(

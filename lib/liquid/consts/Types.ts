@@ -1,16 +1,18 @@
-import type { BIP32Interface } from 'bip32';
-import type { ECPairInterface } from 'ecpair';
 import type { Transaction, TxOutput } from 'liquidjs-lib';
 import type { LiquidSwapTree, RefundDetails } from '../../consts/Types';
 
-export type LiquidRefundDetails = Omit<RefundDetails, 'value' | 'swapTree'> &
+export type LiquidRefundDetails = Omit<
+  RefundDetails,
+  'amount' | 'swapTree' | 'privateKey'
+> &
   TxOutput & {
+    // Optional because covenant claims don't need to sign the transaction
+    privateKey?: Uint8Array;
     legacyTx?: Transaction;
     swapTree?: LiquidSwapTree;
-    blindingPrivateKey?: Buffer;
+    blindingPrivateKey?: Uint8Array;
   };
 
-export type LiquidClaimDetails = Omit<LiquidRefundDetails, 'keys'> & {
-  preimage: Buffer;
-  keys?: ECPairInterface | BIP32Interface;
+export type LiquidClaimDetails = LiquidRefundDetails & {
+  preimage: Uint8Array;
 };

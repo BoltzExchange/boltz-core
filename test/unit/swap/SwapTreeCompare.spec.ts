@@ -1,13 +1,14 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { randomBytes } from 'crypto';
 import swapTree from '../../../lib/swap/SwapTree';
 import { compareTrees } from '../../../lib/swap/SwapTreeCompare';
-import { ECPair } from '../Utils';
 
 describe('SwapTreeCompare', () => {
+  const claimKey = secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey());
+  const refundKey = secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey());
+
   test('should compare SwapTrees', () => {
     const preimageHash = randomBytes(32);
-    const claimKey = Buffer.from(ECPair.makeRandom().publicKey);
-    const refundKey = Buffer.from(ECPair.makeRandom().publicKey);
     const timeoutBlockHeight = 123;
 
     expect(
@@ -20,8 +21,6 @@ describe('SwapTreeCompare', () => {
 
   test('should return false on version mismatch', () => {
     const preimageHash = randomBytes(32);
-    const claimKey = Buffer.from(ECPair.makeRandom().publicKey);
-    const refundKey = Buffer.from(ECPair.makeRandom().publicKey);
     const timeoutBlockHeight = 123;
 
     expect(
@@ -34,8 +33,6 @@ describe('SwapTreeCompare', () => {
 
   test('should return false on script mismatch', () => {
     const preimageHash = randomBytes(32);
-    const claimKey = Buffer.from(ECPair.makeRandom().publicKey);
-    const refundKey = Buffer.from(ECPair.makeRandom().publicKey);
     const timeoutBlockHeight = 123;
 
     expect(
@@ -54,8 +51,6 @@ describe('SwapTreeCompare', () => {
 
   test('should return false on depth mismatch', () => {
     const preimageHash = randomBytes(32);
-    const claimKey = Buffer.from(ECPair.makeRandom().publicKey);
-    const refundKey = Buffer.from(ECPair.makeRandom().publicKey);
     const timeoutBlockHeight = 123;
 
     const compare = swapTree(

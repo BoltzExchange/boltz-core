@@ -1,5 +1,5 @@
-import { getHexBuffer, getHexString } from '../Utils';
-import type { LiquidSwapTree, SwapTree, Tapleaf } from '../consts/Types';
+import { hex } from '@scure/base';
+import type { LiquidSwapTree, SwapTree, TapLeaf } from '../consts/Types';
 import { assignTreeProbabilities, sortTree } from './TreeSort';
 
 type SerializedLeaf = {
@@ -16,14 +16,14 @@ type SerializedLiquidSwapTree = SerializedTree & {
   covenantClaimLeaf?: SerializedLeaf;
 };
 
-const serializeLeaf = (leaf: Tapleaf): SerializedLeaf => ({
+const serializeLeaf = (leaf: TapLeaf): SerializedLeaf => ({
   version: leaf.version,
-  output: getHexString(leaf.output),
+  output: hex.encode(leaf.output),
 });
 
-const deserializeLeaf = (leaf: SerializedLeaf): Tapleaf => ({
+const deserializeLeaf = (leaf: SerializedLeaf): TapLeaf => ({
   version: leaf.version,
-  output: getHexBuffer(leaf.output),
+  output: hex.decode(leaf.output),
 });
 
 export const serializeSwapTree = (

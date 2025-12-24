@@ -1,9 +1,5 @@
-/**
- * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
- */
-import ops from '@boltz/bitcoin-ops';
-import { crypto, script } from 'bitcoinjs-lib';
-import { encodeCltv, toPushdataScript } from './SwapUtils';
+import { ripemd160 } from '@noble/hashes/legacy.js';
+import { Script } from '@scure/btc-signer';
 
 /**
  * Generate a reverse swap redeem script
@@ -16,35 +12,33 @@ import { encodeCltv, toPushdataScript } from './SwapUtils';
  * @returns redeem script
  */
 const reverseSwapScript = (
-  preimageHash: Buffer,
-  claimPublicKey: Buffer,
-  refundPublicKey: Buffer,
+  preimageHash: Uint8Array,
+  claimPublicKey: Uint8Array,
+  refundPublicKey: Uint8Array,
   timeoutBlockHeight: number,
-): Buffer => {
-  const cltv = encodeCltv(timeoutBlockHeight);
+): Uint8Array => {
+  return Script.encode([
+    'SIZE',
+    32,
+    'EQUAL',
 
-  return toPushdataScript([
-    ops.OP_SIZE,
-    script.number.encode(32),
-    ops.OP_EQUAL,
-
-    ops.OP_IF,
-    ops.OP_HASH160,
-    crypto.ripemd160(preimageHash),
-    ops.OP_EQUALVERIFY,
+    'IF',
+    'HASH160',
+    ripemd160(preimageHash),
+    'EQUALVERIFY',
     claimPublicKey,
-    ops.OP_ELSE,
+    'ELSE',
 
-    ops.OP_DROP,
+    'DROP',
 
-    cltv,
-    ops.OP_CHECKLOCKTIMEVERIFY,
-    ops.OP_DROP,
+    timeoutBlockHeight,
+    'CHECKLOCKTIMEVERIFY',
+    'DROP',
 
     refundPublicKey,
-    ops.OP_ENDIF,
+    'ENDIF',
 
-    ops.OP_CHECKSIG,
+    'CHECKSIG',
   ]);
 };
 

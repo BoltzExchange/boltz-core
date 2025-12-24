@@ -1,4 +1,6 @@
-import { crypto } from 'bitcoinjs-lib';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { hash160 } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'crypto';
 import { getScriptIntrospectionValues } from '../../../lib/liquid/Utils';
 import {
@@ -8,13 +10,14 @@ import {
   p2wpkhOutput,
   p2wshOutput,
 } from '../../../lib/swap/Scripts';
-import { ECPair } from '../Utils';
 
 describe('Liquid Utils', () => {
   test('should get P2TR introspection values', () => {
-    const output = p2trOutput(Buffer.from(ECPair.makeRandom().publicKey));
+    const output = p2trOutput(
+      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+    );
 
-    expect(getScriptIntrospectionValues(output)).toEqual({
+    expect(getScriptIntrospectionValues(Buffer.from(output))).toEqual({
       version: 1,
       script: output.subarray(2, 40),
     });
@@ -22,19 +25,19 @@ describe('Liquid Utils', () => {
 
   test('should get P2WPKH introspection values', () => {
     const output = p2wpkhOutput(
-      crypto.hash160(Buffer.from(ECPair.makeRandom().publicKey)),
+      hash160(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
     );
 
-    expect(getScriptIntrospectionValues(output)).toEqual({
+    expect(getScriptIntrospectionValues(Buffer.from(output))).toEqual({
       version: 0,
       script: output.subarray(2, 40),
     });
   });
 
   test('should get P2WSH introspection values', () => {
-    const output = p2wshOutput(crypto.sha256(randomBytes(32)));
+    const output = p2wshOutput(sha256(randomBytes(32)));
 
-    expect(getScriptIntrospectionValues(output)).toEqual({
+    expect(getScriptIntrospectionValues(Buffer.from(output))).toEqual({
       version: 0,
       script: output.subarray(2, 40),
     });
@@ -42,21 +45,21 @@ describe('Liquid Utils', () => {
 
   test('should get P2PKH introspection values', () => {
     const output = p2pkhOutput(
-      crypto.hash160(Buffer.from(ECPair.makeRandom().publicKey)),
+      hash160(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
     );
 
-    expect(getScriptIntrospectionValues(output)).toEqual({
+    expect(getScriptIntrospectionValues(Buffer.from(output))).toEqual({
       version: -1,
-      script: crypto.sha256(output),
+      script: sha256(output),
     });
   });
 
   test('should get P2SH introspection values', () => {
-    const output = p2shOutput(crypto.hash160(randomBytes(32)));
+    const output = p2shOutput(hash160(randomBytes(32)));
 
-    expect(getScriptIntrospectionValues(output)).toEqual({
+    expect(getScriptIntrospectionValues(Buffer.from(output))).toEqual({
       version: -1,
-      script: crypto.sha256(output),
+      script: sha256(output),
     });
   });
 });

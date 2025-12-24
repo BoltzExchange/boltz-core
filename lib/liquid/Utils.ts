@@ -1,12 +1,11 @@
 import ops from '@boltz/bitcoin-ops';
-import { crypto, script } from 'bitcoinjs-lib';
+import { confidential, crypto, script } from 'liquidjs-lib';
 import type { TxOutput } from 'liquidjs-lib';
-import { confidential } from 'liquidjs-lib';
 import { confidentialLiquid } from './init';
 
 export const getOutputValue = (
   output: TxOutput & {
-    blindingPrivateKey?: Buffer;
+    blindingPrivateKey?: Uint8Array;
   },
 ): number => {
   return output.blindingPrivateKey &&
@@ -15,7 +14,7 @@ export const getOutputValue = (
     ? Number(
         confidentialLiquid.unblindOutputWithKey(
           output,
-          output.blindingPrivateKey,
+          Buffer.from(output.blindingPrivateKey),
         ).value,
       )
     : confidential.confidentialValueToSatoshi(output.value);

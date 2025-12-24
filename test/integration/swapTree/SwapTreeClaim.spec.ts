@@ -1,13 +1,10 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { SigHash } from '@scure/btc-signer';
 import { randomBytes } from 'crypto';
-import {
-  Musig,
-  OutputType,
-  constructClaimTransaction,
-} from '../../../lib/Boltz';
+import { Musig, OutputType } from '../../../lib/Boltz';
+import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../lib/swap/SwapTree';
-import { hashForWitnessV1 } from '../../../lib/swap/TaprootUtils';
-import { ECPair } from '../../unit/Utils';
 import {
   bitcoinClient,
   claimSwap,
@@ -37,24 +34,37 @@ describe.each`
     );
     utxo.cooperative = true;
 
-    const tx = constructClaimTransaction([utxo], destinationOutput, 1_000);
+    const tx = constructClaimTransaction(
+      [utxo],
+      Buffer.from(destinationOutput),
+      1_000n,
+    );
 
     // Check the dummy signature
-    expect(tx.ins[0].witness).toHaveLength(1);
-    expect(tx.ins[0].witness[0].equals(Buffer.alloc(64))).toEqual(true);
+    expect(tx.getInput(0).finalScriptWitness).toHaveLength(1);
+    expect(
+      Buffer.from(tx.getInput(0).finalScriptWitness![0] as Uint8Array).equals(
+        Buffer.alloc(64),
+      ),
+    ).toEqual(true);
 
-    const sigHash = hashForWitnessV1([utxo], tx, 0);
+    const sigHash = tx.preimageWitnessV1(
+      0,
+      [Buffer.from(utxo.script)],
+      SigHash.DEFAULT,
+      [utxo.amount],
+    );
 
     const updatedMusig = Musig.updateMessage(musig!, sigHash);
     const theirMusig = new Musig(
       refundKeys,
-      [updatedMusig!.publicKeys[0], refundKeys.publicKey].map(Buffer.from),
+      [updatedMusig!.publicKeys[0], secp256k1.getPublicKey(refundKeys)],
       sigHash,
       updatedMusig.tweak,
     );
 
     updatedMusig.aggregateNonces([
-      [refundKeys.publicKey, theirMusig.getPublicNonce()],
+      [secp256k1.getPublicKey(refundKeys), theirMusig.getPublicNonce()],
     ]);
     theirMusig.aggregateNonces([
       [updatedMusig!.publicKeys[0], updatedMusig.getPublicNonce()],
@@ -62,13 +72,15 @@ describe.each`
 
     updatedMusig.signPartial();
     updatedMusig.addPartial(
-      Buffer.from(refundKeys.publicKey),
+      secp256k1.getPublicKey(refundKeys),
       theirMusig.signPartial(),
     );
 
-    tx.setWitness(0, [Buffer.from(updatedMusig.aggregatePartials())]);
+    tx.updateInput(0, {
+      finalScriptWitness: [updatedMusig.aggregatePartials()],
+    });
 
-    await bitcoinClient.sendRawTransaction(tx.toHex());
+    await bitcoinClient.sendRawTransaction(tx.hex);
   });
 
   test('should claim via script path', async () => {
@@ -105,7 +117,7 @@ describe.each`
       false,
       treeFunc,
     );
-    utxo.keys = ECPair.makeRandom();
+    utxo.privateKey = secp256k1.utils.randomPrivateKey();
 
     try {
       await claimSwap([utxo]);

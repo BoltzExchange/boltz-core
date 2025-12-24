@@ -1,18 +1,23 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { randomBytes } from 'crypto';
-import { getHexBuffer } from '../../../lib/Utils';
+import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
 import { OutputType } from '../../../lib/consts/Enums';
 import type { ClaimDetails } from '../../../lib/consts/Types';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import { p2trOutput } from '../../../lib/swap/Scripts';
-import { ECPair } from '../Utils';
 import { claimDetails, claimDetailsMap } from './ClaimDetails';
 
 describe('Claim', () => {
   const testClaim = (utxos: ClaimDetails[], fee: number) => {
     return constructClaimTransaction(
-      utxos,
-      getHexBuffer('00140000000000000000000000000000000000000000'),
-      fee,
+      utxos.map((utxo) => ({
+        ...utxo,
+        transactionId: reverseBuffer(
+          Buffer.from(utxo.transactionId, 'hex'),
+        ).toString('hex'),
+      })),
+      Buffer.from('00140000000000000000000000000000000000000000', 'hex'),
+      BigInt(fee),
       false,
     );
   };
@@ -23,13 +28,11 @@ describe('Claim', () => {
     ${OutputType.Compatibility} | ${166} | ${'P2SH nested P2WSH'}
     ${OutputType.Legacy}        | ${274} | ${'P2SH'}
   `('should claim a $name swap', ({ type, fee }) => {
-    expect(
-      testClaim([claimDetailsMap.get(type)!], fee).toHex(),
-    ).toMatchSnapshot();
+    expect(testClaim([claimDetailsMap.get(type)!], fee).hex).toMatchSnapshot();
   });
 
   test('should claim multiple swaps in one transaction', () => {
-    expect(testClaim(claimDetails, 490).toHex()).toMatchSnapshot();
+    expect(testClaim(claimDetails, 490).hex).toMatchSnapshot();
   });
 
   test.each`
@@ -64,8 +67,10 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
-          1,
+          p2trOutput(
+            secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+          ),
+          1n,
         ),
       ).toThrow('not all non Taproot inputs have a redeem script');
     },
@@ -83,8 +88,10 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
-          1,
+          p2trOutput(
+            secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+          ),
+          1n,
         ),
       ).toThrow('not all Taproot inputs have a swap tree');
     },
@@ -102,8 +109,10 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
-          1,
+          p2trOutput(
+            secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+          ),
+          1n,
         ),
       ).toThrow('not all Taproot inputs have an internal key');
     },

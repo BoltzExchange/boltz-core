@@ -1,10 +1,11 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { signSchnorr } from '@scure/btc-signer/utils.js';
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { crypto } from 'bitcoinjs-lib';
 import { randomBytes } from 'crypto';
 import { Transaction, address, confidential, networks } from 'liquidjs-lib';
 import { Musig, OutputType } from '../../../../lib/Boltz';
-import { getHexBuffer } from '../../../../lib/Utils';
 import { constructRefundTransaction, init } from '../../../../lib/liquid';
 import { tweakMusig } from '../../../../lib/liquid/swap/TaprootUtils';
 import { p2trOutput } from '../../../../lib/swap/Scripts';
@@ -25,8 +26,11 @@ describe('ExplicitOutputWithNonce', () => {
 
   test('should be able to spend an explicit output with a confidential nonce', async () => {
     const keys = generateKeys();
-    const outputScript = p2trOutput(Buffer.from(keys.publicKey));
-    const addr = address.fromOutputScript(outputScript, networks.regtest);
+    const outputScript = p2trOutput(secp256k1.getPublicKey(keys));
+    const addr = address.fromOutputScript(
+      Buffer.from(outputScript),
+      networks.regtest,
+    );
 
     const transaction = Transaction.fromHex(
       await elementsClient.getRawTransaction(
@@ -47,25 +51,25 @@ describe('ExplicitOutputWithNonce', () => {
 
     const tree = swapTree(
       true,
-      crypto.sha256(preimage),
-      Buffer.from(claimKeys.publicKey),
-      Buffer.from(refundKeys.publicKey),
+      sha256(preimage),
+      secp256k1.getPublicKey(claimKeys),
+      secp256k1.getPublicKey(refundKeys),
       timeoutBlockHeight,
     );
     const musig = tweakMusig(
       new Musig(
         claimKeys,
-        [claimKeys.publicKey, refundKeys.publicKey].map(Buffer.from),
+        [claimKeys, refundKeys].map((k) => secp256k1.getPublicKey(k)),
         randomBytes(32),
       ),
       tree.tree,
     );
-    const swapOutputScript = p2trOutput(Buffer.from(musig.pubkeyAgg));
+    const swapOutputScript = p2trOutput(musig.pubkeyAgg);
 
     const swapTx = new Transaction();
     swapTx.addInput(transaction.getHash(), vout);
     swapTx.addOutput(
-      swapOutputScript,
+      Buffer.from(swapOutputScript),
       confidential.satoshiToConfidentialValue(
         confidential.confidentialValueToSatoshi(prevOut.value) - 100,
       ),
@@ -79,13 +83,14 @@ describe('ExplicitOutputWithNonce', () => {
       Buffer.alloc(1),
     );
 
-    swapTx.outs[0].nonce = getHexBuffer(
+    swapTx.outs[0].nonce = Buffer.from(
       '02b3e1ade7cd37505988723a8f05e1ae17e8f072e6339215e4f6d28aca692f6bf7',
+      'hex',
     );
 
     swapTx.ins[0].witness = [
       Buffer.from(
-        keys.signSchnorr(
+        signSchnorr(
           swapTx.hashForWitnessV1(
             0,
             [prevOut.script],
@@ -98,6 +103,7 @@ describe('ExplicitOutputWithNonce', () => {
             Transaction.SIGHASH_DEFAULT,
             networks.regtest.genesisBlockHash,
           ),
+          keys,
         ),
       ),
     ];
@@ -111,16 +117,16 @@ describe('ExplicitOutputWithNonce', () => {
           ...swapTx.outs[0],
           vout: 0,
           swapTree: tree,
-          keys: refundKeys,
+          privateKey: refundKeys,
           cooperative: false,
           type: OutputType.Taproot,
-          txHash: swapTx.getHash(),
-          internalKey: Buffer.from(musig.internalKey),
+          transactionId: swapTx.getId(),
+          internalKey: musig.internalKey,
         },
       ],
-      outputScript,
+      Buffer.from(outputScript),
       timeoutBlockHeight,
-      100,
+      100n,
       true,
       networks.regtest,
     );

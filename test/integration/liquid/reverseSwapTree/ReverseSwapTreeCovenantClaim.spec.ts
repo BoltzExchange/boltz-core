@@ -1,5 +1,6 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha2.js';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { crypto } from 'bitcoinjs-lib';
 import { randomBytes } from 'crypto';
 import { Transaction, address, networks } from 'liquidjs-lib';
 import { OutputType } from '../../../../lib/consts/Enums';
@@ -19,7 +20,6 @@ import {
 import Musig from '../../../../lib/musig/Musig';
 import { p2trOutput, p2wshOutput } from '../../../../lib/swap/Scripts';
 import { detectSwap } from '../../../../lib/swap/SwapDetector';
-import { ECPair } from '../../../unit/Utils';
 import {
   blindWitnessAddress,
   elementsClient,
@@ -53,9 +53,9 @@ describe.each`
         timeoutBlockHeight ||
         (await elementsClient.getBlockchainInfo()).blocks + 21;
 
-      const preimageHash = crypto.sha256(preimage);
-      const ourKeys = ECPair.makeRandom();
-      const theirKeys = ECPair.makeRandom();
+      const preimageHash = sha256(preimage);
+      const ourKeys = secp256k1.utils.randomPrivateKey();
+      const theirKeys = secp256k1.utils.randomPrivateKey();
 
       const expectedOutput = address.toOutputScript(
         outputAddress || (await elementsClient.getNewAddress()),
@@ -65,8 +65,8 @@ describe.each`
 
       const tree = liquidReverseSwapTree(
         preimageHash,
-        Buffer.from(ourKeys.publicKey),
-        Buffer.from(theirKeys.publicKey),
+        secp256k1.getPublicKey(ourKeys),
+        secp256k1.getPublicKey(theirKeys),
         timeoutBlockHeight,
         [
           {
@@ -80,14 +80,14 @@ describe.each`
       const tweakedMusig = tweakMusig(
         new Musig(
           ourKeys,
-          [ourKeys.publicKey, theirKeys.publicKey].map(Buffer.from),
+          [ourKeys, theirKeys].map((k) => secp256k1.getPublicKey(k)),
           randomBytes(32),
         ),
         tree.tree,
       );
 
       let swapAddress = address.fromOutputScript(
-        p2trOutput(Buffer.from(tweakedMusig.pubkeyAgg)),
+        Buffer.from(p2trOutput(tweakedMusig.pubkeyAgg)),
         networks.regtest,
       );
       let blindingPrivateKey: Buffer | undefined = undefined;
@@ -98,12 +98,12 @@ describe.each`
         blindingPrivateKey = enc.blindingKey.privateKey;
       }
 
-      const feeBuffer = 210;
+      const feeBuffer = 210n;
       const tx = Transaction.fromHex(
         await elementsClient.getRawTransaction(
           await elementsClient.sendToAddress(
             swapAddress,
-            expectedAmount + feeBuffer,
+            expectedAmount + Number(feeBuffer),
           ),
         ),
       );
@@ -129,10 +129,11 @@ describe.each`
             preimage,
             swapTree: tree,
             blindingPrivateKey,
-            txHash: tx.getHash(),
-            internalKey: Buffer.from(tweakedMusig.internalKey),
-          },
-        ] as LiquidClaimDetails[],
+            transactionId: tx.getId(),
+            privateKey: ourKeys,
+            internalKey: tweakedMusig.internalKey,
+          } as LiquidClaimDetails,
+        ],
       };
     };
 
@@ -154,20 +155,20 @@ describe.each`
       const updatedMusig = Musig.updateMessage(musig, sigHash);
       const theirMusig = new Musig(
         theirKeys,
-        [updatedMusig.publicKeys[0], theirKeys.publicKey].map(Buffer.from),
+        [updatedMusig.publicKeys[0], secp256k1.getPublicKey(theirKeys)],
         sigHash,
         updatedMusig.tweak,
       );
 
       updatedMusig.aggregateNonces([
-        [theirKeys.publicKey, theirMusig.getPublicNonce()],
+        [secp256k1.getPublicKey(theirKeys), theirMusig.getPublicNonce()],
       ]);
       theirMusig.aggregateNonces([
         [updatedMusig.publicKeys[0], updatedMusig.getPublicNonce()],
       ]);
       updatedMusig.signPartial();
       updatedMusig.addPartial(
-        Buffer.from(theirKeys.publicKey),
+        secp256k1.getPublicKey(theirKeys),
         theirMusig.signPartial(),
       );
 
@@ -179,7 +180,7 @@ describe.each`
     test('should claim via signature script path', async () => {
       const { utxos, feeBuffer, expectedOutput, ourKeys } =
         await createOutput();
-      utxos[0].keys = ourKeys;
+      utxos[0].privateKey = ourKeys;
       utxos[0].cooperative = false;
 
       const claimTx = constructClaimTransaction(
@@ -210,8 +211,8 @@ describe.each`
         [
           {
             ...utxos[0],
-            keys: theirKeys,
             cooperative: false,
+            privateKey: theirKeys,
           },
         ],
         expectedOutput,
@@ -239,14 +240,18 @@ describe.each`
         switch (addressType) {
           case 'p2tr':
             outputAddress = address.fromOutputScript(
-              p2trOutput(Buffer.from(ECPair.makeRandom().publicKey)),
+              Buffer.from(
+                p2trOutput(
+                  secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+                ),
+              ),
               networks.regtest,
             );
             break;
 
           case 'p2wsh':
             outputAddress = address.fromOutputScript(
-              p2wshOutput(randomBytes(32)),
+              Buffer.from(p2wshOutput(randomBytes(32))),
               networks.regtest,
             );
             break;
@@ -275,8 +280,8 @@ describe.each`
               blindingPrivateKey,
               swapTree: tree,
               cooperative: false,
-              txHash: lockupTx.getHash(),
-              internalKey: Buffer.from(musig.internalKey),
+              transactionId: lockupTx.getId(),
+              internalKey: musig.internalKey,
             },
           ],
           expectedOutput,
@@ -314,8 +319,8 @@ describe.each`
               blindingPrivateKey,
               swapTree: tree,
               cooperative: false,
-              txHash: lockupTx.getHash(),
-              internalKey: Buffer.from(musig.internalKey),
+              transactionId: lockupTx.getId(),
+              internalKey: musig.internalKey,
             },
           ],
           expectedOutput,
@@ -351,9 +356,9 @@ describe.each`
             blindingPrivateKey,
             swapTree: tree,
             cooperative: false,
-            txHash: lockupTx.getHash(),
+            transactionId: lockupTx.getId(),
             preimage: randomBytes(32),
-            internalKey: Buffer.from(musig.internalKey),
+            internalKey: musig.internalKey,
           },
         ],
         expectedOutput,
@@ -389,8 +394,8 @@ describe.each`
             blindingPrivateKey,
             swapTree: tree,
             cooperative: false,
-            txHash: lockupTx.getHash(),
-            internalKey: Buffer.from(musig.internalKey),
+            transactionId: lockupTx.getId(),
+            internalKey: musig.internalKey,
           },
         ],
         address.toOutputScript(
@@ -438,12 +443,12 @@ describe.each`
               blindingPrivateKey,
               swapTree: tree,
               cooperative: false,
-              txHash: lockupTx.getHash(),
-              internalKey: Buffer.from(musig.internalKey),
+              transactionId: lockupTx.getId(),
+              internalKey: musig.internalKey,
             },
           ],
           expectedOutput,
-          feeBuffer - delta,
+          feeBuffer - BigInt(delta),
           true,
           networks.regtest,
         );

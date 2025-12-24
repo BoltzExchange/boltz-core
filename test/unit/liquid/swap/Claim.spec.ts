@@ -1,15 +1,20 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { getHexBuffer } from '../../../../lib/Utils';
+import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
 import { OutputType } from '../../../../lib/consts/Enums';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import { constructClaimTransaction, init } from '../../../../lib/liquid';
 import { liquidClaimDetailsMap } from './ClaimDetails';
 
 describe('Liquid Claim', () => {
-  const testClaim = (utxos: LiquidClaimDetails[], fee: number) => {
+  const testClaim = (utxos: LiquidClaimDetails[], fee: bigint) => {
     return constructClaimTransaction(
-      utxos,
-      getHexBuffer('00140000000000000000000000000000000000000000'),
+      utxos.map((utxo) => ({
+        ...utxo,
+        transactionId: reverseBuffer(
+          Buffer.from(utxo.transactionId, 'hex'),
+        ).toString('hex'),
+      })),
+      Buffer.from('00140000000000000000000000000000000000000000', 'hex'),
       fee,
       false,
     );
@@ -21,7 +26,7 @@ describe('Liquid Claim', () => {
 
   test('should claim a P2WSH swap', () => {
     expect(
-      testClaim([liquidClaimDetailsMap.get(OutputType.Bech32)!], 22).toHex(),
+      testClaim([liquidClaimDetailsMap.get(OutputType.Bech32)!], 22n).toHex(),
     ).toMatchSnapshot();
   });
 
@@ -41,7 +46,7 @@ describe('Liquid Claim', () => {
             vout: details.vout + 2,
           },
         ],
-        40,
+        40n,
       ).toHex(),
     ).toMatchSnapshot();
   });
@@ -56,10 +61,12 @@ describe('Liquid Claim', () => {
         [
           {
             type,
+            transactionId:
+              '0000000000000000000000000000000000000000000000000000000000000000',
             redeemScript: Buffer.alloc(0),
-          } as LiquidClaimDetails,
+          } as any,
         ],
-        1,
+        1n,
       ),
     ).toThrow('only Taproot or native SegWit inputs supported');
   });
@@ -70,15 +77,19 @@ describe('Liquid Claim', () => {
         [
           {
             type: OutputType.Bech32,
+            transactionId:
+              '0000000000000000000000000000000000000000000000000000000000000000',
             redeemScript: Buffer.alloc(0),
             blindingPrivateKey: Buffer.alloc(1),
           },
           {
             type: OutputType.Bech32,
+            transactionId:
+              '0000000000000000000000000000000000000000000000000000000000000000',
             redeemScript: Buffer.alloc(0),
           },
-        ] as LiquidClaimDetails[],
-        1,
+        ] as any,
+        1n,
       ),
     ).toThrow('all or none inputs have to be blinded');
   });
