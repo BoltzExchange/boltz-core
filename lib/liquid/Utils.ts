@@ -28,7 +28,7 @@ export const getScriptIntrospectionValues = (
 ): { version: number; script: Buffer } => {
   const dec = script.decompile(outputScript);
   if (dec === undefined || dec === null) {
-    throw 'failed to decompile output script';
+    throw new Error('failed to decompile output script');
   }
 
   switch (dec[0]) {

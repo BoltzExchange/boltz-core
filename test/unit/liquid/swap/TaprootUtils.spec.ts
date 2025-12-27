@@ -36,7 +36,7 @@ describe('TaprootUtils', () => {
     init(await zkp());
   });
 
-  test('should hash tap leafs', () => {
+  test('should hash tap leaf', () => {
     const hash = tapLeafHash(taptree[0] as TapLeaf);
     expect(hash).toBeInstanceOf(Buffer);
     expect(hash).toMatchSnapshot();
@@ -54,7 +54,7 @@ describe('TaprootUtils', () => {
     expect(hashTree).toMatchSnapshot();
   });
 
-  test('should convert netsted taproot tree to hash tree', () => {
+  test('should convert nested taproot tree to hash tree', () => {
     const hashTree = toHashTree([taptree, taptree]);
     expect(hashTree).toBeDefined();
     expect(hashTree).toMatchSnapshot();

@@ -1,5 +1,6 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { SigHash } from '@scure/btc-signer';
+import { equalBytes } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'node:crypto';
 import { Musig, OutputType } from '../../../lib/Boltz';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
@@ -34,26 +35,20 @@ describe.each`
     );
     utxo.cooperative = true;
 
-    const tx = constructClaimTransaction(
-      [utxo],
-      Buffer.from(destinationOutput),
-      1_000n,
-    );
+    const tx = constructClaimTransaction([utxo], destinationOutput, 1_000n);
 
     // Check the dummy signature
     expect(tx.getInput(0).finalScriptWitness).toHaveLength(1);
     expect(
-      Buffer.from(tx.getInput(0).finalScriptWitness![0] as Uint8Array).equals(
-        Buffer.alloc(64),
+      equalBytes(
+        tx.getInput(0).finalScriptWitness![0] as Uint8Array,
+        new Uint8Array(64),
       ),
     ).toEqual(true);
 
-    const sigHash = tx.preimageWitnessV1(
-      0,
-      [Buffer.from(utxo.script)],
-      SigHash.DEFAULT,
-      [utxo.amount],
-    );
+    const sigHash = tx.preimageWitnessV1(0, [utxo.script], SigHash.DEFAULT, [
+      utxo.amount,
+    ]);
 
     const updatedMusig = Musig.updateMessage(musig!, sigHash);
     const theirMusig = new Musig(

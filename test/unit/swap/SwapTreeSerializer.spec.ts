@@ -13,11 +13,9 @@ describe('SwapTreeSerializer', () => {
     'a8aca40d423f00ec0a69b1b815169d7412a747e08e5669e80b3106e82975908a',
     'hex',
   );
-  const claimPublicKey = Buffer.from(
-    secp256k1.getPublicKey(
-      hex.decode(
-        '4cffad3235065eff2959eabeb36cccaed698bc5a009d43f2ca1ce2d251599f85',
-      ),
+  const claimPublicKey = secp256k1.getPublicKey(
+    hex.decode(
+      '4cffad3235065eff2959eabeb36cccaed698bc5a009d43f2ca1ce2d251599f85',
     ),
   );
   const refundPublicKey = secp256k1.getPublicKey(

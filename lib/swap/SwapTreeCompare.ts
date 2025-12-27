@@ -5,7 +5,7 @@ const compareLeaf = (leaf: TapLeaf, compareLeaf: TapLeaf) =>
   leaf.version === compareLeaf.version &&
   equalBytes(leaf.output, compareLeaf.output);
 
-const compareTree = (tree: TapTree, compare: TapTree) => {
+const compareTree = (tree: TapTree, compare: TapTree): boolean => {
   if (Array.isArray(tree) !== Array.isArray(compare)) {
     return false;
   }

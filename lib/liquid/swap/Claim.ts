@@ -1,7 +1,6 @@
 import ops from '@boltz/bitcoin-ops';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha2.js';
-import { hex } from '@scure/base';
 import { Script } from '@scure/btc-signer';
 import { signSchnorr } from '@scure/btc-signer/utils.js';
 import {
@@ -50,7 +49,7 @@ const validateLiquidInputs = (
   const taprootInputs = utxos.filter(isRelevantTaprootOutput);
 
   if (isRefund && taprootInputs.some((utxo) => utxo.privateKey === undefined)) {
-    throw 'not all Taproot refund inputs have keys';
+    throw new Error('not all Taproot refund inputs have keys');
   }
 
   if (
@@ -60,7 +59,7 @@ const validateLiquidInputs = (
         utxo.swapTree?.covenantClaimLeaf === undefined,
     )
   ) {
-    throw 'not all Taproot signature claims have keys';
+    throw new Error('not all Taproot signature claims have keys');
   }
 };
 
@@ -95,7 +94,7 @@ export const constructClaimTransaction = (
         (utxos[0].blindingPrivateKey === undefined),
     )
   ) {
-    throw 'all or none inputs have to be blinded';
+    throw new Error('all or none inputs have to be blinded');
   }
 
   if (
@@ -104,7 +103,7 @@ export const constructClaimTransaction = (
         utxo.type !== OutputType.Taproot && utxo.type !== OutputType.Bech32,
     )
   ) {
-    throw 'only Taproot or native SegWit inputs supported';
+    throw new Error('only Taproot or native SegWit inputs supported');
   }
 
   const pset = Creator.newPset();
@@ -115,14 +114,9 @@ export const constructClaimTransaction = (
   for (const [i, utxo] of utxos.entries()) {
     utxoValueSum += BigInt(getOutputValue(utxo));
 
-    const transactionId = Buffer.from(utxo.transactionId, 'hex');
-    const txHash = Buffer.alloc(transactionId.length);
-    transactionId.copy(txHash);
-    const txid = hex.encode(txHash);
-
     pset.addInput(
       new CreatorInput(
-        txid,
+        utxo.transactionId,
         utxo.vout,
         isRbf ? 0xfffffffd : 0xffffffff,
         i === 0 ? timeoutBlockHeight : undefined,
@@ -157,7 +151,7 @@ export const constructClaimTransaction = (
       script: destinationScript,
       blindingPublicKey: blindingKey,
       asset: network.assetHash,
-      amount: Number(utxoValueSum - BigInt(fee)),
+      amount: Number(utxoValueSum - fee),
       blinderIndex: blindingKey !== undefined ? 0 : undefined,
     },
   ]);
@@ -210,7 +204,7 @@ export const constructClaimTransaction = (
       }
 
       if (utxo.swapTree === undefined || utxo.internalKey === undefined) {
-        throw 'swap tree or internal key is undefined';
+        throw new Error('swap tree or internal key is undefined');
       }
 
       const leafHash = tapLeafHash(
@@ -298,7 +292,7 @@ export const constructClaimTransaction = (
           const isCovenantClaim = utxo.privateKey === undefined;
 
           if (utxo.swapTree === undefined || utxo.internalKey === undefined) {
-            throw 'swap tree or internal key is undefined';
+            throw new Error('swap tree or internal key is undefined');
           }
 
           const tapleaf = isRefund
@@ -308,7 +302,7 @@ export const constructClaimTransaction = (
               : utxo.swapTree.claimLeaf;
 
           if (tapleaf === undefined) {
-            throw 'tapleaf is undefined';
+            throw new Error('tapleaf is undefined');
           }
 
           const witness = isRefund

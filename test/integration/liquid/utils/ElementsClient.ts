@@ -10,7 +10,7 @@ class ElementsClient extends ChainClient {
     return this.client.request<string>('dumpblindingkey', [address]);
   };
 
-  public getNewAddress = (
+  public override getNewAddress = (
     type: AddressType | LiquidAddressType = LiquidAddressType.Blech32,
   ): Promise<string> => {
     return this.client.request<string>('getnewaddress', ['', type]);

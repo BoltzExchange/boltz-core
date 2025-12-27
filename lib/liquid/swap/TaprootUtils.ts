@@ -76,7 +76,7 @@ export const createControlBlock = (
 ): Buffer => {
   const path = liquidFindScriptPath(hashTree, tapLeafHash(leaf));
   if (path === undefined || path.length === 0) {
-    throw 'leaf not in tree';
+    throw new Error('leaf not in tree');
   }
 
   const outputKey = secp.ecc.xOnlyPointAddTweak(
@@ -84,7 +84,7 @@ export const createControlBlock = (
     tapTweakHash(internalKey, hashTree.hash),
   );
   if (outputKey === null) {
-    throw 'output key is null';
+    throw new Error('output key is null');
   }
 
   return Buffer.concat(

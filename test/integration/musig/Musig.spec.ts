@@ -61,14 +61,11 @@ describe('Musig', () => {
       hex.decode(await bitcoinClient.getRawTransaction(txId)),
     );
 
-    let outputIndex = -1;
-    for (let i = 0; i < prevTx.outputsLength; i++) {
-      if (equalBytes(prevTx.getOutput(i).script!, outputScript)) {
-        outputIndex = i;
-        break;
-      }
-    }
-    expect(outputIndex).not.toEqual(-1);
+    const outputIndex = Array.from(
+      { length: prevTx.outputsLength },
+      (_, i) => i,
+    ).find((i) => equalBytes(prevTx.getOutput(i).script!, outputScript));
+    expect(outputIndex).not.toBeUndefined();
 
     // Construct transaction
     const tx = new Transaction();

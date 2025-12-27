@@ -1,4 +1,4 @@
-import type { LiquidSwapTree } from '../../../lib/consts/Types';
+import type { LiquidSwapTree, TapTree } from '../../../lib/consts/Types';
 import { createLeaf } from '../../../lib/swap/TaprootUtils';
 import { assignTreeProbabilities, sortTree } from '../../../lib/swap/TreeSort';
 
@@ -28,7 +28,10 @@ describe('TreeSort', () => {
       claimLeaf: createLeaf(true, [1]),
       refundLeaf: createLeaf(true, [2]),
     };
-    const sortedTree = sortTree(assignTreeProbabilities(tree));
+    const sortedTree = sortTree(assignTreeProbabilities(tree)) as [
+      TapTree,
+      TapTree,
+    ];
 
     expect(sortedTree).toHaveLength(2);
     expect(sortedTree[0]).toEqual(tree.claimLeaf);
@@ -41,7 +44,10 @@ describe('TreeSort', () => {
       refundLeaf: createLeaf(true, [2]),
       covenantClaimLeaf: createLeaf(true, [3]),
     };
-    const sortedTree = sortTree(assignTreeProbabilities(tree));
+    const sortedTree = sortTree(assignTreeProbabilities(tree)) as [
+      TapTree,
+      [TapTree, TapTree],
+    ];
 
     expect(sortedTree).toHaveLength(2);
     expect(sortedTree[0]).toEqual(tree.covenantClaimLeaf);

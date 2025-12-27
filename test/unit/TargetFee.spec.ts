@@ -51,7 +51,7 @@ describe('TargetFee', () => {
       }
       expect(utxos).toHaveLength(inputs);
 
-      const constructFunc = (fee) =>
+      const constructFunc = (fee: bigint) =>
         constructClaimTransaction(
           utxos,
           Buffer.from('00140000000000000000000000000000000000000000', 'hex'),

@@ -90,7 +90,7 @@ const reverseSwapTree = (
   if (
     new Set(features.map((feature) => feature.type)).size !== features.length
   ) {
-    throw 'duplicate feature';
+    throw new Error('duplicate feature');
   }
 
   for (const feature of features) {
@@ -105,7 +105,7 @@ const reverseSwapTree = (
         break;
 
       default:
-        throw `unknown feature: ${feature.type}`;
+        throw new Error(`unknown feature: ${feature.type}`);
     }
   }
 
