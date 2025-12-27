@@ -1,11 +1,11 @@
-import type { Taptree } from 'bitcoinjs-lib/src/types';
-import type { SwapTree, Tapleaf } from '../consts/Types';
+import { equalBytes } from '@scure/btc-signer/utils.js';
+import type { SwapTree, TapLeaf, TapTree } from '../consts/Types';
 
-const compareLeaf = (leaf: Tapleaf, compareLeaf: Tapleaf) =>
+const compareLeaf = (leaf: TapLeaf, compareLeaf: TapLeaf) =>
   leaf.version === compareLeaf.version &&
-  leaf.output.equals(compareLeaf.output);
+  equalBytes(leaf.output, compareLeaf.output);
 
-const compareTree = (tree: Taptree, compare: Taptree) => {
+const compareTree = (tree: TapTree, compare: TapTree): boolean => {
   if (Array.isArray(tree) !== Array.isArray(compare)) {
     return false;
   }
@@ -16,7 +16,7 @@ const compareTree = (tree: Taptree, compare: Taptree) => {
       tree.every((leaf, i) => compareTree(leaf, compare[i]))
     );
   } else {
-    return compareLeaf(tree as Tapleaf, compare as Tapleaf);
+    return compareLeaf(tree as TapLeaf, compare as TapLeaf);
   }
 };
 

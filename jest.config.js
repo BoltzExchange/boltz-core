@@ -6,7 +6,7 @@ const config = {
     '^.+\\.[tj]s$': '@swc/jest',
   },
   transformIgnorePatterns: [
-    '<rootDir>/node_modules/(?!(@noble/curves|@scure/base|@scure/btc-signer|micro-packed))',
+    '<rootDir>/node_modules/(?!(@noble|@scure|micro-packed))',
   ],
 };
 

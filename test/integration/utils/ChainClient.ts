@@ -87,8 +87,9 @@ class ChainClient {
         id,
         false,
       ]);
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (
+        e instanceof Error &&
         e.message !== undefined &&
         e.message ===
           'No such mempool or blockchain transaction. Use gettransaction for wallet transactions.'
@@ -130,4 +131,4 @@ class ChainClient {
 }
 
 export default ChainClient;
-export { ChainConfig, AddressType };
+export { type ChainConfig, AddressType };

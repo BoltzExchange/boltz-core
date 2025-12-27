@@ -1,12 +1,8 @@
-/**
- * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
- */
-import type { Transaction } from 'bitcoinjs-lib';
-import { getHexBuffer } from '../Utils';
+import type { Transaction } from '@scure/btc-signer';
 import type { ClaimDetails, RefundDetails } from '../consts/Types';
 import { constructClaimTransaction } from './Claim';
 
-const dummyPreimage = getHexBuffer('0x00');
+const dummyPreimage = new Uint8Array(0);
 
 /**
  * Refund swaps
@@ -19,9 +15,9 @@ const dummyPreimage = getHexBuffer('0x00');
  */
 export const constructRefundTransaction = (
   utxos: RefundDetails[],
-  destinationScript: Buffer,
+  destinationScript: Uint8Array,
   timeoutBlockHeight: number,
-  fee: number,
+  fee: bigint,
   isRbf = true,
 ): Transaction => {
   const claimUtxos: ClaimDetails[] = [];

@@ -1,120 +1,97 @@
-/**
- * This file is based on the repository github.com/submarineswaps/swaps-service created by Alex Bosworth
- */
-import ops from '@boltz/bitcoin-ops';
-import * as bip65 from 'bip65';
-import { Transaction, crypto, script } from 'bitcoinjs-lib';
-import { tapleafHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341';
-import * as varuint from 'varuint-bitcoin';
-import { getHexString } from '../Utils';
-import { OutputType } from '../consts/Enums';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { concatBytes } from '@noble/hashes/utils.js';
+import { Script, SigHash, Transaction } from '@scure/btc-signer';
+import { signECDSA, signSchnorr } from '@scure/btc-signer/utils.js';
+import { OutputType } from '../Boltz';
 import type { ClaimDetails } from '../consts/Types';
-import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
-import { createControlBlock, hashForWitnessV1 } from './TaprootUtils';
+import { createControlBlock, taprootHashTree } from './TaprootUtils';
 
-const dummyTaprootSignature = Buffer.alloc(64);
+const LEGACY_SIGHASH = SigHash.ALL;
+const DUMMY_TAPROOT_SIGNATURE = new Uint8Array(64);
 
 export const isRelevantTaprootOutput = (
-  utxo: Omit<ClaimDetails, 'value' | 'keys'>,
+  utxo: Pick<ClaimDetails, 'type' | 'cooperative'>,
 ) => utxo.type === OutputType.Taproot && utxo.cooperative !== true;
 
 export const validateInputs = (
-  utxos: Omit<ClaimDetails, 'value' | 'keys'>[],
+  utxos: Pick<
+    ClaimDetails,
+    'type' | 'redeemScript' | 'swapTree' | 'internalKey'
+  >[],
 ) => {
   if (
     utxos
       .filter((utxo) => utxo.type !== OutputType.Taproot)
       .some((utxo) => utxo.redeemScript === undefined)
   ) {
-    throw 'not all non Taproot inputs have a redeem script';
+    throw Error('not all non Taproot inputs have a redeem script');
   }
 
   const relevantTaprootOutputs = utxos.filter(isRelevantTaprootOutput);
 
   if (relevantTaprootOutputs.some((utxo) => utxo.swapTree === undefined)) {
-    throw 'not all Taproot inputs have a swap tree';
+    throw Error('not all Taproot inputs have a swap tree');
   }
 
   if (relevantTaprootOutputs.some((utxo) => utxo.internalKey === undefined)) {
-    throw 'not all Taproot inputs have an internal key';
+    throw Error('not all Taproot inputs have an internal key');
   }
 };
 
-/**
- * Claim swaps
- *
- * @param utxos UTXOs that should be claimed or refunded
- * @param destinationScript the output script to which the funds should be sent
- * @param fee how many satoshis should be paid as fee
- * @param isRbf whether the transaction should signal full Replace-by-Fee
- * @param timeoutBlockHeight locktime of the transaction; only needed if the transaction is a refund
- * @param isRefund whether the transaction is a refund or claim
- */
 export const constructClaimTransaction = (
   utxos: ClaimDetails[],
-  destinationScript: Buffer,
-  fee: number,
+  destinationScript: Uint8Array,
+  fee: bigint,
   isRbf = true,
   timeoutBlockHeight?: number,
   isRefund = false,
-): Transaction => {
+) => {
   validateInputs(utxos);
 
-  const tx = new Transaction();
-
-  // Refund transactions are just like claim ones and therefore this method
-  // is also used for refunds. The locktime of refund transactions has to be
-  // after the timelock of the UTXO is expired
-  if (timeoutBlockHeight) {
-    tx.locktime = bip65.encode({ blocks: timeoutBlockHeight });
-  }
-
-  // The sum of the values of all UTXOs that should be claimed or refunded
-  let utxoValueSum = BigInt(0);
-
-  utxos.forEach((utxo) => {
-    utxoValueSum += BigInt(utxo.value);
-
-    // Add the swap as input to the transaction
-    // RBF reference: https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki#summary
-    tx.addInput(utxo.txHash, utxo.vout, isRbf ? 0xfffffffd : 0xffffffff);
+  const tx = new Transaction({
+    version: 2,
+    lockTime: timeoutBlockHeight,
   });
 
-  // Send the sum of the UTXOs minus the estimated fee to the destination address
-  tx.addOutput(destinationScript, Number(utxoValueSum - BigInt(fee)));
+  const inputSum = utxos.reduce((acc, utxo) => acc + utxo.amount, BigInt(0));
 
-  utxos.forEach((utxo, index) => {
+  tx.addOutput({
+    amount: inputSum - fee,
+    script: destinationScript,
+  });
+
+  for (const utxo of utxos) {
+    tx.addInput({
+      txid: utxo.transactionId,
+      index: utxo.vout,
+      sequence: isRbf ? 0xfffffffd : 0xffffffff,
+    });
+  }
+
+  for (const [index, utxo] of utxos.entries()) {
     switch (utxo.type) {
-      // Construct and sign the input scripts for P2SH inputs
       case OutputType.Legacy: {
-        const sigHash = tx.hashForSignature(
+        // biome-ignore lint/complexity/useLiteralKeys: only way to get the hash to sign for the legacy input
+        const hash = tx['preimageLegacy'](
           index,
-          utxo.redeemScript!,
-          Transaction.SIGHASH_ALL,
+          utxo.redeemScript,
+          LEGACY_SIGHASH,
         );
-        const signature = utxo.keys.sign(sigHash);
-
-        const inputScript = [
-          encodeSignature(Transaction.SIGHASH_ALL, Buffer.from(signature)),
-          utxo.preimage,
-          ops.OP_PUSHDATA1,
-          utxo.redeemScript!,
-        ];
-
-        tx.setInputScript(index, scriptBuffersToScript(inputScript));
+        tx.updateInput(index, {
+          finalScriptSig: Script.encode([
+            signLegacy(hash, utxo.privateKey),
+            utxo.preimage,
+            utxo.redeemScript,
+          ]),
+        });
         break;
       }
-
-      // Construct the nested redeem script for nested SegWit inputs
       case OutputType.Compatibility: {
-        const nestedScript = [
-          getHexString(Buffer.from(varuint.encode(ops.OP_0).buffer)),
-          crypto.sha256(utxo.redeemScript!),
-        ];
-
-        const nested = scriptBuffersToScript(nestedScript);
-
-        tx.setInputScript(index, scriptBuffersToScript([nested]));
+        tx.updateInput(index, {
+          finalScriptSig: Script.encode([
+            Script.encode(['OP_0', sha256(utxo.redeemScript)]),
+          ]),
+        });
         break;
       }
     }
@@ -122,54 +99,76 @@ export const constructClaimTransaction = (
     // Construct and sign the witness for (nested) SegWit inputs
     // When the Taproot output is spent cooperatively, we leave it empty
     if (utxo.type === OutputType.Taproot) {
-      if (utxo.cooperative !== true) {
-        const tapLeaf = isRefund
-          ? utxo.swapTree!.refundLeaf
-          : utxo.swapTree!.claimLeaf;
-        const sigHash = hashForWitnessV1(
-          utxos,
-          tx,
-          index,
-          tapleafHash(tapLeaf),
-          Transaction.SIGHASH_DEFAULT,
-        );
+      if (utxo.cooperative === true) {
+        tx.updateInput(index, {
+          finalScriptWitness: [DUMMY_TAPROOT_SIGNATURE],
+        });
 
-        const signature = Buffer.from(utxo.keys.signSchnorr(sigHash));
-        const witness = isRefund ? [signature] : [signature, utxo.preimage];
-
-        tx.setWitness(
-          index,
-          witness.concat([
-            tapLeaf.output,
-            createControlBlock(
-              toHashTree(utxo.swapTree!.tree),
-              tapLeaf,
-              utxo.internalKey!,
-            ),
-          ]),
-        );
-      } else {
-        // Stub the signature to allow for accurate fee estimations
-        tx.setWitness(index, [dummyTaprootSignature]);
+        continue;
       }
+
+      if (utxo.swapTree === undefined || utxo.internalKey === undefined) {
+        throw Error('swap tree or internal key is undefined');
+      }
+
+      const tapLeaf = isRefund
+        ? utxo.swapTree.refundLeaf
+        : utxo.swapTree.claimLeaf;
+
+      const sigHash = tx.preimageWitnessV1(
+        index,
+        utxos.map((out) => out.script),
+        SigHash.DEFAULT,
+        utxos.map((out) => out.amount),
+        undefined,
+        tapLeaf.output,
+        tapLeaf.version,
+      );
+      const signature = signSchnorr(sigHash, utxo.privateKey);
+      const witness = [signature];
+
+      if (!isRefund) {
+        witness.push(utxo.preimage);
+      }
+
+      witness.push(tapLeaf.output);
+      witness.push(
+        createControlBlock(
+          taprootHashTree(utxo.swapTree.tree),
+          tapLeaf,
+          utxo.internalKey,
+        ),
+      );
+
+      tx.updateInput(index, {
+        finalScriptWitness: witness,
+      });
     } else if (
       utxo.type === OutputType.Bech32 ||
       utxo.type === OutputType.Compatibility
     ) {
-      const sigHash = tx.hashForWitnessV0(
+      const sigHash = tx.preimageWitnessV0(
         index,
-        utxo.redeemScript!,
-        utxo.value,
-        Transaction.SIGHASH_ALL,
+        utxo.redeemScript,
+        LEGACY_SIGHASH,
+        utxo.amount,
       );
-      const signature = script.signature.encode(
-        Buffer.from(utxo.keys.sign(sigHash)),
-        Transaction.SIGHASH_ALL,
-      );
-
-      tx.setWitness(index, [signature, utxo.preimage, utxo.redeemScript!]);
+      tx.updateInput(index, {
+        finalScriptWitness: [
+          signLegacy(sigHash, utxo.privateKey),
+          utxo.preimage,
+          utxo.redeemScript,
+        ],
+      });
     }
-  });
+  }
 
   return tx;
+};
+
+export const signLegacy = (hash: Uint8Array, privateKey: Uint8Array) => {
+  return concatBytes(
+    signECDSA(hash, privateKey, true),
+    new Uint8Array([LEGACY_SIGHASH]),
+  );
 };

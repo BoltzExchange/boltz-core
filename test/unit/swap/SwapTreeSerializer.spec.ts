@@ -1,4 +1,5 @@
-import { getHexBuffer } from '../../../lib/Utils';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { hex } from '@scure/base';
 import { Feature, Networks, reverseSwapTree } from '../../../lib/liquid';
 import { p2trOutput } from '../../../lib/swap/Scripts';
 import swapTree from '../../../lib/swap/SwapTree';
@@ -6,25 +7,21 @@ import {
   deserializeSwapTree,
   serializeSwapTree,
 } from '../../../lib/swap/SwapTreeSerializer';
-import { ECPair } from '../Utils';
 
 describe('SwapTreeSerializer', () => {
-  const preimageHash = getHexBuffer(
+  const preimageHash = Buffer.from(
     'a8aca40d423f00ec0a69b1b815169d7412a747e08e5669e80b3106e82975908a',
+    'hex',
   );
-  const claimPublicKey = Buffer.from(
-    ECPair.fromPrivateKey(
-      getHexBuffer(
-        '4cffad3235065eff2959eabeb36cccaed698bc5a009d43f2ca1ce2d251599f85',
-      ),
-    ).publicKey,
+  const claimPublicKey = secp256k1.getPublicKey(
+    hex.decode(
+      '4cffad3235065eff2959eabeb36cccaed698bc5a009d43f2ca1ce2d251599f85',
+    ),
   );
-  const refundPublicKey = Buffer.from(
-    ECPair.fromPrivateKey(
-      getHexBuffer(
-        'eb4036423cd9ae6eaa44eb7203047c613aa2c6f52153b6783d53fa4e19173af1',
-      ),
-    ).publicKey,
+  const refundPublicKey = secp256k1.getPublicKey(
+    hex.decode(
+      'eb4036423cd9ae6eaa44eb7203047c613aa2c6f52153b6783d53fa4e19173af1',
+    ),
   );
   const timeoutBlockHeight = 123;
 
@@ -48,7 +45,7 @@ describe('SwapTreeSerializer', () => {
           type: Feature.ClaimCovenant,
           expectedAmount: 100_000,
           assetHash: Networks.liquidRegtest.assetHash,
-          outputScript: p2trOutput(claimPublicKey),
+          outputScript: Buffer.from(p2trOutput(claimPublicKey)),
         },
       ],
     );

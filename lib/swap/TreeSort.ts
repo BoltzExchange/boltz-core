@@ -37,7 +37,7 @@ export const assignTreeProbabilities = <T>(
   >,
 ): ProbabilityNode<T>[] => {
   if (tree.claimLeaf === undefined || tree.refundLeaf === undefined) {
-    throw 'invalid tree';
+    throw Error('invalid tree');
   }
 
   if (tree.covenantClaimLeaf) {
@@ -69,4 +69,4 @@ export const assignTreeProbabilities = <T>(
   ];
 };
 
-export { Tree, TreeNode, ProbabilityNode };
+export type { Tree, TreeNode, ProbabilityNode };

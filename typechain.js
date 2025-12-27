@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { execSync } = require('child_process');
+const { execSync } = require('node:child_process');
 
 for (const contract of ['ERC20', 'Router', 'EtherSwap', 'ERC20Swap']) {
   execSync(

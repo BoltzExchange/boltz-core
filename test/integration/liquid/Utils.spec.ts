@@ -1,6 +1,5 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address } from 'liquidjs-lib';
-import { getHexBuffer } from '../../../lib/Utils';
 import { getOutputValue, init } from '../../../lib/liquid';
 import { elementsClient } from '../Utils';
 
@@ -36,8 +35,9 @@ describe('Liquid Utils', () => {
     const { scriptPubKey, unconfidentialAddress } =
       address.fromConfidential(addr);
 
-    const blindingKey = getHexBuffer(
+    const blindingKey = Buffer.from(
       await elementsClient.dumpBlindingKey(addr),
+      'hex',
     );
 
     const amount = 123_321;
@@ -60,8 +60,9 @@ describe('Liquid Utils', () => {
     expect(addr.startsWith('el1')).toBeTruthy();
 
     const { scriptPubKey } = address.fromConfidential(addr);
-    const blindingKey = getHexBuffer(
+    const blindingKey = Buffer.from(
       await elementsClient.dumpBlindingKey(addr),
+      'hex',
     );
 
     const amount = 121_429;

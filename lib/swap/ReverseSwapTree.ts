@@ -1,37 +1,42 @@
-import ops from '@boltz/bitcoin-ops';
-import { crypto, script } from 'bitcoinjs-lib';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import { ripemd160 } from '@noble/hashes/legacy.js';
+import { Script } from '@scure/btc-signer';
 import type { SwapTree } from '../consts/Types';
 import {
   createRefundLeaf,
   extractRefundPublicKeyFromSwapTree,
 } from './SwapTree';
-import { createLeaf, swapLeafsToTree } from './TaprootUtils';
+import { createLeaf, swapLeafsToTree, toXOnly } from './TaprootUtils';
 
 export const extractClaimPublicKeyFromReverseSwapTree = (
   swapTree: SwapTree,
-): Buffer => script.decompile(swapTree.claimLeaf.output)![6] as Buffer;
+): Uint8Array => {
+  const pubkey = Script.decode(swapTree.claimLeaf.output)?.[6];
+  if (pubkey === undefined || !(pubkey instanceof Uint8Array)) {
+    throw new Error('invalid claim public key');
+  }
+  return pubkey;
+};
 
 export const extractRefundPublicKeyFromReverseSwapTree = (
   swapTree: SwapTree,
-): Buffer => extractRefundPublicKeyFromSwapTree(swapTree);
+): Uint8Array => extractRefundPublicKeyFromSwapTree(swapTree);
 
 const reverseSwapTree = (
   isLiquid: boolean,
-  preimageHash: Buffer,
-  claimPublicKey: Buffer,
-  refundPublicKey: Buffer,
+  preimageHash: Uint8Array,
+  claimPublicKey: Uint8Array,
+  refundPublicKey: Uint8Array,
   timeoutBlockHeight: number,
 ): SwapTree => {
   const claimLeaf = createLeaf(isLiquid, [
-    ops.OP_SIZE,
-    script.number.encode(32),
-    ops.OP_EQUALVERIFY,
-    ops.OP_HASH160,
-    crypto.ripemd160(preimageHash),
-    ops.OP_EQUALVERIFY,
+    'SIZE',
+    32,
+    'EQUALVERIFY',
+    'HASH160',
+    ripemd160(preimageHash),
+    'EQUALVERIFY',
     toXOnly(claimPublicKey),
-    ops.OP_CHECKSIG,
+    'CHECKSIG',
   ]);
   const refundLeaf = createRefundLeaf(
     isLiquid,

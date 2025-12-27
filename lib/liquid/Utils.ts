@@ -1,12 +1,11 @@
 import ops from '@boltz/bitcoin-ops';
-import { crypto, script } from 'bitcoinjs-lib';
+import { confidential, crypto, script } from 'liquidjs-lib';
 import type { TxOutput } from 'liquidjs-lib';
-import { confidential } from 'liquidjs-lib';
 import { confidentialLiquid } from './init';
 
 export const getOutputValue = (
   output: TxOutput & {
-    blindingPrivateKey?: Buffer;
+    blindingPrivateKey?: Uint8Array;
   },
 ): number => {
   return output.blindingPrivateKey &&
@@ -15,7 +14,7 @@ export const getOutputValue = (
     ? Number(
         confidentialLiquid.unblindOutputWithKey(
           output,
-          output.blindingPrivateKey,
+          Buffer.from(output.blindingPrivateKey),
         ).value,
       )
     : confidential.confidentialValueToSatoshi(output.value);
@@ -27,7 +26,10 @@ const getScriptIntrospectionWitnessScript = (outputScript: Buffer) =>
 export const getScriptIntrospectionValues = (
   outputScript: Buffer,
 ): { version: number; script: Buffer } => {
-  const dec = script.decompile(outputScript)!;
+  const dec = script.decompile(outputScript);
+  if (dec === undefined || dec === null) {
+    throw new Error('failed to decompile output script');
+  }
 
   switch (dec[0]) {
     case ops.OP_1:

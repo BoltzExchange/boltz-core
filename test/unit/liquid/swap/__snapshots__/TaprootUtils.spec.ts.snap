@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`TaprootUtils should convert netsted taproot tree to hash tree 1`] = `
+exports[`TaprootUtils should convert nested taproot tree to hash tree 1`] = `
 {
   "hash": {
     "data": [
@@ -396,7 +396,7 @@ exports[`TaprootUtils should convert taproot tree to hash tree 1`] = `
 }
 `;
 
-exports[`TaprootUtils should hash tap leafs 1`] = `
+exports[`TaprootUtils should hash tap leaf 1`] = `
 {
   "data": [
     214,

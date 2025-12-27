@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { OutputType, reverseSwapScript } from '../../../lib/Boltz';
 import { bitcoinClient, claimSwap, createSwapOutput } from '../Utils';
 
@@ -19,19 +19,13 @@ describe('ReverseSwapScript claim', () => {
     );
     utxo.preimage = randomBytes(31);
 
-    let actualError: any;
-
-    try {
-      await claimSwap([utxo]);
-    } catch (error) {
-      // If the preimage has in invalid length the refund key is loaded and the signature is verified against it
-      actualError = error;
-    }
-
-    expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toContain(
-      'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
-    );
+    // If the preimage has an invalid length the refund key is loaded and the signature is verified against it
+    await expect(claimSwap([utxo])).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
+        'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
+      ),
+    });
   });
 
   test('should not claim reverse swaps if the preimage has a valid length but an invalid hash', async () => {
@@ -42,18 +36,12 @@ describe('ReverseSwapScript claim', () => {
     );
     utxo.preimage = randomBytes(32);
 
-    let actualError: any;
-
-    try {
-      await claimSwap([utxo]);
-    } catch (error) {
-      actualError = error;
-    }
-
-    expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toContain(
-      'mempool-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
-    );
+    await expect(claimSwap([utxo])).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
+        'mempool-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
+      ),
+    });
   });
 
   test.each`

@@ -1,4 +1,4 @@
-import { request } from 'http';
+import { request } from 'node:http';
 
 type RpcConfig = {
   host: string;
@@ -24,7 +24,10 @@ class RpcClient {
     };
   }
 
-  public request = <T>(method: string, params?: any[]): Promise<T> => {
+  public request = <T>(
+    method: string,
+    params?: (string | string[] | number | boolean)[],
+  ): Promise<T> => {
     return new Promise<T>((resolve, reject) => {
       const serializedRequest = JSON.stringify({
         method,
@@ -71,4 +74,4 @@ class RpcClient {
 }
 
 export default RpcClient;
-export { RpcConfig };
+export type { RpcConfig };

@@ -1,11 +1,10 @@
 import type { Transaction } from 'liquidjs-lib';
 import type { Network } from 'liquidjs-lib/src/networks';
-import { getHexBuffer } from '../../Utils';
 import Networks from '../consts/Networks';
 import type { LiquidClaimDetails, LiquidRefundDetails } from '../consts/Types';
 import { constructClaimTransaction } from './Claim';
 
-const dummyPreimage = getHexBuffer('0x00');
+const dummyPreimage = new Uint8Array(0);
 
 /**
  * Refund swaps
@@ -22,14 +21,14 @@ export const constructRefundTransaction = (
   utxos: LiquidRefundDetails[],
   destinationScript: Buffer,
   timeoutBlockHeight: number,
-  fee: number,
+  fee: bigint,
   isRbf = true,
   network: Network = Networks.liquidMainnet,
   blindingKey?: Buffer,
 ): Transaction => {
   const claimUtxos: LiquidClaimDetails[] = utxos.map((utxo) => ({
-    preimage: dummyPreimage,
     ...utxo,
+    preimage: dummyPreimage,
   }));
 
   return constructClaimTransaction(

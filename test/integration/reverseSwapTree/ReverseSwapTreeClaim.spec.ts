@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../lib/consts/Enums';
 import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
 import { bitcoinClient, claimSwap, createSwapOutput, init } from '../Utils';
@@ -29,15 +29,12 @@ describe('ReverseSwapTree claim', () => {
         randomBytes(length),
       );
 
-      try {
-        await claimSwap([utxo]);
-        expect(true).toBe(false);
-      } catch (error: any) {
-        expect(error.code).toBe(-26);
-        expect(error.message).toContain(
+      await expect(claimSwap([utxo])).rejects.toMatchObject({
+        code: -26,
+        message: expect.stringContaining(
           'mempool-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
-        );
-      }
+        ),
+      });
     },
   );
 });

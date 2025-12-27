@@ -1,21 +1,23 @@
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import { randomBytes } from 'crypto';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { randomBytes } from 'node:crypto';
 import {
   extractClaimPublicKeyFromReverseSwapTree,
   extractRefundPublicKeyFromReverseSwapTree,
   reverseSwapTree,
 } from '../../../lib/Boltz';
-import { ECPair } from '../Utils';
+import { toXOnly } from '../../../lib/swap/TaprootUtils';
 
 describe('ReverseSwapTree', () => {
   test('should extract claim public key from swap tree', () => {
-    const claimKeys = Buffer.from(ECPair.makeRandom().publicKey);
+    const claimKeys = secp256k1.getPublicKey(
+      secp256k1.utils.randomPrivateKey(),
+    );
 
     const tree = reverseSwapTree(
       false,
       randomBytes(32),
       claimKeys,
-      Buffer.from(ECPair.makeRandom().publicKey),
+      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
       123,
     );
 
@@ -25,12 +27,14 @@ describe('ReverseSwapTree', () => {
   });
 
   test('should extract refund public key from swap tree', () => {
-    const refundKeys = Buffer.from(ECPair.makeRandom().publicKey);
+    const refundKeys = secp256k1.getPublicKey(
+      secp256k1.utils.randomPrivateKey(),
+    );
 
     const tree = reverseSwapTree(
       false,
       randomBytes(32),
-      Buffer.from(ECPair.makeRandom().publicKey),
+      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
       refundKeys,
       123,
     );

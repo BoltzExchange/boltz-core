@@ -1,7 +1,6 @@
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, confidential } from 'liquidjs-lib';
 import { targetFee } from '../../../lib/TargetFee';
-import { getHexBuffer } from '../../../lib/Utils';
 import { constructClaimTransaction, init } from '../../../lib/liquid';
 import { liquidClaimDetails } from './swap/ClaimDetails';
 
@@ -17,6 +16,7 @@ describe.each([false, true])(
       (satPerVbyte: number) => {
         const utxo = {
           ...liquidClaimDetails[0],
+          script: Buffer.from(liquidClaimDetails[0].script),
           value: confidential.satoshiToConfidentialValue(10 ** 8),
         };
         const tx = targetFee<Transaction>(
@@ -24,7 +24,10 @@ describe.each([false, true])(
           (fee) =>
             constructClaimTransaction(
               [utxo],
-              getHexBuffer('00140000000000000000000000000000000000000000'),
+              Buffer.from(
+                '00140000000000000000000000000000000000000000',
+                'hex',
+              ),
               fee,
               false,
             ),

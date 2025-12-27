@@ -1,4 +1,4 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
+import zkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { reverseSwapScript, swapScript } from '../../../../lib/Boltz';
 import { OutputType } from '../../../../lib/consts/Enums';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
@@ -9,6 +9,7 @@ import {
   destinationOutput,
   elementsClient,
   refundSwap,
+  init as utilsInit,
 } from '../../Utils';
 
 describe.each`
@@ -16,13 +17,19 @@ describe.each`
   ${swapScript}        | ${'SwapScript'}        | ${'swap'}
   ${reverseSwapScript} | ${'ReverseSwapScript'} | ${'reverse swap'}
 `('Liquid $name refund', ({ script, swapName }) => {
+  let secpZkp: Secp256k1ZKP;
   let bestBlockHeight: number;
 
   beforeAll(async () => {
-    const [, secp] = await Promise.all([elementsClient.init(), zkp()]);
+    const [, secp] = await Promise.all([
+      elementsClient.init(),
+      zkp(),
+      utilsInit(),
+    ]);
     init(secp);
 
     bestBlockHeight = (await elementsClient.getBlockchainInfo()).blocks;
+    secpZkp = secp;
   });
 
   afterEach(async () => {
@@ -39,7 +46,7 @@ describe.each`
     async ({ type, blindInputs, blindOutput }) => {
       const { utxo } = await createSwapOutput<LiquidClaimDetails>(
         type,
-        false,
+        true,
         script,
         bestBlockHeight,
         blindInputs,
@@ -47,7 +54,9 @@ describe.each`
       await refundSwap(
         [utxo],
         bestBlockHeight,
-        blindOutput ? slip77.derive(destinationOutput).publicKey! : undefined,
+        blindOutput
+          ? slip77(secpZkp).derive(Buffer.from(destinationOutput)).publicKey!
+          : undefined,
       );
     },
   );
@@ -65,7 +74,7 @@ describe.each`
       for (let i = 0; i < 3; i++) {
         const { utxo } = await createSwapOutput<LiquidClaimDetails>(
           type,
-          false,
+          true,
           script,
           bestBlockHeight,
           blindInputs,
@@ -75,7 +84,9 @@ describe.each`
       await refundSwap(
         utxos,
         bestBlockHeight,
-        blindOutput ? slip77.derive(destinationOutput).publicKey! : undefined,
+        blindOutput
+          ? slip77(secpZkp).derive(Buffer.from(destinationOutput)).publicKey!
+          : undefined,
       );
     },
   );

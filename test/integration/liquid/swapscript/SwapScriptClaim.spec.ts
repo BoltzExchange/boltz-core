@@ -1,4 +1,4 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
+import zkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { reverseSwapScript, swapScript } from '../../../../lib/Boltz';
 import { OutputType } from '../../../../lib/consts/Enums';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
@@ -9,6 +9,7 @@ import {
   createSwapOutput,
   destinationOutput,
   elementsClient,
+  init as utilsInit,
 } from '../../Utils';
 
 describe.each`
@@ -16,9 +17,16 @@ describe.each`
   ${swapScript}        | ${'SwapScript'}        | ${'swap'}
   ${reverseSwapScript} | ${'ReverseSwapScript'} | ${'reverse swap'}
 `('Liquid $name claim', ({ script, swapName }) => {
+  let secpZkp: Secp256k1ZKP;
+
   beforeAll(async () => {
-    const [, secp] = await Promise.all([elementsClient.init(), zkp()]);
+    const [, secp] = await Promise.all([
+      elementsClient.init(),
+      zkp(),
+      utilsInit(),
+    ]);
     init(secp);
+    secpZkp = secp;
   });
 
   afterEach(async () => {
@@ -42,7 +50,9 @@ describe.each`
       );
       await claimSwap(
         [utxo],
-        blindOutput ? slip77.derive(destinationOutput).publicKey! : undefined,
+        blindOutput
+          ? slip77(secpZkp).derive(Buffer.from(destinationOutput)).publicKey!
+          : undefined,
       );
     },
   );
@@ -69,7 +79,9 @@ describe.each`
       }
       await claimSwap(
         utxos,
-        blindOutput ? slip77.derive(destinationOutput).publicKey! : undefined,
+        blindOutput
+          ? slip77(secpZkp).derive(Buffer.from(destinationOutput)).publicKey!
+          : undefined,
       );
     },
   );

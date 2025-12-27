@@ -1,10 +1,11 @@
 import ops from '@boltz/bitcoin-ops';
-import { crypto, script } from 'bitcoinjs-lib';
+import { ripemd160 } from '@noble/hashes/legacy.js';
+import { hex } from '@scure/base';
+import { script } from 'liquidjs-lib';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
-import { getHexBuffer } from '../../Utils';
-import type { LiquidSwapTree, Tapleaf } from '../../consts/Types';
+import type { LiquidSwapTree, TapLeaf } from '../../consts/Types';
 import bitcoinReverseSwapTree from '../../swap/ReverseSwapTree';
-import { leafVersionLiquid } from '../../swap/TaprootUtils';
+import { TAP_LEAF_VERSION_LIQUID } from '../../swap/TaprootUtils';
 import { assignTreeProbabilities, sortTree } from '../../swap/TreeSort';
 import { getScriptIntrospectionValues } from '../Utils';
 import liquidOps from '../consts/Ops';
@@ -24,24 +25,24 @@ type FeatureOption = { type: Feature } & ClaimCovenant;
 const claimCovenantOutputIndex = script.number.encode(0);
 
 const createClaimCovenantLeaf = (
-  preimageHash: Buffer,
+  preimageHash: Uint8Array,
   assetHash: string,
   outputScript: Buffer,
   expectedAmount: number,
-): Tapleaf => {
+): TapLeaf => {
   const userOutput = getScriptIntrospectionValues(outputScript);
 
   const amountBuffer = Buffer.alloc(8);
   amountBuffer.writeBigUint64LE(BigInt(expectedAmount));
 
   return {
-    version: leafVersionLiquid,
+    version: TAP_LEAF_VERSION_LIQUID,
     output: script.compile([
       ops.OP_SIZE,
       script.number.encode(32),
       ops.OP_EQUALVERIFY,
       ops.OP_HASH160,
-      crypto.ripemd160(preimageHash),
+      Buffer.from(ripemd160(preimageHash)),
       ops.OP_EQUALVERIFY,
 
       claimCovenantOutputIndex,
@@ -55,7 +56,7 @@ const createClaimCovenantLeaf = (
       liquidOps.OP_INSPECTOUTPUTASSET,
       ops.OP_1,
       ops.OP_EQUALVERIFY,
-      reverseBuffer(getHexBuffer(assetHash)),
+      reverseBuffer(Buffer.from(hex.decode(assetHash))),
       ops.OP_EQUALVERIFY,
 
       claimCovenantOutputIndex,
@@ -68,9 +69,9 @@ const createClaimCovenantLeaf = (
 };
 
 const reverseSwapTree = (
-  preimageHash: Buffer,
-  claimPublicKey: Buffer,
-  refundPublicKey: Buffer,
+  preimageHash: Uint8Array,
+  claimPublicKey: Uint8Array,
+  refundPublicKey: Uint8Array,
   timeoutBlockHeight: number,
   features?: FeatureOption[],
 ): LiquidSwapTree => {
@@ -89,7 +90,7 @@ const reverseSwapTree = (
   if (
     new Set(features.map((feature) => feature.type)).size !== features.length
   ) {
-    throw 'duplicate feature';
+    throw new Error('duplicate feature');
   }
 
   for (const feature of features) {
@@ -104,15 +105,16 @@ const reverseSwapTree = (
         break;
 
       default:
-        throw `unknown feature: ${feature.type}`;
+        throw new Error(`unknown feature: ${feature.type}`);
     }
   }
 
   return {
     ...tree,
-    tree: sortTree<Tapleaf>(assignTreeProbabilities(tree)),
+    tree: sortTree<TapLeaf>(assignTreeProbabilities(tree)),
   };
 };
 
 export default reverseSwapTree;
-export { Feature, FeatureOption };
+export { Feature };
+export type { FeatureOption };
