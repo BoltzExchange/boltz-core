@@ -19,7 +19,7 @@ describe('Refund', () => {
     ),
   };
 
-  const refundDetails = [
+  const refundDetails: RefundDetails[] = [
     {
       ...utxo,
       type: OutputType.Bech32,

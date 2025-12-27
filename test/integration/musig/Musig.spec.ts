@@ -2,7 +2,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { hex } from '@scure/base';
 import { Address, OutScript, SigHash, Transaction } from '@scure/btc-signer';
 import { equalBytes } from '@scure/btc-signer/utils.js';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import Networks from '../../../lib/consts/Networks';
 import Musig from '../../../lib/musig/Musig';
 import { p2trOutput } from '../../../lib/swap/Scripts';

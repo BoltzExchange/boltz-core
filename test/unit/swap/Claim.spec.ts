@@ -1,6 +1,6 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
-import { randomBytes } from 'crypto';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
+import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../lib/consts/Enums';
 import type { ClaimDetails } from '../../../lib/consts/Types';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';

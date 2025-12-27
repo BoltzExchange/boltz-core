@@ -1,7 +1,11 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
-import { randomBytes } from 'crypto';
 import { networks } from 'liquidjs-lib';
-import { Feature, reverseSwapTree } from '../../../../lib/liquid';
+import { randomBytes } from 'node:crypto';
+import {
+  Feature,
+  type FeatureOption,
+  reverseSwapTree,
+} from '../../../../lib/liquid';
 import { p2trOutput } from '../../../../lib/swap/Scripts';
 
 describe('ReverseSwapTree', () => {
@@ -50,7 +54,7 @@ describe('ReverseSwapTree', () => {
         [
           {
             type: feature,
-          } as any,
+          } as unknown as FeatureOption,
         ],
       ),
     ).toThrow(`unknown feature: ${feature}`);

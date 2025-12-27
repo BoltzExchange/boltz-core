@@ -45,15 +45,12 @@ describe('SwapScript refund', () => {
       bestBlockHeight + 1,
     );
 
-    try {
-      await refundSwap([utxo], bestBlockHeight);
-      expect(true).toBe(false);
-    } catch (error: any) {
-      expect(error.code).toBe(-26);
-      expect(error.message).toContain(
+    await expect(refundSwap([utxo], bestBlockHeight)).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
         'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
-      );
-    }
+      ),
+    });
   });
 
   test.each`
@@ -70,15 +67,12 @@ describe('SwapScript refund', () => {
     );
     utxo.privateKey = secp256k1.utils.randomPrivateKey();
 
-    try {
-      await refundSwap([utxo], bestBlockHeight);
-      expect(true).toBe(false);
-    } catch (error: any) {
-      expect(error.code).toBe(-26);
-      expect(error.message).toContain(
+    await expect(refundSwap([utxo], bestBlockHeight)).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
         'mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation)',
-      );
-    }
+      ),
+    });
   });
 
   test('should refund multiple swaps in one transaction', async () => {

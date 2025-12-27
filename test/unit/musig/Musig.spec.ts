@@ -1,8 +1,9 @@
+/** biome-ignore-all lint/complexity/useLiteralKeys: test is checking on internal properties */
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { hex } from '@scure/base';
 import { nonceGen } from '@scure/btc-signer/musig2.js';
 import zkpInit, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import Musig from '../../../lib/musig/Musig';
 import { toXOnly } from '../../../lib/swap/TaprootUtils';
 

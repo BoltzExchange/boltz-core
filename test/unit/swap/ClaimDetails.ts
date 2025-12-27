@@ -18,7 +18,7 @@ const utxo = {
   ),
 };
 
-export const claimDetails = [
+export const claimDetails: ClaimDetails[] = [
   {
     ...utxo,
     type: OutputType.Bech32,

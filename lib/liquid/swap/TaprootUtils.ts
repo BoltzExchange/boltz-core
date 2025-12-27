@@ -82,7 +82,10 @@ export const createControlBlock = (
   const outputKey = secp.ecc.xOnlyPointAddTweak(
     internalKey,
     tapTweakHash(internalKey, hashTree.hash),
-  )!;
+  );
+  if (outputKey === null) {
+    throw 'output key is null';
+  }
 
   return Buffer.concat(
     [Buffer.from([leaf.version | outputKey.parity]), internalKey].concat(path),

@@ -45,7 +45,7 @@ describe('Scripts', () => {
     [42 as OutputType, undefined],
   ])(
     'should get correct SH function for output type %s',
-    (type: OutputType, expectedFunc: any) => {
+    (type: OutputType, expectedFunc: unknown) => {
       expect(outputFunctionForType(type)).toEqual(expectedFunc);
     },
   );

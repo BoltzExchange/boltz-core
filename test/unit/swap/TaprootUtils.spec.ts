@@ -4,7 +4,7 @@ import { Script, type ScriptType } from '@scure/btc-signer';
 import { TAP_LEAF_VERSION } from '@scure/btc-signer/payment.js';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { tapTweakHash } from 'bitcoinjs-lib/src/payments/bip341';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import type { TapLeaf, TapTree } from '../../../lib/consts/Types';
 import Musig from '../../../lib/musig/Musig';
 import {

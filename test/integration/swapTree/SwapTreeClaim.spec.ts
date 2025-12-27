@@ -1,6 +1,6 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { SigHash } from '@scure/btc-signer';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { Musig, OutputType } from '../../../lib/Boltz';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
@@ -100,15 +100,12 @@ describe.each`
     );
     utxo.preimage = randomBytes(32);
 
-    try {
-      await claimSwap([utxo]);
-      expect(true).toBe(false);
-    } catch (error: any) {
-      expect(error.code).toBe(-26);
-      expect(error.message).toContain(
+    await expect(claimSwap([utxo])).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
         'mempool-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
-      );
-    }
+      ),
+    });
   });
 
   test('should not claim via script path when claim key is invalid', async () => {
@@ -119,14 +116,11 @@ describe.each`
     );
     utxo.privateKey = secp256k1.utils.randomPrivateKey();
 
-    try {
-      await claimSwap([utxo]);
-      expect(true).toBe(false);
-    } catch (error: any) {
-      expect(error.code).toBe(-26);
-      expect(error.message).toContain(
+    await expect(claimSwap([utxo])).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
         'mempool-script-verify-flag-failed (Invalid Schnorr signature)',
-      );
-    }
+      ),
+    });
   });
 });

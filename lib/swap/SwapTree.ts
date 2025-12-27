@@ -17,11 +17,27 @@ export const createRefundLeaf = (
 
 export const extractClaimPublicKeyFromSwapTree = (
   swapTree: SwapTree,
-): Uint8Array => Script.decode(swapTree.claimLeaf.output)![3] as Uint8Array;
+): Uint8Array => {
+  const pubkey = Script.decode(swapTree.claimLeaf.output)?.[3];
+
+  if (pubkey === undefined || !(pubkey instanceof Uint8Array)) {
+    throw new Error('invalid claim public key');
+  }
+
+  return pubkey;
+};
 
 export const extractRefundPublicKeyFromSwapTree = (
   swapTree: SwapTree,
-): Uint8Array => Script.decode(swapTree.refundLeaf.output)![0] as Uint8Array;
+): Uint8Array => {
+  const pubkey = Script.decode(swapTree.refundLeaf.output)?.[0];
+
+  if (pubkey === undefined || !(pubkey instanceof Uint8Array)) {
+    throw new Error('invalid refund public key');
+  }
+
+  return pubkey;
+};
 
 const swapTree = (
   isLiquid: boolean,

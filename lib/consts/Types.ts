@@ -5,22 +5,33 @@ export type Error = {
   code: string;
 };
 
-export type RefundDetails = {
+export type BaseRefundDetails = {
   transactionId: string;
   vout: number;
   script: Uint8Array;
   amount: bigint;
-  type: OutputType;
   privateKey: Uint8Array;
+};
 
-  // Legacy swaps
-  redeemScript?: Uint8Array;
+export type LegacyRefundDetails = BaseRefundDetails & {
+  type: OutputType.Legacy | OutputType.Compatibility | OutputType.Bech32;
+  redeemScript: Uint8Array;
 
-  // Taproot swaps
+  cooperative?: never;
+  swapTree?: never;
+  internalKey?: never;
+};
+
+export type TaprootRefundDetails = BaseRefundDetails & {
+  type: OutputType.Taproot;
   cooperative?: boolean;
   swapTree?: SwapTree;
   internalKey?: Uint8Array;
+
+  redeemScript?: never;
 };
+
+export type RefundDetails = LegacyRefundDetails | TaprootRefundDetails;
 
 export type ClaimDetails = RefundDetails & {
   preimage: Uint8Array;

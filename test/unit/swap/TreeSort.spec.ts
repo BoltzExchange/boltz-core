@@ -15,7 +15,7 @@ describe('TreeSort', () => {
   `('should sort generic tree', ({ tree, result }) => {
     expect(
       sortTree(
-        (tree as [number, any][]).map(([probability, value]) => ({
+        (tree as [number, unknown][]).map(([probability, value]) => ({
           probability,
           value,
         })),

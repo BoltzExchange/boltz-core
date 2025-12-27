@@ -61,4 +61,4 @@ export const deserializeSwapTree = (
   };
 };
 
-export { SerializedLeaf, SerializedTree };
+export type { SerializedLeaf, SerializedTree };

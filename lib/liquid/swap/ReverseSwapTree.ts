@@ -116,4 +116,5 @@ const reverseSwapTree = (
 };
 
 export default reverseSwapTree;
-export { Feature, FeatureOption };
+export { Feature };
+export type { FeatureOption };

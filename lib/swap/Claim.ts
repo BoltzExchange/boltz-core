@@ -24,17 +24,17 @@ export const validateInputs = (
       .filter((utxo) => utxo.type !== OutputType.Taproot)
       .some((utxo) => utxo.redeemScript === undefined)
   ) {
-    throw 'not all non Taproot inputs have a redeem script';
+    throw Error('not all non Taproot inputs have a redeem script');
   }
 
   const relevantTaprootOutputs = utxos.filter(isRelevantTaprootOutput);
 
   if (relevantTaprootOutputs.some((utxo) => utxo.swapTree === undefined)) {
-    throw 'not all Taproot inputs have a swap tree';
+    throw Error('not all Taproot inputs have a swap tree');
   }
 
   if (relevantTaprootOutputs.some((utxo) => utxo.internalKey === undefined)) {
-    throw 'not all Taproot inputs have an internal key';
+    throw Error('not all Taproot inputs have an internal key');
   }
 };
 
@@ -71,7 +71,7 @@ export const constructClaimTransaction = (
   for (const [index, utxo] of utxos.entries()) {
     switch (utxo.type) {
       case OutputType.Legacy: {
-        // Dirty but only way to get the hash to sign for the legacy input
+        // biome-ignore lint/complexity/useLiteralKeys: only way to get the hash to sign for the legacy input
         const hash = tx['preimageLegacy'](
           index,
           utxo.redeemScript,
@@ -81,7 +81,7 @@ export const constructClaimTransaction = (
           finalScriptSig: Script.encode([
             signLegacy(hash, utxo.privateKey),
             utxo.preimage,
-            utxo.redeemScript!,
+            utxo.redeemScript,
           ]),
         });
         break;
@@ -89,7 +89,7 @@ export const constructClaimTransaction = (
       case OutputType.Compatibility: {
         tx.updateInput(index, {
           finalScriptSig: Script.encode([
-            Script.encode(['OP_0', sha256(utxo.redeemScript!)]),
+            Script.encode(['OP_0', sha256(utxo.redeemScript)]),
           ]),
         });
         break;
@@ -107,9 +107,13 @@ export const constructClaimTransaction = (
         continue;
       }
 
+      if (utxo.swapTree === undefined || utxo.internalKey === undefined) {
+        throw Error('swap tree or internal key is undefined');
+      }
+
       const tapLeaf = isRefund
-        ? utxo.swapTree!.refundLeaf
-        : utxo.swapTree!.claimLeaf;
+        ? utxo.swapTree.refundLeaf
+        : utxo.swapTree.claimLeaf;
 
       const sigHash = tx.preimageWitnessV1(
         index,
@@ -130,9 +134,9 @@ export const constructClaimTransaction = (
       witness.push(tapLeaf.output);
       witness.push(
         createControlBlock(
-          taprootHashTree(utxo.swapTree!.tree),
+          taprootHashTree(utxo.swapTree.tree),
           tapLeaf,
-          utxo.internalKey!,
+          utxo.internalKey,
         ),
       );
 
@@ -145,7 +149,7 @@ export const constructClaimTransaction = (
     ) {
       const sigHash = tx.preimageWitnessV0(
         index,
-        utxo.redeemScript!,
+        utxo.redeemScript,
         LEGACY_SIGHASH,
         utxo.amount,
       );
@@ -153,7 +157,7 @@ export const constructClaimTransaction = (
         finalScriptWitness: [
           signLegacy(sigHash, utxo.privateKey),
           utxo.preimage,
-          utxo.redeemScript!,
+          utxo.redeemScript,
         ],
       });
     }

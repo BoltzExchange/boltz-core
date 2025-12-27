@@ -1,4 +1,4 @@
-import { confidential } from 'liquidjs-lib';
+import { Transaction, confidential } from 'liquidjs-lib';
 import type { OutputType } from '../../../../lib/consts/Enums';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import { Networks } from '../../../../lib/liquid';
@@ -17,7 +17,8 @@ export const liquidClaimDetails = claimDetails.map((details) => ({
   nonce,
   asset: lbtcRegtest,
   value: confidential.satoshiToConfidentialValue(Number(details.amount)),
-}));
+  legacyTx: new Transaction(),
+})) as unknown as LiquidClaimDetails[];
 
 export const liquidClaimDetailsMap = new Map<OutputType, LiquidClaimDetails>(
   liquidClaimDetails.map((entry) => [entry.type, entry]),

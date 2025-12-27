@@ -1,8 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha2.js';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { randomBytes } from 'crypto';
 import { Transaction, address, networks } from 'liquidjs-lib';
+import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../../lib/consts/Enums';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import {
@@ -90,7 +90,7 @@ describe.each`
         Buffer.from(p2trOutput(tweakedMusig.pubkeyAgg)),
         networks.regtest,
       );
-      let blindingPrivateKey: Buffer | undefined = undefined;
+      let blindingPrivateKey: Buffer | undefined;
 
       if (shouldBlind) {
         const enc = blindWitnessAddress(swapAddress, OutputType.Taproot);
@@ -126,6 +126,7 @@ describe.each`
         utxos: [
           {
             ...output,
+            type: OutputType.Taproot,
             preimage,
             swapTree: tree,
             blindingPrivateKey,
@@ -211,6 +212,9 @@ describe.each`
         [
           {
             ...utxos[0],
+            redeemScript: undefined,
+            legacyTx: undefined,
+            type: OutputType.Taproot,
             cooperative: false,
             privateKey: theirKeys,
           },
@@ -276,6 +280,7 @@ describe.each`
           [
             {
               ...output,
+              type: OutputType.Taproot,
               preimage,
               blindingPrivateKey,
               swapTree: tree,
@@ -315,6 +320,7 @@ describe.each`
           [
             {
               ...output,
+              type: OutputType.Taproot,
               preimage,
               blindingPrivateKey,
               swapTree: tree,
@@ -353,6 +359,7 @@ describe.each`
         [
           {
             ...output,
+            type: OutputType.Taproot,
             blindingPrivateKey,
             swapTree: tree,
             cooperative: false,
@@ -390,6 +397,7 @@ describe.each`
         [
           {
             ...output,
+            type: OutputType.Taproot,
             preimage,
             blindingPrivateKey,
             swapTree: tree,
@@ -439,6 +447,7 @@ describe.each`
           [
             {
               ...output,
+              type: OutputType.Taproot,
               preimage,
               blindingPrivateKey,
               swapTree: tree,

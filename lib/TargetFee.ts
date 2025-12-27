@@ -1,5 +1,5 @@
 interface ITransaction {
-  ins: any[];
+  ins: unknown[];
   virtualSize(discountCT?: boolean): number;
 }
 

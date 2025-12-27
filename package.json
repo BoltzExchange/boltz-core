@@ -7,9 +7,12 @@
     "compile": "npm run compile:solidity && npm run compile:typescript",
     "compile:solidity": "forge compile && npm run compile:solidity:ethers",
     "compile:solidity:ethers": "node typechain.js",
-    "compile:typescript": "tsc",
+    "compile:typescript": "tsc && npm run compile:typescript:test",
+    "compile:typescript:test": "tsc --project tsconfig.test.json",
     "compile:typescript:watch": "tsc --watch",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "npm run lint:eslint && npm run lint:biome",
+    "lint:eslint": "eslint --max-warnings 0 .",
+    "lint:biome": "npx @biomejs/biome lint .",
     "prettier": "npx prettier '{lib,test}/**/*.ts'",
     "prettier:write": "npm run prettier -- --write",
     "prettier:check": "npm run prettier -- --check",
@@ -58,6 +61,7 @@
     "@scure/btc-signer": "^2.0.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.10",
     "@eslint/js": "^9.39.2",
     "@swc/core": "^1.15.7",
     "@swc/jest": "^0.2.39",

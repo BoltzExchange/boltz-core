@@ -37,15 +37,12 @@ describe.each`
       timeout + 21,
     );
 
-    try {
-      await refundSwap([utxo], timeout);
-      expect(true).toBe(false);
-    } catch (error: any) {
-      expect(error.code).toBe(-26);
-      expect(error.message).toContain(
+    await expect(refundSwap([utxo], timeout)).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
         'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
-      );
-    }
+      ),
+    });
   });
 
   test('should not refund via script path when refund key is invalid', async () => {
@@ -58,14 +55,11 @@ describe.each`
     );
     utxo.privateKey = secp256k1.utils.randomPrivateKey();
 
-    try {
-      await refundSwap([utxo], timeout);
-      expect(true).toBe(false);
-    } catch (error: any) {
-      expect(error.code).toBe(-26);
-      expect(error.message).toContain(
+    await expect(refundSwap([utxo], timeout)).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
         'mempool-script-verify-flag-failed (Invalid Schnorr signature)',
-      );
-    }
+      ),
+    });
   });
 });

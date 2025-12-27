@@ -43,7 +43,7 @@ describe('Liquid PreimageDetector', () => {
           nonce,
           preimage,
           redeemScript: Buffer.from(redeemScript),
-          type: type,
+          type: OutputType.Bech32,
           privateKey: claimKeys,
           vout: 0,
           value: confidential.satoshiToConfidentialValue(123123),

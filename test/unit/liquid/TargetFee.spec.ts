@@ -16,6 +16,7 @@ describe.each([false, true])(
       (satPerVbyte: number) => {
         const utxo = {
           ...liquidClaimDetails[0],
+          script: Buffer.from(liquidClaimDetails[0].script),
           value: confidential.satoshiToConfidentialValue(10 ** 8),
         };
         const tx = targetFee<Transaction>(

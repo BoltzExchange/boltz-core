@@ -64,7 +64,7 @@ describe('Liquid Claim', () => {
             transactionId:
               '0000000000000000000000000000000000000000000000000000000000000000',
             redeemScript: Buffer.alloc(0),
-          } as any,
+          } as unknown as LiquidClaimDetails,
         ],
         1n,
       ),
@@ -88,7 +88,7 @@ describe('Liquid Claim', () => {
               '0000000000000000000000000000000000000000000000000000000000000000',
             redeemScript: Buffer.alloc(0),
           },
-        ] as any,
+        ] as unknown as LiquidClaimDetails[],
         1n,
       ),
     ).toThrow('all or none inputs have to be blinded');

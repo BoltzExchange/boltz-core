@@ -43,8 +43,9 @@ export const detectSwap = <T extends Transaction | LiquidTransaction>(
     vout: number,
     output: TransactionOutput | LiquidTxOutput,
   ): DetectedSwap<T> | undefined => {
-    const scriptMatch = scripts.find(([, script]) =>
-      equalBytes(script, output.script!),
+    const scriptMatch = scripts.find(
+      ([, script]) =>
+        output.script !== undefined && equalBytes(script, output.script),
     );
 
     if (scriptMatch) {
@@ -60,7 +61,7 @@ export const detectSwap = <T extends Transaction | LiquidTransaction>(
 
   if (transaction instanceof Transaction) {
     for (let vout = 0; vout < transaction.outputsLength; vout++) {
-      const match = findMatch(vout, transaction.getOutput(vout)!);
+      const match = findMatch(vout, transaction.getOutput(vout));
       if (match) {
         return match;
       }

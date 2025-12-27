@@ -12,6 +12,7 @@ import {
   Extractor,
   Finalizer,
   Pset,
+  type Secp256k1Interface,
   Signer,
   Transaction,
   Updater,
@@ -56,7 +57,7 @@ const validateLiquidInputs = (
     taprootInputs.some(
       (utxo) =>
         utxo.privateKey === undefined &&
-        utxo.swapTree!.covenantClaimLeaf === undefined,
+        utxo.swapTree?.covenantClaimLeaf === undefined,
     )
   ) {
     throw 'not all Taproot signature claims have keys';
@@ -124,20 +125,20 @@ export const constructClaimTransaction = (
         txid,
         utxo.vout,
         isRbf ? 0xfffffffd : 0xffffffff,
-        i == 0 ? timeoutBlockHeight : undefined,
+        i === 0 ? timeoutBlockHeight : undefined,
       ).toPartialInput(),
     );
     updater.addInSighashType(i, getSighashType(utxo.type));
 
     if (utxo.type === OutputType.Legacy) {
-      updater.addInNonWitnessUtxo(i, utxo.legacyTx!);
-      updater.addInRedeemScript(i, Buffer.from(utxo.redeemScript!));
+      updater.addInNonWitnessUtxo(i, utxo.legacyTx);
+      updater.addInRedeemScript(i, Buffer.from(utxo.redeemScript));
     } else if (utxo.type === OutputType.Compatibility) {
-      updater.addInNonWitnessUtxo(i, utxo.legacyTx!);
+      updater.addInNonWitnessUtxo(i, utxo.legacyTx);
       updater.addInRedeemScript(
         i,
         Buffer.from(
-          Script.encode([Script.encode(['OP_0', sha256(utxo.redeemScript!)])]),
+          Script.encode([Script.encode(['OP_0', sha256(utxo.redeemScript)])]),
         ),
       );
     }
@@ -146,7 +147,7 @@ export const constructClaimTransaction = (
       updater.addInWitnessUtxo(i, utxo);
 
       if (utxo.type !== OutputType.Taproot) {
-        updater.addInWitnessScript(i, Buffer.from(utxo.redeemScript!));
+        updater.addInWitnessScript(i, Buffer.from(utxo.redeemScript));
       }
     }
   }
@@ -208,8 +209,12 @@ export const constructClaimTransaction = (
         continue;
       }
 
+      if (utxo.swapTree === undefined || utxo.internalKey === undefined) {
+        throw 'swap tree or internal key is undefined';
+      }
+
       const leafHash = tapLeafHash(
-        isRefund ? utxo.swapTree!.refundLeaf : utxo.swapTree!.claimLeaf,
+        isRefund ? utxo.swapTree.refundLeaf : utxo.swapTree.claimLeaf,
       );
       const signature = signSchnorr(
         pset.getInputPreimage(
@@ -218,7 +223,7 @@ export const constructClaimTransaction = (
           network.genesisBlockHash,
           leafHash,
         ),
-        utxo.privateKey!,
+        utxo.privateKey,
       );
       signatures.push(Buffer.from(signature));
       signer.addSignature(
@@ -229,7 +234,7 @@ export const constructClaimTransaction = (
             {
               signature: Buffer.from(signature),
               pubkey: Buffer.from(
-                toXOnly(secp256k1.getPublicKey(utxo.privateKey!)),
+                toXOnly(secp256k1.getPublicKey(utxo.privateKey)),
               ),
               leafHash,
             },
@@ -241,7 +246,7 @@ export const constructClaimTransaction = (
       const signature = Buffer.from(
         signLegacy(
           pset.getInputPreimage(i, getSighashType(utxo.type)),
-          utxo.privateKey!,
+          utxo.privateKey,
         ),
       );
       signatures.push(signature);
@@ -250,7 +255,7 @@ export const constructClaimTransaction = (
         i,
         {
           partialSig: {
-            pubkey: Buffer.from(secp256k1.getPublicKey(utxo.privateKey!)),
+            pubkey: Buffer.from(secp256k1.getPublicKey(utxo.privateKey)),
             signature,
           },
         },
@@ -274,12 +279,12 @@ export const constructClaimTransaction = (
             signatures[i],
             utxo.preimage,
             'PUSHDATA1',
-            utxo.redeemScript!,
+            utxo.redeemScript,
           ]),
         );
       } else if (utxo.type === OutputType.Compatibility) {
         finals.finalScriptSig = Buffer.from(
-          Script.encode([Script.encode(['OP_0', sha256(utxo.redeemScript!)])]),
+          Script.encode([Script.encode(['OP_0', sha256(utxo.redeemScript)])]),
         );
       }
 
@@ -292,11 +297,19 @@ export const constructClaimTransaction = (
         } else {
           const isCovenantClaim = utxo.privateKey === undefined;
 
+          if (utxo.swapTree === undefined || utxo.internalKey === undefined) {
+            throw 'swap tree or internal key is undefined';
+          }
+
           const tapleaf = isRefund
-            ? utxo.swapTree!.refundLeaf
+            ? utxo.swapTree.refundLeaf
             : isCovenantClaim
-              ? utxo.swapTree!.covenantClaimLeaf!
-              : utxo.swapTree!.claimLeaf;
+              ? utxo.swapTree.covenantClaimLeaf
+              : utxo.swapTree.claimLeaf;
+
+          if (tapleaf === undefined) {
+            throw 'tapleaf is undefined';
+          }
 
           const witness = isRefund
             ? [signatures[i]]
@@ -308,9 +321,9 @@ export const constructClaimTransaction = (
             witness.concat([
               Buffer.from(tapleaf.output),
               createControlBlock(
-                toHashTree(utxo.swapTree!.tree),
+                toHashTree(utxo.swapTree.tree),
                 tapleaf,
-                Buffer.from(utxo.internalKey!),
+                Buffer.from(utxo.internalKey),
               ),
             ]),
           );
@@ -319,7 +332,7 @@ export const constructClaimTransaction = (
         finals.finalScriptWitness = witnessStackToScriptWitness([
           signatures[i],
           Buffer.from(utxo.preimage),
-          Buffer.from(utxo.redeemScript!),
+          Buffer.from(utxo.redeemScript),
         ]);
       }
 
@@ -332,14 +345,14 @@ export const constructClaimTransaction = (
 
 const blindPset = (pset: Pset, utxos: LiquidClaimDetails[]) => {
   const zkpGenerator = new ZKPGenerator(
-    secp as any,
+    secp as unknown as Secp256k1Interface,
     ZKPGenerator.WithBlindingKeysOfInputs(
       utxos
         .map((utxo) => utxo.blindingPrivateKey)
         .map((key) => (key ? Buffer.from(key) : undefined)) as Buffer[],
     ),
   );
-  const zkpValidator = new ZKPValidator(secp as any);
+  const zkpValidator = new ZKPValidator(secp as unknown as Secp256k1Interface);
   const outputBlindingArgs = zkpGenerator.blindOutputs(
     pset,
     Pset.ECCKeysGenerator(secp.ecc),

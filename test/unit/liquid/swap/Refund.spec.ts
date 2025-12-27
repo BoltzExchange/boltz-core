@@ -7,7 +7,7 @@ import { constructRefundTransaction, init } from '../../../../lib/liquid';
 import { lbtcRegtest, nonce } from './ClaimDetails';
 
 describe('Liquid Refund', () => {
-  const utxo = {
+  const utxo: LiquidRefundDetails = {
     nonce,
     vout: 0,
     asset: lbtcRegtest,

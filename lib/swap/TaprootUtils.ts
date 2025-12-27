@@ -48,10 +48,10 @@ export const createControlBlock = (
     equalBytes(path.script, leaf.output),
   );
   if (path === undefined) {
-    throw 'leaf not in tree';
+    throw Error('leaf not in tree');
   }
 
-  const parity = taprootTweakPubkey(internalKey, hashTree.hash)![1];
+  const parity = taprootTweakPubkey(internalKey, hashTree.hash)?.[1];
 
   return TaprootControlBlock.encode({
     version: leaf.version + parity,

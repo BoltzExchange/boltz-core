@@ -2,7 +2,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { hex } from '@scure/base';
 import { hash160 } from '@scure/btc-signer/utils.js';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../lib/consts/Enums';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import { detectPreimage } from '../../../lib/swap/PreimageDetector';

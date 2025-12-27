@@ -9,7 +9,13 @@ import { createLeaf, swapLeafsToTree, toXOnly } from './TaprootUtils';
 
 export const extractClaimPublicKeyFromReverseSwapTree = (
   swapTree: SwapTree,
-): Uint8Array => Script.decode(swapTree.claimLeaf.output)![6] as Uint8Array;
+): Uint8Array => {
+  const pubkey = Script.decode(swapTree.claimLeaf.output)?.[6];
+  if (pubkey === undefined || !(pubkey instanceof Uint8Array)) {
+    throw new Error('invalid claim public key');
+  }
+  return pubkey;
+};
 
 export const extractRefundPublicKeyFromReverseSwapTree = (
   swapTree: SwapTree,

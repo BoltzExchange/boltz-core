@@ -1,17 +1,52 @@
 import type { Transaction, TxOutput } from 'liquidjs-lib';
+import type { OutputType } from '../../consts/Enums';
 import type { LiquidSwapTree, RefundDetails } from '../../consts/Types';
 
-export type LiquidRefundDetails = Omit<
+export type LiquidBaseRefundDetails = Omit<
   RefundDetails,
   'amount' | 'swapTree' | 'privateKey'
 > &
   TxOutput & {
-    // Optional because covenant claims don't need to sign the transaction
-    privateKey?: Uint8Array;
-    legacyTx?: Transaction;
-    swapTree?: LiquidSwapTree;
     blindingPrivateKey?: Uint8Array;
   };
+
+export type LiquidScriptRefundDetails = LiquidBaseRefundDetails & {
+  type: OutputType.Legacy | OutputType.Compatibility;
+  legacyTx: Transaction;
+};
+
+export type LiquidSegwitV0RefundDetails = LiquidBaseRefundDetails & {
+  type: OutputType.Bech32;
+  legacyTx?: never;
+};
+
+export type LiquidLegacyRefundDetails = (
+  | LiquidScriptRefundDetails
+  | LiquidSegwitV0RefundDetails
+) & {
+  redeemScript: Uint8Array;
+  privateKey: Uint8Array;
+
+  cooperative?: never;
+  swapTree?: never;
+  internalKey?: never;
+};
+
+export type LiquidTaprootRefundDetails = LiquidBaseRefundDetails & {
+  type: OutputType.Taproot;
+  cooperative?: boolean;
+  swapTree?: LiquidSwapTree;
+  internalKey?: Uint8Array;
+  // Optional because covenant claims don't need to sign the transaction
+  privateKey?: Uint8Array;
+
+  redeemScript?: never;
+  legacyTx?: never;
+};
+
+export type LiquidRefundDetails =
+  | LiquidLegacyRefundDetails
+  | LiquidTaprootRefundDetails;
 
 export type LiquidClaimDetails = LiquidRefundDetails & {
   preimage: Uint8Array;

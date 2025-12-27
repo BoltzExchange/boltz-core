@@ -1,7 +1,7 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { Musig, OutputType } from '../../../../lib/Boltz';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import {

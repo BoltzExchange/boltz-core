@@ -5,13 +5,13 @@ import { Address, OutScript, Transaction } from '@scure/btc-signer';
 import type { TransactionOutput } from '@scure/btc-signer/psbt.js';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import initZkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { randomBytes } from 'crypto';
 import type { TxOutput as LiquidTxOutput } from 'liquidjs-lib';
 import {
   Transaction as LiquidTransaction,
   address,
   address as liquidAddress,
 } from 'liquidjs-lib';
+import { randomBytes } from 'node:crypto';
 import {
   Networks,
   OutputType,

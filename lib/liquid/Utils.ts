@@ -26,7 +26,10 @@ const getScriptIntrospectionWitnessScript = (outputScript: Buffer) =>
 export const getScriptIntrospectionValues = (
   outputScript: Buffer,
 ): { version: number; script: Buffer } => {
-  const dec = script.decompile(outputScript)!;
+  const dec = script.decompile(outputScript);
+  if (dec === undefined || dec === null) {
+    throw 'failed to decompile output script';
+  }
 
   switch (dec[0]) {
     case ops.OP_1:
