@@ -5,8 +5,5 @@
     "lib": ["ES2020"],
     "noEmit": true
   },
-  "include": [
-    "test/**/*",
-    "lib/**/*"
-  ]
+  "include": ["test/**/*", "lib/**/*"]
 }
