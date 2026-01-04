@@ -1,6 +1,7 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { Musig, OutputType } from '../../../../lib/Boltz';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import {
@@ -11,7 +12,7 @@ import {
 import { hashForWitnessV1 } from '../../../../lib/liquid/swap/TaprootUtils';
 import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../../lib/swap/SwapTree';
-import { ECPair, slip77 } from '../../../unit/Utils';
+import { slip77 } from '../../../unit/Utils';
 import {
   claimSwap,
   createSwapOutput,
@@ -19,6 +20,17 @@ import {
   elementsClient,
   init as utilsInit,
 } from '../../Utils';
+
+let secpZkp: Secp256k1ZKP;
+
+const initSecpZkp = async () => {
+  if (secpZkp) {
+    return secpZkp;
+  }
+
+  secpZkp = await zkp();
+  return secpZkp;
+};
 
 describe.each`
   name                 | treeFunc           | blindInputs | blindOutput
@@ -33,15 +45,16 @@ describe.each`
 `(
   '$name claim (inputs blinded $blindInputs; output blinded $blindOutput)',
   ({ treeFunc, blindInputs, blindOutput }) => {
-    const blindingKey = blindOutput
-      ? slip77.derive(destinationOutput).publicKey!
-      : undefined;
-
-    let secp: Secp256k1ZKP;
+    let blindingKey: Buffer | undefined;
 
     beforeAll(async () => {
-      secp = await zkp();
-      init(secp);
+      if (blindOutput) {
+        blindingKey = slip77(await initSecpZkp()).derive(
+          Buffer.from(destinationOutput),
+        ).publicKey!;
+      }
+
+      init(await initSecpZkp());
       utilsInit();
       await elementsClient.init();
     });
@@ -63,8 +76,8 @@ describe.each`
 
       const tx = constructClaimTransaction(
         [utxo],
-        destinationOutput,
-        1_000,
+        Buffer.from(destinationOutput),
+        1_000n,
         true,
         Networks.liquidRegtest,
         blindingKey,
@@ -81,13 +94,13 @@ describe.each`
       const updatedMusig = Musig.updateMessage(musig!, sigHash);
       const theirMusig = new Musig(
         refundKeys,
-        [updatedMusig!.publicKeys[0], refundKeys.publicKey].map(Buffer.from),
+        [updatedMusig!.publicKeys[0], secp256k1.getPublicKey(refundKeys)],
         sigHash,
         updatedMusig!.tweak,
       );
 
       updatedMusig.aggregateNonces([
-        [refundKeys.publicKey, theirMusig.getPublicNonce()],
+        [secp256k1.getPublicKey(refundKeys), theirMusig.getPublicNonce()],
       ]);
       theirMusig.aggregateNonces([
         [updatedMusig.publicKeys[0], updatedMusig.getPublicNonce()],
@@ -95,7 +108,7 @@ describe.each`
 
       updatedMusig.signPartial();
       updatedMusig.addPartial(
-        Buffer.from(refundKeys.publicKey),
+        secp256k1.getPublicKey(refundKeys),
         theirMusig.signPartial(),
       );
 
@@ -143,7 +156,7 @@ describe.each`
         undefined,
         blindInputs,
       );
-      utxo.keys = ECPair.makeRandom();
+      utxo.privateKey = secp256k1.utils.randomPrivateKey();
 
       await expect(claimSwap([utxo], blindingKey)).rejects.toEqual({
         code: -26,

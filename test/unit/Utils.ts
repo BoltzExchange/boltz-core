@@ -1,9 +1,10 @@
-import { ECPairFactory } from 'ecpair';
+import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { SLIP77Factory } from 'slip77';
-import * as ecc from 'tiny-secp256k1';
 
-export const ECPair = ECPairFactory(ecc);
-
-export const slip77 = SLIP77Factory(ecc).fromSeed(
-  'evil elegant tent travel robust reflect donkey dream possible shrug bulb prefer',
-);
+export const slip77 = (zkp: Secp256k1ZKP) =>
+  SLIP77Factory(zkp.ecc).fromSeed(
+    Buffer.from(
+      '46c599214112ab07572995a45b83c3bd5be58ed9bd602126a10090ce61901ce4',
+      'hex',
+    ),
+  );

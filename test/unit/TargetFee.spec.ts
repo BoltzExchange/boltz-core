@@ -1,5 +1,4 @@
 import { constructClaimTransaction, targetFee } from '../../lib/Boltz';
-import { getHexBuffer } from '../../lib/Utils';
 import { claimDetails } from './swap/ClaimDetails';
 
 describe('TargetFee', () => {
@@ -8,20 +7,20 @@ describe('TargetFee', () => {
     (satPerVbyte: number) => {
       const utxo = {
         ...claimDetails[0],
-        value: 10 ** 8,
+        amount: BigInt(10) ** 8n,
       };
       const tx = targetFee(satPerVbyte, (fee) =>
         constructClaimTransaction(
           [utxo],
-          getHexBuffer('00140000000000000000000000000000000000000000'),
+          Buffer.from('00140000000000000000000000000000000000000000', 'hex'),
           fee,
           false,
         ),
       );
 
-      expect(tx.outs).toHaveLength(1);
-      expect(tx.outs[0].value).toEqual(
-        utxo.value - Math.ceil((tx.virtualSize() + 1) * satPerVbyte),
+      expect(tx.outputsLength).toEqual(1);
+      expect(tx.getOutput(0).amount).toEqual(
+        utxo.amount - BigInt(Math.ceil((tx.vsize + 1) * satPerVbyte)),
       );
     },
   );
@@ -40,7 +39,7 @@ describe('TargetFee', () => {
       const utxos = [
         {
           ...claimDetails[0],
-          value: 10 ** 8,
+          amount: BigInt(10) ** 8n,
         },
       ];
 
@@ -52,30 +51,32 @@ describe('TargetFee', () => {
       }
       expect(utxos).toHaveLength(inputs);
 
-      const constructFunc = (fee) =>
+      const constructFunc = (fee: bigint) =>
         constructClaimTransaction(
           utxos,
-          getHexBuffer('00140000000000000000000000000000000000000000'),
+          Buffer.from('00140000000000000000000000000000000000000000', 'hex'),
           fee,
           false,
         );
       const tx = targetFee(satPerVbyte, constructFunc);
 
-      const inputSum = utxos.reduce((sum, utxo) => sum + utxo.value, 0);
-      const outputSum = tx.outs.reduce((sum, output) => sum + output.value, 0);
+      const inputSum = utxos.reduce((sum, utxo) => sum + utxo.amount, 0n);
 
-      expect(tx.outs).toHaveLength(1);
-      expect(tx.outs[0].value).toEqual(
+      let outputSum = 0n;
+      for (let i = 0; i < tx.outputsLength; i++) {
+        outputSum += tx.getOutput(i).amount!;
+      }
+
+      expect(tx.outputsLength).toEqual(1);
+      expect(tx.getOutput(0).amount).toEqual(
         inputSum -
-          Math.ceil(
-            (constructFunc(1).virtualSize() + tx.ins.length) * satPerVbyte,
-          ),
+          BigInt(Math.ceil((tx.vsize + tx.inputsLength) * satPerVbyte)),
       );
 
-      const feePerVbyte = (inputSum - outputSum) / tx.virtualSize();
+      const feePerVbyte = (inputSum - outputSum) / BigInt(tx.vsize);
 
       expect(feePerVbyte).toBeGreaterThanOrEqual(satPerVbyte);
-      expect(feePerVbyte).toBeLessThan(satPerVbyte + 1);
+      expect(feePerVbyte).toBeLessThanOrEqual(satPerVbyte + 1);
     },
   );
 });

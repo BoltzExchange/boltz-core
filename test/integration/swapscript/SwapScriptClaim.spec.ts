@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import { OutputType, swapScript } from '../../../lib/Boltz';
 import swapTree from '../../../lib/swap/SwapTree';
 import { bitcoinClient, claimSwap, createSwapOutput, init } from '../Utils';
@@ -19,20 +19,14 @@ describe('SwapScript claim', () => {
       swapScript,
     );
 
-    let actualError: any;
+    utxo.preimage = randomBytes(32);
 
-    try {
-      utxo.preimage = randomBytes(32);
-
-      await claimSwap([utxo]);
-    } catch (error) {
-      actualError = error;
-    }
-
-    expect(actualError.code).toEqual(-26);
-    expect(actualError.message).toContain(
-      'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
-    );
+    await expect(claimSwap([utxo])).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
+        'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
+      ),
+    });
   });
 
   test.each`

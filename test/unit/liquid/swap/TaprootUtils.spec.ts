@@ -1,13 +1,10 @@
 import ops from '@boltz/bitcoin-ops';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { hex } from '@scure/base';
 import zkp from '@vulpemventures/secp256k1-zkp';
-import { initEccLib } from 'bitcoinjs-lib';
-import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import type { Taptree } from 'bitcoinjs-lib/src/types';
-import { randomBytes } from 'crypto';
 import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341';
-import * as ecc from 'tiny-secp256k1';
-import { getHexBuffer } from '../../../../lib/Utils';
-import type { Tapleaf } from '../../../../lib/consts/Types';
+import { randomBytes } from 'node:crypto';
+import type { TapLeaf, TapTree } from '../../../../lib/consts/Types';
 import { init } from '../../../../lib/liquid';
 import { secp } from '../../../../lib/liquid/init';
 import {
@@ -18,38 +15,35 @@ import {
   tweakMusig,
 } from '../../../../lib/liquid/swap/TaprootUtils';
 import Musig from '../../../../lib/musig/Musig';
-import { createLeaf } from '../../../../lib/swap/TaprootUtils';
-import { ECPair } from '../../Utils';
+import { createLeaf, toXOnly } from '../../../../lib/swap/TaprootUtils';
 
 describe('TaprootUtils', () => {
-  const publicKey = Buffer.from(
-    ECPair.fromPrivateKey(
-      getHexBuffer(
-        '87ca03c7557e262775987404c3f07d43b7331721f2916324b53e90e3541132c5',
-      ),
-    ).publicKey,
+  const publicKey = secp256k1.getPublicKey(
+    hex.decode(
+      '87ca03c7557e262775987404c3f07d43b7331721f2916324b53e90e3541132c5',
+    ),
   );
-  const bytes = getHexBuffer(
+  const bytes = hex.decode(
     '6ca8dbc536d5ffbe22af6e8034840cdc305fea9d2bdea252d378d7db9bb77882',
   );
 
-  const taptree: Taptree = [
-    createLeaf(true, [ops.OP_SHA256, bytes, ops.OP_EQUALVERIFY]),
-    createLeaf(true, [publicKey, ops.OP_CHECKSIGVERIFY]),
+  const taptree: TapTree = [
+    createLeaf(true, ['SHA256', bytes, 'EQUALVERIFY']),
+    createLeaf(true, [publicKey, 'CHECKSIGVERIFY']),
   ];
 
   beforeAll(async () => {
     init(await zkp());
   });
 
-  test('should hash tap leafs', () => {
-    const hash = tapLeafHash(taptree[0] as Tapleaf);
+  test('should hash tap leaf', () => {
+    const hash = tapLeafHash(taptree[0] as TapLeaf);
     expect(hash).toBeInstanceOf(Buffer);
     expect(hash).toMatchSnapshot();
   });
 
   test('should hash tap tweaks', () => {
-    const tweak = tapTweakHash(publicKey, bytes);
+    const tweak = tapTweakHash(Buffer.from(publicKey), Buffer.from(bytes));
     expect(tweak).toBeInstanceOf(Buffer);
     expect(tweak).toMatchSnapshot();
   });
@@ -60,22 +54,22 @@ describe('TaprootUtils', () => {
     expect(hashTree).toMatchSnapshot();
   });
 
-  test('should convert netsted taproot tree to hash tree', () => {
+  test('should convert nested taproot tree to hash tree', () => {
     const hashTree = toHashTree([taptree, taptree]);
     expect(hashTree).toBeDefined();
     expect(hashTree).toMatchSnapshot();
   });
 
   test('should tweak Musig', async () => {
-    const ourMusigKey = ECPair.makeRandom();
+    const ourMusigKey = secp256k1.utils.randomPrivateKey();
 
     const musig = new Musig(
       ourMusigKey,
       [
-        Buffer.from(ourMusigKey.publicKey),
-        Buffer.from(ECPair.makeRandom().publicKey),
-        Buffer.from(ECPair.makeRandom().publicKey),
-      ],
+        ourMusigKey,
+        secp256k1.utils.randomPrivateKey(),
+        secp256k1.utils.randomPrivateKey(),
+      ].map((key) => secp256k1.getPublicKey(key)),
       randomBytes(32),
     );
     const tweakedMusig = tweakMusig(musig, taptree);
@@ -83,7 +77,7 @@ describe('TaprootUtils', () => {
     expect(Buffer.from(tweakedMusig.pubkeyAgg)).toEqual(
       Buffer.from(
         secp.ecc.xOnlyPointAddTweak(
-          toXOnly(Buffer.from(musig.pubkeyAgg)),
+          toXOnly(musig.pubkeyAgg),
           tapTweakHash(Buffer.from(musig.pubkeyAgg), toHashTree(taptree).hash),
         )!.xOnlyPubkey,
       ),
@@ -91,13 +85,13 @@ describe('TaprootUtils', () => {
   });
 
   test('should create control blocks', () => {
-    initEccLib(ecc);
-
-    const internalKey = toXOnly(Buffer.from(ECPair.makeRandom().publicKey));
+    const internalKey = toXOnly(
+      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+    );
     const controlBlock = createControlBlock(
       toHashTree(taptree),
-      taptree[0] as Tapleaf,
-      internalKey,
+      taptree[0] as TapLeaf,
+      Buffer.from(internalKey),
     );
 
     const hashTree = toHashTree(taptree);
@@ -105,15 +99,15 @@ describe('TaprootUtils', () => {
       Buffer.concat(
         [
           Buffer.from([
-            (taptree[0] as Tapleaf).version |
+            (taptree[0] as TapLeaf).version |
               secp.ecc.xOnlyPointAddTweak(
                 internalKey,
-                tapTweakHash(internalKey, hashTree.hash),
+                tapTweakHash(Buffer.from(internalKey), hashTree.hash),
               )!.parity,
           ]),
           internalKey,
         ].concat(
-          liquidFindScriptPath(hashTree, tapLeafHash(taptree[0] as Tapleaf))!,
+          liquidFindScriptPath(hashTree, tapLeafHash(taptree[0] as TapLeaf))!,
         ),
       ),
     );
@@ -128,7 +122,9 @@ describe('TaprootUtils', () => {
           randomBytes(20),
           ops.OP_EQUALVERIFY,
         ]),
-        toXOnly(Buffer.from(ECPair.makeRandom().publicKey)),
+        Buffer.from(
+          toXOnly(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
+        ),
       ),
     ).toThrow('leaf not in tree');
   });

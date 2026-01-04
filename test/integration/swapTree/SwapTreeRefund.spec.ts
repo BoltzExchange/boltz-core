@@ -1,7 +1,7 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { OutputType } from '../../../lib/consts/Enums';
 import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../lib/swap/SwapTree';
-import { ECPair } from '../../unit/Utils';
 import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils';
 
 describe.each`
@@ -37,15 +37,12 @@ describe.each`
       timeout + 21,
     );
 
-    try {
-      await refundSwap([utxo], timeout);
-      expect(true).toBe(false);
-    } catch (error: any) {
-      expect(error.code).toBe(-26);
-      expect(error.message).toContain(
+    await expect(refundSwap([utxo], timeout)).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
         'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
-      );
-    }
+      ),
+    });
   });
 
   test('should not refund via script path when refund key is invalid', async () => {
@@ -56,16 +53,13 @@ describe.each`
       treeFunc,
       timeout,
     );
-    utxo.keys = ECPair.makeRandom();
+    utxo.privateKey = secp256k1.utils.randomPrivateKey();
 
-    try {
-      await refundSwap([utxo], timeout);
-      expect(true).toBe(false);
-    } catch (error: any) {
-      expect(error.code).toBe(-26);
-      expect(error.message).toContain(
+    await expect(refundSwap([utxo], timeout)).rejects.toMatchObject({
+      code: -26,
+      message: expect.stringContaining(
         'mempool-script-verify-flag-failed (Invalid Schnorr signature)',
-      );
-    }
+      ),
+    });
   });
 });

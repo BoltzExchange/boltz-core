@@ -1,3 +1,4 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { OutputType, reverseSwapScript } from '../../../lib/Boltz';
 import { bitcoinClient, createSwapOutput, refundSwap } from '../Utils';
 
@@ -41,15 +42,37 @@ describe('ReverseSwapScript refund', () => {
         bestBlockHeight + 1,
       );
 
-      try {
-        await refundSwap([utxo], bestBlockHeight);
-        expect(true).toBe(false);
-      } catch (error: any) {
-        expect(error.code).toBe(-26);
-        expect(error.message).toContain(
+      await expect(refundSwap([utxo], bestBlockHeight)).rejects.toMatchObject({
+        code: -26,
+        message: expect.stringContaining(
           'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
-        );
-      }
+        ),
+      });
+    },
+  );
+
+  test.each`
+    type                        | name
+    ${OutputType.Bech32}        | ${'P2WSH'}
+    ${OutputType.Compatibility} | ${'P2SH nested P2WSH'}
+    ${OutputType.Legacy}        | ${'P2SH'}
+  `(
+    'should not refund a $name reverse swap with invalid keys',
+    async ({ type }) => {
+      const { utxo } = await createSwapOutput(
+        type,
+        true,
+        reverseSwapScript,
+        bestBlockHeight,
+      );
+      utxo.privateKey = secp256k1.utils.randomPrivateKey();
+
+      await expect(refundSwap([utxo], bestBlockHeight)).rejects.toMatchObject({
+        code: -26,
+        message: expect.stringContaining(
+          'mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation)',
+        ),
+      });
     },
   );
 

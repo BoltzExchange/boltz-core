@@ -1,3 +1,5 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { hex } from '@scure/base';
 import {
   type Nonces,
   Session,
@@ -6,8 +8,7 @@ import {
   nonceAggregate,
   nonceGen,
 } from '@scure/btc-signer/musig2.js';
-import type { ECPairInterface } from 'ecpair';
-import { uint8ArrayEqual, uint8ArrayToHex } from '../Utils';
+import { equalBytes } from '@scure/btc-signer/utils.js';
 
 class Musig {
   public readonly pubkeyAgg: Uint8Array;
@@ -16,6 +17,7 @@ class Musig {
   private readonly nonce: Nonces;
 
   private readonly myIndex: number;
+  private readonly myPublicKey: Uint8Array;
   private readonly partialSignatures: (Uint8Array | null)[];
 
   private pubNonces?: Uint8Array[];
@@ -23,21 +25,19 @@ class Musig {
   private session?: Session;
 
   constructor(
-    private readonly key: ECPairInterface,
+    private readonly privateKey: Uint8Array,
     public readonly publicKeys: Uint8Array[],
     public readonly msg: Uint8Array,
     public readonly tweak?: Uint8Array,
   ) {
-    if (key.privateKey === undefined) {
-      throw new Error('key has no private key');
-    }
-
     if (publicKeys.length < 2) {
       throw new Error('need at least 2 keys to aggregate');
     }
 
+    this.myPublicKey = secp256k1.getPublicKey(this.privateKey);
+
     this.myIndex = this.publicKeys.findIndex((key) =>
-      uint8ArrayEqual(this.key.publicKey, key),
+      equalBytes(this.myPublicKey, key),
     );
 
     if (this.myIndex === -1) {
@@ -48,8 +48,8 @@ class Musig {
     this.internalKey =
       tweak !== undefined ? Musig.aggregateKeys(publicKeys) : this.pubkeyAgg;
     this.nonce = nonceGen(
-      this.key.publicKey,
-      this.key.privateKey,
+      this.myPublicKey,
+      this.privateKey,
       this.pubkeyAgg,
       this.msg,
     );
@@ -65,14 +65,14 @@ class Musig {
     );
 
   public static tweak = (musig: Musig, tweak: Uint8Array) => {
-    return new Musig(musig.key, musig.publicKeys, musig.msg, tweak);
+    return new Musig(musig.privateKey, musig.publicKeys, musig.msg, tweak);
   };
 
   /**
    * Updates the message and regenerates the nonce because it depends on the message
    */
   public static updateMessage = (musig: Musig, msg: Uint8Array) => {
-    return new Musig(musig.key, musig.publicKeys, msg, musig.tweak);
+    return new Musig(musig.privateKey, musig.publicKeys, msg, musig.tweak);
   };
 
   public numParticipants = (): number => {
@@ -93,7 +93,7 @@ class Musig {
     }
 
     const myNonceIndex = nonces.findIndex((nonce) =>
-      uint8ArrayEqual(this.nonce.public, nonce),
+      equalBytes(this.nonce.public, nonce),
     );
     if (myNonceIndex !== this.myIndex) {
       throw new Error('our nonce is at incorrect index');
@@ -112,10 +112,10 @@ class Musig {
   public aggregateNonces = (nonces: [Uint8Array, Uint8Array][]) => {
     let noncesToUse = nonces;
     if (
-      nonces.find(([keyCmp]) => uint8ArrayEqual(this.key.publicKey, keyCmp)) ===
+      nonces.find(([keyCmp]) => equalBytes(this.myPublicKey, keyCmp)) ===
       undefined
     ) {
-      noncesToUse = [...nonces, [this.key.publicKey, this.getPublicNonce()]];
+      noncesToUse = [...nonces, [this.myPublicKey, this.getPublicNonce()]];
     }
 
     if (this.publicKeys.length !== noncesToUse.length) {
@@ -125,12 +125,10 @@ class Musig {
     const ordered: Uint8Array[] = [];
 
     for (const key of this.publicKeys) {
-      const nonce = noncesToUse.find(([keyCmp]) =>
-        uint8ArrayEqual(key, keyCmp),
-      );
+      const nonce = noncesToUse.find(([keyCmp]) => equalBytes(key, keyCmp));
       if (nonce === undefined) {
         throw new Error(
-          `could not find nonce for public key ${uint8ArrayToHex(key)}`,
+          `could not find nonce for public key ${hex.encode(key)}`,
         );
       }
 
@@ -148,11 +146,7 @@ class Musig {
       throw new Error('session not initialized');
     }
 
-    const sig = this.session.sign(
-      this.nonce.secret,
-      this.key.privateKey!,
-      true,
-    );
+    const sig = this.session.sign(this.nonce.secret, this.privateKey, true);
     this.partialSignatures[this.myIndex] = sig;
 
     return sig;
@@ -212,13 +206,11 @@ class Musig {
     const index =
       typeof publicKeyOrIndex === 'number'
         ? publicKeyOrIndex
-        : this.publicKeys.findIndex((key) =>
-            uint8ArrayEqual(publicKeyOrIndex, key),
-          );
+        : this.publicKeys.findIndex((key) => equalBytes(publicKeyOrIndex, key));
 
     if (index === -1) {
       throw new Error(
-        `could not find index of public key ${uint8ArrayToHex(publicKeyOrIndex as Uint8Array)}`,
+        `could not find index of public key ${hex.encode(publicKeyOrIndex as Uint8Array)}`,
       );
     }
 
