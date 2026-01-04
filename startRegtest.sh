@@ -13,7 +13,7 @@ print_header() {
 print_header "Bitcoin Core"
 
 echo "Creating container"
-docker run -v `pwd`/docker:/config -d --name $bitcoin_container -p 18443:18443 boltz/bitcoin-core:30.0 $bitcoin_config > /dev/null
+docker run -v `pwd`/docker:/config -d --name $bitcoin_container -p 18443:18443 boltz/bitcoin-core:30.1 $bitcoin_config > /dev/null
 
 sleep 1
 
