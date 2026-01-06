@@ -82,8 +82,8 @@
     "slip77": "^0.2.0",
     "typechain": "^8.3.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.51.0",
-    "ws": "^8.18.3"
+    "typescript-eslint": "^8.52.0",
+    "ws": "^8.19.0"
   },
   "peerDependencies": {
     "@vulpemventures/secp256k1-zkp": "^3.2.1",
