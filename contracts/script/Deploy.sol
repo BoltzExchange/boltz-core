@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity ^0.8.30;
+pragma solidity ^0.8.33;
 
 import {Script, console} from "forge-std/Script.sol";
 import {EtherSwap} from "../EtherSwap.sol";

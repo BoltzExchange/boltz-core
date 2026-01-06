@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.30;
+pragma solidity ^0.8.33;
 
 import {TransferHelper} from "./TransferHelper.sol";
 
@@ -361,7 +361,7 @@ contract EtherSwap {
     {
         // Make sure the timelock has expired already
         // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
-        require(timelock <= block.number, "EtherSwap: swap has not timed out yet");
+        require(timelock <= currentTime(), "EtherSwap: swap has not timed out yet");
         refundInternal(preimageHash, amount, claimAddress, refundAddress, timelock);
     }
 
@@ -555,5 +555,9 @@ contract EtherSwap {
     /// @param hash Value hash of the swap
     function checkSwapIsLocked(bytes32 hash) private view {
         require(swaps[hash], "EtherSwap: swap has no Ether locked in the contract");
+    }
+
+    function currentTime() internal view virtual returns (uint256) {
+        return block.number;
     }
 }
