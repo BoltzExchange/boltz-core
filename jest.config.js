@@ -8,6 +8,7 @@ const config = {
   transformIgnorePatterns: [
     '<rootDir>/node_modules/(?!(@noble|@scure|micro-packed))',
   ],
+  resolver: '<rootDir>/jest.resolver.cjs',
 };
 
 export default config;

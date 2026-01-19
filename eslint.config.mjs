@@ -38,6 +38,22 @@ export default [
       '@typescript-eslint/no-unsafe-declaration-merging': 'off',
 
       'import/no-unresolved': 'off',
+      // Require .js extension for ESM packages (@noble, @scure)
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^@noble/[^/]+/[^.]+$',
+              message: 'Import from @noble/* must include .js extension',
+            },
+            {
+              regex: '^@scure/[^/]+/[^.]+$',
+              message: 'Import from @scure/* must include .js extension',
+            },
+          ],
+        },
+      ],
 
       semi: 'error',
       'no-trailing-spaces': 'error',
