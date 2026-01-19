@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import zkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { OutputType } from '../../../../lib/consts/Enums';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';

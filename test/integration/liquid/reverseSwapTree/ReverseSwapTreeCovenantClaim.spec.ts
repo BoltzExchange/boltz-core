@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address, networks } from 'liquidjs-lib';
