@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { hex } from '@scure/base';
 import { Script, type ScriptType } from '@scure/btc-signer';
 import { TAP_LEAF_VERSION } from '@scure/btc-signer/payment.js';

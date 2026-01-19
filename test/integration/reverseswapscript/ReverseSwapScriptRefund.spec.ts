@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { OutputType, reverseSwapScript } from '../../../lib/Boltz';
 import { bitcoinClient, createSwapOutput, refundSwap } from '../Utils';
 

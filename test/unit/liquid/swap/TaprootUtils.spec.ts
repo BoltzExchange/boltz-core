@@ -1,5 +1,5 @@
 import ops from '@boltz/bitcoin-ops';
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { hex } from '@scure/base';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341';

@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { hex } from '@scure/base';
 import { Address, OutScript, SigHash, Transaction } from '@scure/btc-signer';
 import { equalBytes } from '@scure/btc-signer/utils.js';
