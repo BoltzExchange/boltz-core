@@ -57,14 +57,13 @@ describe('ExplicitOutputWithNonce', () => {
       timeoutBlockHeight,
     );
     const musig = tweakMusig(
-      new Musig(
+      Musig.create(
         claimKeys,
         [claimKeys, refundKeys].map((k) => secp256k1.getPublicKey(k)),
-        randomBytes(32),
       ),
       tree.tree,
     );
-    const swapOutputScript = p2trOutput(musig.pubkeyAgg);
+    const swapOutputScript = p2trOutput(musig.aggPubkey);
 
     const swapTx = new Transaction();
     swapTx.addInput(transaction.getHash(), vout);

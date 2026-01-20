@@ -14,7 +14,7 @@ import {
   toHashTree,
   tweakMusig,
 } from '../../../../lib/liquid/swap/TaprootUtils';
-import Musig from '../../../../lib/musig/Musig';
+import * as Musig from '../../../../lib/musig/Musig';
 import { createLeaf, toXOnly } from '../../../../lib/swap/TaprootUtils';
 
 describe('TaprootUtils', () => {
@@ -63,22 +63,21 @@ describe('TaprootUtils', () => {
   test('should tweak Musig', async () => {
     const ourMusigKey = secp256k1.utils.randomPrivateKey();
 
-    const musig = new Musig(
+    const musig = Musig.create(
       ourMusigKey,
       [
         ourMusigKey,
         secp256k1.utils.randomPrivateKey(),
         secp256k1.utils.randomPrivateKey(),
       ].map((key) => secp256k1.getPublicKey(key)),
-      randomBytes(32),
     );
     const tweakedMusig = tweakMusig(musig, taptree);
 
-    expect(Buffer.from(tweakedMusig.pubkeyAgg)).toEqual(
+    expect(Buffer.from(tweakedMusig.aggPubkey)).toEqual(
       Buffer.from(
         secp.ecc.xOnlyPointAddTweak(
-          toXOnly(musig.pubkeyAgg),
-          tapTweakHash(Buffer.from(musig.pubkeyAgg), toHashTree(taptree).hash),
+          toXOnly(musig.aggPubkey),
+          tapTweakHash(Buffer.from(musig.aggPubkey), toHashTree(taptree).hash),
         )!.xOnlyPubkey,
       ),
     );

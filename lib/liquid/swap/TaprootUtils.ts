@@ -9,7 +9,7 @@ import {
 import { taggedHash } from 'liquidjs-lib/src/crypto';
 import type { Network } from 'liquidjs-lib/src/networks';
 import type { TapLeaf, TapTree } from '../../consts/Types';
-import Musig from '../../musig/Musig';
+import type { MusigKeyAgg } from '../../musig/Musig';
 import { toXOnly } from '../../swap/TaprootUtils';
 import { secp } from '../init';
 
@@ -64,9 +64,9 @@ export function toHashTree(scriptTree: TapTree): HashTree {
   };
 }
 
-export const tweakMusig = (musig: Musig, tree: TapTree): Musig => {
+export const tweakMusig = (musig: MusigKeyAgg, tree: TapTree): MusigKeyAgg => {
   const tweak = toHashTree(tree).hash;
-  return Musig.tweak(musig, tapTweakHash(Buffer.from(musig.pubkeyAgg), tweak));
+  return musig.xonlyTweakAdd(tapTweakHash(Buffer.from(musig.aggPubkey), tweak));
 };
 
 export const createControlBlock = (
