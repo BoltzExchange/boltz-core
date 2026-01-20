@@ -17,7 +17,7 @@ import {
   taprootTweakPubkey,
 } from '@scure/btc-signer/utils.js';
 import type { TapLeaf, TapTree } from '../consts/Types';
-import Musig from '../musig/Musig';
+import type { MusigKeyAgg } from '../musig/Musig';
 
 export const TAP_LEAF_VERSION_LIQUID = 196;
 
@@ -65,11 +65,10 @@ export const createLeaf = (isLiquid: boolean, script: ScriptType): TapLeaf => ({
   output: Script.encode(script),
 });
 
-export const tweakMusig = (musig: Musig, tree: TapTree): Musig => {
+export const tweakMusig = (musig: MusigKeyAgg, tree: TapTree): MusigKeyAgg => {
   const tweak = taprootHashTree(tree).hash;
-  return Musig.tweak(
-    musig,
-    schnorr.utils.taggedHash('TapTweak', musig.pubkeyAgg, tweak),
+  return musig.xonlyTweakAdd(
+    schnorr.utils.taggedHash('TapTweak', musig.aggPubkey, tweak),
   );
 };
 

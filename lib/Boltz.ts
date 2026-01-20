@@ -3,7 +3,7 @@ import { OutputType } from './consts/Enums';
 import Networks from './consts/Networks';
 import * as Types from './consts/Types';
 import type { ClaimDetails, RefundDetails } from './consts/Types';
-import Musig from './musig/Musig';
+import * as Musig from './musig/Musig';
 import { constructClaimTransaction } from './swap/Claim';
 import { detectPreimage } from './swap/PreimageDetector';
 import { constructRefundTransaction } from './swap/Refund';

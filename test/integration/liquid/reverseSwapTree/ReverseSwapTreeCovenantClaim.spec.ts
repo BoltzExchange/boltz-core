@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha2.js';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address, networks } from 'liquidjs-lib';
@@ -17,7 +17,7 @@ import {
   hashForWitnessV1,
   tweakMusig,
 } from '../../../../lib/liquid/swap/TaprootUtils';
-import Musig from '../../../../lib/musig/Musig';
+import * as Musig from '../../../../lib/musig/Musig';
 import { p2trOutput, p2wshOutput } from '../../../../lib/swap/Scripts';
 import { detectSwap } from '../../../../lib/swap/SwapDetector';
 import {
@@ -77,17 +77,14 @@ describe.each`
           },
         ],
       );
-      const tweakedMusig = tweakMusig(
-        new Musig(
-          ourKeys,
-          [ourKeys, theirKeys].map((k) => secp256k1.getPublicKey(k)),
-          randomBytes(32),
-        ),
-        tree.tree,
+      const musig = Musig.create(
+        ourKeys,
+        [ourKeys, theirKeys].map((k) => secp256k1.getPublicKey(k)),
       );
+      const tweakedMusig = tweakMusig(musig, tree.tree);
 
       let swapAddress = address.fromOutputScript(
-        Buffer.from(p2trOutput(tweakedMusig.pubkeyAgg)),
+        Buffer.from(p2trOutput(tweakedMusig.aggPubkey)),
         networks.regtest,
       );
       let blindingPrivateKey: Buffer | undefined;
@@ -108,7 +105,7 @@ describe.each`
         ),
       );
 
-      const output = detectSwap(Buffer.from(tweakedMusig.pubkeyAgg), tx)!;
+      const output = detectSwap(Buffer.from(tweakedMusig.aggPubkey), tx)!;
 
       return {
         tree,
@@ -153,27 +150,44 @@ describe.each`
 
       const sigHash = hashForWitnessV1(networks.regtest, utxos, claimTx, 0);
 
-      const updatedMusig = Musig.updateMessage(musig, sigHash);
-      const theirMusig = new Musig(
-        theirKeys,
-        [updatedMusig.publicKeys[0], secp256k1.getPublicKey(theirKeys)],
-        sigHash,
-        updatedMusig.tweak,
-      );
+      // Apply the same tweak to create a new MusigKeyAgg, then set message
+      const tweakedMusig = musig.tweak
+        ? Musig.create(utxos[0].privateKey!, musig.publicKeys).xonlyTweakAdd(
+            musig.tweak,
+          )
+        : Musig.create(utxos[0].privateKey!, musig.publicKeys);
 
-      updatedMusig.aggregateNonces([
-        [secp256k1.getPublicKey(theirKeys), theirMusig.getPublicNonce()],
+      const ourWithNonce = tweakedMusig.message(sigHash).generateNonce();
+      const theirWithNonce = (
+        musig.tweak
+          ? Musig.create(theirKeys, [
+              musig.publicKeys[0],
+              secp256k1.getPublicKey(theirKeys),
+            ]).xonlyTweakAdd(musig.tweak)
+          : Musig.create(theirKeys, [
+              musig.publicKeys[0],
+              secp256k1.getPublicKey(theirKeys),
+            ])
+      )
+        .message(sigHash)
+        .generateNonce();
+
+      const ourAggregated = ourWithNonce.aggregateNonces([
+        [secp256k1.getPublicKey(theirKeys), theirWithNonce.publicNonce],
       ]);
-      theirMusig.aggregateNonces([
-        [updatedMusig.publicKeys[0], updatedMusig.getPublicNonce()],
+      const theirAggregated = theirWithNonce.aggregateNonces([
+        [musig.publicKeys[0], ourWithNonce.publicNonce],
       ]);
-      updatedMusig.signPartial();
-      updatedMusig.addPartial(
+
+      let ourSigned = ourAggregated.initializeSession().signPartial();
+      const theirSigned = theirAggregated.initializeSession().signPartial();
+
+      ourSigned = ourSigned.addPartial(
         secp256k1.getPublicKey(theirKeys),
-        theirMusig.signPartial(),
+        theirSigned.ourPartialSignature,
       );
 
-      claimTx.setWitness(0, [Buffer.from(updatedMusig.aggregatePartials())]);
+      claimTx.setWitness(0, [Buffer.from(ourSigned.aggregatePartials())]);
 
       await elementsClient.sendRawTransaction(claimTx.toHex());
     });

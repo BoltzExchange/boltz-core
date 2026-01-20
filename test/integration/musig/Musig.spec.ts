@@ -1,10 +1,9 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { hex } from '@scure/base';
 import { Address, OutScript, SigHash, Transaction } from '@scure/btc-signer';
 import { equalBytes } from '@scure/btc-signer/utils.js';
-import { randomBytes } from 'node:crypto';
 import Networks from '../../../lib/consts/Networks';
-import Musig from '../../../lib/musig/Musig';
+import * as Musig from '../../../lib/musig/Musig';
 import { p2trOutput } from '../../../lib/swap/Scripts';
 import { bitcoinClient, encodeAddress } from '../Utils';
 
@@ -21,20 +20,16 @@ describe('Musig', () => {
     const ourKey = hex.decode(
       '1f1d1a9d8c3507b251ff29096511ffe66a75437e3bcdf912e7433e55e87f569c',
     );
-    const musig = new Musig(
-      ourKey,
-      [
-        secp256k1.getPublicKey(ourKey),
-        hex.decode(
-          '02e88bd3780532bbb4a127a2e041467bc42c5cc4ff16ddb5afa7e27c5b653de44c',
-        ),
-      ],
-      randomBytes(32),
-    );
+    const musig = Musig.create(ourKey, [
+      secp256k1.getPublicKey(ourKey),
+      hex.decode(
+        '02e88bd3780532bbb4a127a2e041467bc42c5cc4ff16ddb5afa7e27c5b653de44c',
+      ),
+    ]);
     expect(
       Address(Networks.regtest).encode({
         type: 'tr',
-        pubkey: musig.pubkeyAgg,
+        pubkey: musig.aggPubkey,
       }),
     ).toMatchSnapshot();
   });
@@ -43,16 +38,15 @@ describe('Musig', () => {
     const ourKey = secp256k1.utils.randomPrivateKey();
     const theirKey = secp256k1.utils.randomPrivateKey();
 
-    let musig = new Musig(
+    const keyAgg = Musig.create(
       ourKey,
       [ourKey, theirKey].map((k) => secp256k1.getPublicKey(k)),
-      randomBytes(32),
     );
 
     // Fund address
     const amount = 10_000n;
 
-    const outputScript = p2trOutput(musig.pubkeyAgg);
+    const outputScript = p2trOutput(keyAgg.aggPubkey);
     const txId = await bitcoinClient.sendToAddress(
       encodeAddress(outputScript),
       Number(amount),
@@ -83,34 +77,37 @@ describe('Musig', () => {
     const sigHash = tx.preimageWitnessV1(0, [outputScript], SigHash.DEFAULT, [
       amount,
     ]);
-    musig = new Musig(
-      ourKey,
-      [ourKey, theirKey].map((k) => secp256k1.getPublicKey(k)),
-      sigHash,
-    );
 
-    const theirMusig = new Musig(
+    // Create musig sessions for signing
+    const ourWithNonce = keyAgg.message(sigHash).generateNonce();
+    const theirWithNonce = Musig.create(
       theirKey,
       [ourKey, theirKey].map((k) => secp256k1.getPublicKey(k)),
-      sigHash,
-    );
+    )
+      .message(sigHash)
+      .generateNonce();
 
-    // Create signature
-    musig.aggregateNonces([
-      [secp256k1.getPublicKey(theirKey), theirMusig.getPublicNonce()],
+    // Aggregate nonces
+    const ourAggregated = ourWithNonce.aggregateNonces([
+      [secp256k1.getPublicKey(theirKey), theirWithNonce.publicNonce],
     ]);
-    theirMusig.aggregateNonces([
-      [secp256k1.getPublicKey(ourKey), musig.getPublicNonce()],
+    const theirAggregated = theirWithNonce.aggregateNonces([
+      [secp256k1.getPublicKey(ourKey), ourWithNonce.publicNonce],
     ]);
-    musig.signPartial();
-    musig.addPartial(
+
+    // Initialize sessions and sign
+    let ourSigned = ourAggregated.initializeSession().signPartial();
+    const theirSigned = theirAggregated.initializeSession().signPartial();
+
+    // Add counterparty signatures
+    ourSigned = ourSigned.addPartial(
       secp256k1.getPublicKey(theirKey),
-      theirMusig.signPartial(),
+      theirSigned.ourPartialSignature,
     );
 
     // Finalize and broadcast
     tx.updateInput(0, {
-      finalScriptWitness: [musig.aggregatePartials()],
+      finalScriptWitness: [ourSigned.aggregatePartials()],
     });
 
     await bitcoinClient.sendRawTransaction(tx.hex);

@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { hex } from '@scure/base';
 import { Address, OutScript, Transaction } from '@scure/btc-signer';
@@ -32,7 +32,8 @@ import {
   constructRefundTransaction as liquidConstructRefundTransaction,
 } from '../../lib/liquid';
 import { tweakMusig as liquidTweakMusig } from '../../lib/liquid/swap/TaprootUtils';
-import Musig from '../../lib/musig/Musig';
+import * as Musig from '../../lib/musig/Musig';
+import type { MusigKeyAgg } from '../../lib/musig/Musig';
 import {
   outputFunctionForType,
   p2trOutput,
@@ -216,7 +217,7 @@ export const createSwapOutput = async <
   preimage?: Buffer,
 ): Promise<{
   utxo: T;
-  musig?: Musig;
+  musig?: MusigKeyAgg;
   claimKeys: Uint8Array;
   refundKeys: Uint8Array;
 }> => {
@@ -234,7 +235,7 @@ export const createSwapOutput = async <
   const timeout = timeoutBlockHeight || blocks + 1;
 
   let utxo: T;
-  let tweakedMusig: Musig | undefined;
+  let tweakedMusig: MusigKeyAgg | undefined;
 
   if (outputType === OutputType.Taproot) {
     const tree = (generateScript as typeof swapTree)(
@@ -245,10 +246,9 @@ export const createSwapOutput = async <
       timeout,
     ) as SwapTree;
 
-    const musig = new Musig(
+    const musig = Musig.create(
       isRefund ? refundKeys : claimKeys,
       [claimKeys, refundKeys].map((k) => secp256k1.getPublicKey(k)),
-      randomBytes(32),
     );
 
     tweakedMusig = (isBitcoin ? tweakMusig : liquidTweakMusig)(
@@ -259,14 +259,14 @@ export const createSwapOutput = async <
     utxo = {
       ...(await sendFundsToOutput(
         outputType,
-        Buffer.from(p2trOutput(tweakedMusig.pubkeyAgg)),
-        Buffer.from(tweakedMusig.pubkeyAgg),
+        Buffer.from(p2trOutput(tweakedMusig.aggPubkey)),
+        Buffer.from(tweakedMusig.aggPubkey),
         confidential,
       )),
       preimage,
       swapTree: tree,
       privateKey: isRefund ? refundKeys : claimKeys,
-      internalKey: Buffer.from(musig.pubkeyAgg),
+      internalKey: Buffer.from(musig.aggPubkey),
     };
   } else {
     const redeemScript = (generateScript as typeof swapScript)(

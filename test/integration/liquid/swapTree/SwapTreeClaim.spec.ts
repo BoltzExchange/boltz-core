@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { randomBytes } from 'node:crypto';
@@ -91,28 +91,44 @@ describe.each`
 
       const sigHash = hashForWitnessV1(Networks.liquidRegtest, [utxo], tx, 0);
 
-      const updatedMusig = Musig.updateMessage(musig!, sigHash);
-      const theirMusig = new Musig(
-        refundKeys,
-        [updatedMusig!.publicKeys[0], secp256k1.getPublicKey(refundKeys)],
-        sigHash,
-        updatedMusig!.tweak,
-      );
+      // Apply the same tweak to create a new MusigKeyAgg, then set message
+      const tweakedMusig = musig!.tweak
+        ? Musig.create(utxo.privateKey!, musig!.publicKeys).xonlyTweakAdd(
+            musig!.tweak,
+          )
+        : Musig.create(utxo.privateKey!, musig!.publicKeys);
 
-      updatedMusig.aggregateNonces([
-        [secp256k1.getPublicKey(refundKeys), theirMusig.getPublicNonce()],
+      const ourWithNonce = tweakedMusig.message(sigHash).generateNonce();
+      const theirWithNonce = (
+        musig!.tweak
+          ? Musig.create(refundKeys, [
+              musig!.publicKeys[0],
+              secp256k1.getPublicKey(refundKeys),
+            ]).xonlyTweakAdd(musig!.tweak)
+          : Musig.create(refundKeys, [
+              musig!.publicKeys[0],
+              secp256k1.getPublicKey(refundKeys),
+            ])
+      )
+        .message(sigHash)
+        .generateNonce();
+
+      const ourAggregated = ourWithNonce.aggregateNonces([
+        [secp256k1.getPublicKey(refundKeys), theirWithNonce.publicNonce],
       ]);
-      theirMusig.aggregateNonces([
-        [updatedMusig.publicKeys[0], updatedMusig.getPublicNonce()],
+      const theirAggregated = theirWithNonce.aggregateNonces([
+        [musig!.publicKeys[0], ourWithNonce.publicNonce],
       ]);
 
-      updatedMusig.signPartial();
-      updatedMusig.addPartial(
+      let ourSigned = ourAggregated.initializeSession().signPartial();
+      const theirSigned = theirAggregated.initializeSession().signPartial();
+
+      ourSigned = ourSigned.addPartial(
         secp256k1.getPublicKey(refundKeys),
-        theirMusig.signPartial(),
+        theirSigned.ourPartialSignature,
       );
 
-      tx.setWitness(0, [Buffer.from(updatedMusig!.aggregatePartials())]);
+      tx.setWitness(0, [Buffer.from(ourSigned.aggregatePartials())]);
 
       await elementsClient.sendRawTransaction(tx.toHex());
       const info = await elementsClient.getRawTransactionVerbose(tx.getId());

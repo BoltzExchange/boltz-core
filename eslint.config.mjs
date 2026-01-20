@@ -61,4 +61,10 @@ export default [
       quotes: ['error', 'single', { avoidEscape: true }],
     },
   },
+  {
+    files: ['test/**/*.ts'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
 ];

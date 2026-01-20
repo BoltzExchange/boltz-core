@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { hex } from '@scure/base';
 import { Script, type ScriptType } from '@scure/btc-signer';
 import { TAP_LEAF_VERSION } from '@scure/btc-signer/payment.js';
@@ -6,7 +6,7 @@ import zkp from '@vulpemventures/secp256k1-zkp';
 import { tapTweakHash } from 'bitcoinjs-lib/src/payments/bip341';
 import { randomBytes } from 'node:crypto';
 import type { TapLeaf, TapTree } from '../../../lib/consts/Types';
-import Musig from '../../../lib/musig/Musig';
+import * as Musig from '../../../lib/musig/Musig';
 import {
   TAP_LEAF_VERSION_LIQUID,
   createControlBlock,
@@ -82,23 +82,22 @@ describe('TaprootUtils', () => {
     const secp = await zkp();
     const ourMusigKey = secp256k1.utils.randomPrivateKey();
 
-    const musig = new Musig(
+    const musig = Musig.create(
       ourMusigKey,
       [
         ourMusigKey,
         secp256k1.utils.randomPrivateKey(),
         secp256k1.utils.randomPrivateKey(),
       ].map((key) => secp256k1.getPublicKey(key)),
-      randomBytes(32),
     );
     const tweakedMusig = tweakMusig(musig, taptree);
 
-    expect(Buffer.from(tweakedMusig.pubkeyAgg)).toEqual(
+    expect(Buffer.from(tweakedMusig.aggPubkey)).toEqual(
       Buffer.from(
         secp.ecc.xOnlyPointAddTweak(
-          toXOnly(Buffer.from(musig.pubkeyAgg)),
+          toXOnly(Buffer.from(musig.aggPubkey)),
           tapTweakHash(
-            Buffer.from(musig.pubkeyAgg),
+            Buffer.from(musig.aggPubkey),
             Buffer.from(taprootHashTree(taptree).hash),
           ),
         )!.xOnlyPubkey,
