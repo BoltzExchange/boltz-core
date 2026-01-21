@@ -21,7 +21,7 @@ contract ERC20Swap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant VERSION = 5;
+    uint8 public constant VERSION = 6;
 
     bytes32 public constant TYPEHASH_CLAIM = keccak256(
         "Claim(bytes32 preimage,uint256 amount,address tokenAddress,address refundAddress,uint256 timelock,address destination)"
@@ -37,7 +37,7 @@ contract ERC20Swap {
         abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
             keccak256("ERC20Swap"),
-            keccak256("5"),
+            keccak256("6"),
             block.chainid,
             address(this)
         )
@@ -54,7 +54,7 @@ contract ERC20Swap {
         bytes32 indexed preimageHash,
         uint256 amount,
         address tokenAddress,
-        address claimAddress,
+        address indexed claimAddress,
         address indexed refundAddress,
         uint256 timelock
     );

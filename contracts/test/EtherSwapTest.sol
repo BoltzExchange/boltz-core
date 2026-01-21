@@ -10,7 +10,7 @@ contract EtherSwapTest is Test {
     event Lockup(
         bytes32 indexed preimageHash,
         uint256 amount,
-        address claimAddress,
+        address indexed claimAddress,
         address indexed refundAddress,
         uint256 timelock
     );
@@ -43,7 +43,7 @@ contract EtherSwapTest is Test {
     receive() external payable {}
 
     function testCorrectVersion() external view {
-        assertEq(swap.VERSION(), 5);
+        assertEq(swap.VERSION(), 6);
     }
 
     function testNoSendEtherWithoutFunctionSig() external {
@@ -71,7 +71,7 @@ contract EtherSwapTest is Test {
     function testLock() external {
         uint256 timelock = block.number;
 
-        vm.expectEmit(true, true, false, true, address(swap));
+        vm.expectEmit(true, true, true, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, claimAddress, address(this), timelock);
 
         lock(timelock);
@@ -82,7 +82,7 @@ contract EtherSwapTest is Test {
     function testLockWithRefundAddress() external {
         uint256 timelock = block.number;
 
-        vm.expectEmit(true, true, false, true, address(swap));
+        vm.expectEmit(true, true, true, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, claimAddress, refundAddress, timelock);
 
         swap.lock{value: lockupAmount}(preimageHash, claimAddress, refundAddress, timelock);
@@ -596,7 +596,7 @@ contract EtherSwapTest is Test {
         uint256 timelock = block.number;
         uint256 prepayAmount = 123000;
 
-        vm.expectEmit(true, true, false, true, address(swap));
+        vm.expectEmit(true, true, true, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, claimAddress, address(this), timelock);
 
         swap.lockPrepayMinerfee{value: lockupAmount + prepayAmount}(

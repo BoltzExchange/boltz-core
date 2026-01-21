@@ -14,7 +14,7 @@ contract ERC20SwapTest is Test {
         bytes32 indexed preimageHash,
         uint256 amount,
         address tokenAddress,
-        address claimAddress,
+        address indexed claimAddress,
         address indexed refundAddress,
         uint256 timelock
     );
@@ -49,7 +49,7 @@ contract ERC20SwapTest is Test {
     }
 
     function testCorrectVersion() external view {
-        assertEq(swap.VERSION(), 5);
+        assertEq(swap.VERSION(), 6);
     }
 
     function testShouldNotAcceptEther() external {
@@ -103,7 +103,7 @@ contract ERC20SwapTest is Test {
 
         uint256 timelock = block.number;
 
-        vm.expectEmit(true, true, false, true, address(swap));
+        vm.expectEmit(true, true, true, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock);
 
         lock(timelock);
@@ -118,7 +118,7 @@ contract ERC20SwapTest is Test {
 
         uint256 timelock = block.number;
 
-        vm.expectEmit(true, true, false, true, address(swap));
+        vm.expectEmit(true, true, true, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock);
 
         swap.lock(preimageHash, lockupAmount, address(token), claimAddress, refundAddress, timelock);
@@ -712,7 +712,7 @@ contract ERC20SwapTest is Test {
 
         token.approve(address(swap), lockupAmount);
 
-        vm.expectEmit(true, true, false, true, address(swap));
+        vm.expectEmit(true, true, true, true, address(swap));
         emit Lockup(preimageHash, lockupAmount, address(token), claimAddress, address(this), timelock);
 
         swap.lockPrepayMinerfee{value: prepayAmount}(
