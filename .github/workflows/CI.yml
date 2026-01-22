@@ -41,10 +41,10 @@ jobs:
         run: npm run prettier:check
 
       - name: Forge lint
-        run: forge lint --severity gas --no-cache --deny notes
+        run: forge clean && forge lint --severity gas --no-cache --deny notes
 
       - name: Forge fmt
-        run: forge fmt --check contracts/*.sol contracts/script/ contracts/test/
+        run: forge fmt --check
 
       - name: Unit tests
         run: npm run test:unit
@@ -53,4 +53,4 @@ jobs:
         run: npm run test:int
 
       - name: Contract tests
-        run: npm run test:solidity
+        run: forge clean && npm run test:solidity
