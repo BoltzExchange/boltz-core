@@ -18,6 +18,7 @@ import swapScript from './swap/SwapScript';
 import swapTree, {
   extractClaimPublicKeyFromSwapTree,
   extractRefundPublicKeyFromSwapTree,
+  fundingAddressTree,
 } from './swap/SwapTree';
 import { compareTrees } from './swap/SwapTreeCompare';
 import * as SwapTreeSerializer from './swap/SwapTreeSerializer';
@@ -41,6 +42,7 @@ export {
   detectPreimage,
   reverseSwapTree,
   reverseSwapScript,
+  fundingAddressTree,
   constructClaimTransaction,
   constructRefundTransaction,
   extractClaimPublicKeyFromSwapTree,

@@ -1,6 +1,6 @@
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { Script } from '@scure/btc-signer';
-import type { SwapTree } from '../consts/Types';
+import type { FundingAddressTree, SwapTree } from '../consts/Types';
 import { createLeaf, swapLeafsToTree, toXOnly } from './TaprootUtils';
 
 export const createRefundLeaf = (
@@ -63,6 +63,23 @@ const swapTree = (
     claimLeaf,
     refundLeaf,
     tree: swapLeafsToTree(claimLeaf, refundLeaf),
+  };
+};
+
+export const fundingAddressTree = (
+  isLiquid: boolean,
+  refundPublicKey: Uint8Array,
+  timeoutBlockHeight: number,
+): FundingAddressTree => {
+  const refundLeaf = createRefundLeaf(
+    isLiquid,
+    refundPublicKey,
+    timeoutBlockHeight,
+  );
+
+  return {
+    refundLeaf,
+    tree: refundLeaf,
   };
 };
 
