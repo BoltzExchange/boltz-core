@@ -18,7 +18,8 @@ import {
   tweakMusig,
 } from '../../../../lib/liquid/swap/TaprootUtils';
 import Musig from '../../../../lib/musig/Musig';
-import { createLeaf } from '../../../../lib/swap/TaprootUtils';
+import { fundingAddressTree } from '../../../../lib/swap/SwapTree';
+import { createLeaf, toXOnly } from '../../../../lib/swap/TaprootUtils';
 import { ECPair } from '../../Utils';
 
 describe('TaprootUtils', () => {
@@ -86,6 +87,36 @@ describe('TaprootUtils', () => {
             musig.getAggregatedPublicKey(),
             toHashTree(taptree).hash,
           ),
+        )!.xOnlyPubkey,
+      ),
+    );
+  });
+
+  test('should tweak Musig with FundingAddressTree', async () => {
+    const refundKeys = secp256k1.getPublicKey(
+      secp256k1.utils.randomPrivateKey(),
+    );
+    const timeoutBlockHeight = 800000;
+
+    const tree = fundingAddressTree(true, refundKeys, timeoutBlockHeight);
+
+    const ourMusigKey = secp256k1.utils.randomPrivateKey();
+    const musig = new Musig(
+      ourMusigKey,
+      [
+        ourMusigKey,
+        secp256k1.utils.randomPrivateKey(),
+      ].map((key) => secp256k1.getPublicKey(key)),
+      randomBytes(32),
+    );
+
+    const tweakedMusig = tweakMusig(musig, tree.tree);
+
+    expect(Buffer.from(tweakedMusig.pubkeyAgg)).toEqual(
+      Buffer.from(
+        secp.ecc.xOnlyPointAddTweak(
+          toXOnly(musig.pubkeyAgg),
+          tapTweakHash(Buffer.from(musig.pubkeyAgg), toHashTree(tree.tree).hash),
         )!.xOnlyPubkey,
       ),
     );

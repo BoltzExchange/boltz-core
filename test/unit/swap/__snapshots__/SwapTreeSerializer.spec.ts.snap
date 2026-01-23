@@ -1,5 +1,23 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
+exports[`SwapTreeSerializer should serialize funding address tree (isLiquid: false) 1`] = `
+{
+  "refundLeaf": {
+    "output": "2010154f49ec6656fd70d28abd9bbb71633da124eda324b1bf2b28dd9686915087ad017bb1",
+    "version": 192,
+  },
+}
+`;
+
+exports[`SwapTreeSerializer should serialize funding address tree (isLiquid: true) 1`] = `
+{
+  "refundLeaf": {
+    "output": "2010154f49ec6656fd70d28abd9bbb71633da124eda324b1bf2b28dd9686915087ad017bb1",
+    "version": 196,
+  },
+}
+`;
+
 exports[`SwapTreeSerializer should serialize swap tree (isLiquid: false) 1`] = `
 {
   "claimLeaf": {

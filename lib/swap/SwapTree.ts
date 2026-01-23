@@ -1,9 +1,9 @@
 import ops from '@boltz/bitcoin-ops';
 import { crypto, script } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
-import type { SwapTree } from '../consts/Types';
-import { encodeCltv } from './SwapUtils';
+import type { FundingAddressTree, SwapTree } from '../consts/Types';
 import { createLeaf, swapLeafsToTree } from './TaprootUtils';
+import { encodeCltv } from './SwapUtils';
 
 export const createRefundLeaf = (
   isLiquid: boolean,
@@ -48,6 +48,19 @@ const swapTree = (
     claimLeaf,
     refundLeaf,
     tree: swapLeafsToTree(claimLeaf, refundLeaf),
+  };
+};
+
+export const fundingAddressTree = (
+  isLiquid: boolean,
+  refundPublicKey: Buffer,
+  timeoutBlockHeight: number,
+): FundingAddressTree => {
+  const refundLeaf = createRefundLeaf(isLiquid, refundPublicKey, timeoutBlockHeight);
+
+  return {
+    refundLeaf,
+    tree: refundLeaf,
   };
 };
 
