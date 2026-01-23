@@ -91,6 +91,33 @@ describe('TaprootUtils', () => {
     );
   });
 
+  test('should tweak Musig with nested tree', async () => {
+    const secp = await zkp();
+    const ourMusigKey = ECPair.makeRandom();
+
+    const nestedTree: Taptree = [taptree, taptree];
+
+    const musig = new Musig(
+      secp,
+      ourMusigKey,
+      randomBytes(32),
+      [ourMusigKey.publicKey, ECPair.makeRandom().publicKey].map(Buffer.from),
+    );
+    const tweakedKey = tweakMusig(musig, nestedTree);
+
+    expect(tweakedKey).toEqual(
+      Buffer.from(
+        secp.ecc.xOnlyPointAddTweak(
+          toXOnly(musig.getAggregatedPublicKey()),
+          tapTweakHash(
+            musig.getAggregatedPublicKey(),
+            toHashTree(nestedTree).hash,
+          ),
+        )!.xOnlyPubkey,
+      ),
+    );
+  });
+
   test('should create control blocks', () => {
     initEccLib(ecc);
 

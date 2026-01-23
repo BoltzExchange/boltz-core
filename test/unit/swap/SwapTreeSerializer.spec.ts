@@ -1,9 +1,11 @@
 import { getHexBuffer } from '../../../lib/Utils';
 import { Feature, Networks, reverseSwapTree } from '../../../lib/liquid';
 import { p2trOutput } from '../../../lib/swap/Scripts';
-import swapTree from '../../../lib/swap/SwapTree';
+import swapTree, { fundingAddressTree } from '../../../lib/swap/SwapTree';
 import {
+  deserializeFundingAddressTree,
   deserializeSwapTree,
+  serializeFundingAddressTree,
   serializeSwapTree,
 } from '../../../lib/swap/SwapTreeSerializer';
 import { ECPair } from '../Utils';
@@ -96,6 +98,51 @@ describe('SwapTreeSerializer', () => {
 
       const serialized = JSON.stringify(serializeSwapTree(tree));
       expect(deserializeSwapTree(serialized)).toEqual(tree);
+    },
+  );
+
+  const createFundingAddressTree = (isLiquid: boolean) =>
+    fundingAddressTree(isLiquid, refundPublicKey, timeoutBlockHeight);
+
+  test.each`
+    isLiquid
+    ${false}
+    ${true}
+  `(
+    'should serialize funding address tree (isLiquid: $isLiquid)',
+    ({ isLiquid }) => {
+      const serialized = serializeFundingAddressTree(
+        createFundingAddressTree(isLiquid),
+      );
+      expect(serialized).toMatchSnapshot();
+    },
+  );
+
+  test.each`
+    isLiquid
+    ${false}
+    ${true}
+  `(
+    'should deserialize funding address tree (isLiquid: $isLiquid)',
+    ({ isLiquid }) => {
+      const tree = createFundingAddressTree(isLiquid);
+
+      const serialized = serializeFundingAddressTree(tree);
+      expect(deserializeFundingAddressTree(serialized)).toEqual(tree);
+    },
+  );
+
+  test.each`
+    isLiquid
+    ${false}
+    ${true}
+  `(
+    'should deserialize string funding address trees (isLiquid: $isLiquid)',
+    ({ isLiquid }) => {
+      const tree = createFundingAddressTree(isLiquid);
+
+      const serialized = JSON.stringify(serializeFundingAddressTree(tree));
+      expect(deserializeFundingAddressTree(serialized)).toEqual(tree);
     },
   );
 });

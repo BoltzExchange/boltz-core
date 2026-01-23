@@ -61,3 +61,8 @@ export type SwapTree = {
 };
 
 export type LiquidSwapTree = SwapTree & { covenantClaimLeaf?: Tapleaf };
+
+export type FundingAddressTree = {
+  tree: Taptree;
+  refundLeaf: Tapleaf;
+};
