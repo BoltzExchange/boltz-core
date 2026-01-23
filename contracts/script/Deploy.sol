@@ -13,12 +13,13 @@ contract Deploy is Script {
         vm.startBroadcast();
         address etherSwapAddress = address(new EtherSwap());
         console.log("Deployed EtherSwap: ", etherSwapAddress);
-        console.log("Deployed ERC20Swap: ", address(new ERC20Swap()));
+        address erc20SwapAddress = address(new ERC20Swap());
+        console.log("Deployed ERC20Swap: ", erc20SwapAddress);
 
         uint8 decimals = 18;
         TestERC20 erc20 = new TestERC20("TestERC20", "TRC20", decimals, 1000 * (10 ** decimals));
 
-        console.log("Deployed Router: ", address(new Router(etherSwapAddress)));
+        console.log("Deployed Router: ", address(new Router(etherSwapAddress, erc20SwapAddress)));
 
         vm.stopBroadcast();
 
