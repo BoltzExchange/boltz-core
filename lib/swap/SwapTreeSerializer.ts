@@ -1,5 +1,10 @@
 import { hex } from '@scure/base';
-import type { LiquidSwapTree, SwapTree, TapLeaf } from '../consts/Types';
+import type {
+  FundingAddressTree,
+  LiquidSwapTree,
+  SwapTree,
+  TapLeaf,
+} from '../consts/Types';
 import { assignTreeProbabilities, sortTree } from './TreeSort';
 
 type SerializedLeaf = {
@@ -14,6 +19,10 @@ type SerializedTree = {
 
 type SerializedLiquidSwapTree = SerializedTree & {
   covenantClaimLeaf?: SerializedLeaf;
+};
+
+type SerializedFundingAddressTree = {
+  refundLeaf: SerializedLeaf;
 };
 
 const serializeLeaf = (leaf: TapLeaf): SerializedLeaf => ({
@@ -41,6 +50,12 @@ export const serializeSwapTree = (
   return res;
 };
 
+export const serializeFundingAddressTree = (
+  tree: FundingAddressTree,
+): SerializedFundingAddressTree => ({
+  refundLeaf: serializeLeaf(tree.refundLeaf),
+});
+
 export const deserializeSwapTree = (
   tree: string | SerializedTree | LiquidSwapTree,
 ): SwapTree | LiquidSwapTree => {
@@ -61,4 +76,17 @@ export const deserializeSwapTree = (
   };
 };
 
-export type { SerializedLeaf, SerializedTree };
+export const deserializeFundingAddressTree = (
+  tree: string | SerializedFundingAddressTree,
+): FundingAddressTree => {
+  const parsed = typeof tree === 'string' ? JSON.parse(tree) : tree;
+
+  const refundLeaf = deserializeLeaf(parsed.refundLeaf);
+
+  return {
+    refundLeaf,
+    tree: refundLeaf,
+  };
+};
+
+export type { SerializedLeaf, SerializedTree, SerializedFundingAddressTree };
