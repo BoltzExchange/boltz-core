@@ -414,7 +414,7 @@ contract EtherSwap {
         address refundAddress,
         uint256 timelock
     ) public pure returns (bytes32 result) {
-        assembly {
+        assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore(ptr, preimageHash)
             mstore(add(ptr, 0x20), amount)
