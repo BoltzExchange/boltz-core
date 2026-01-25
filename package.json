@@ -56,7 +56,6 @@
   "dependencies": {
     "@boltz/bitcoin-ops": "^2.0.0",
     "@noble/hashes": "^2.0.1",
-    "@openzeppelin/contracts": "^5.4.0",
     "@scure/base": "^2.0.0",
     "@scure/btc-signer": "^2.0.1"
   },
