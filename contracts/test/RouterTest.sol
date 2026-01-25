@@ -7,7 +7,9 @@ import {Router} from "../Router.sol";
 import {SigUtils} from "./SigUtils.sol";
 import {EtherSwap} from "../EtherSwap.sol";
 import {ERC20Swap} from "../ERC20Swap.sol";
+import {ISignatureTransfer} from "permit2/interfaces/ISignatureTransfer.sol";
 import {TestERC20} from "../TestERC20.sol";
+import {DeployPermit2} from "../../solidity-lib/permit2/test/utils/DeployPermit2.sol";
 
 contract MockTarget {
     uint256 public calls;
@@ -67,10 +69,15 @@ contract MockERC20Target {
 }
 
 contract RouterTest is Test {
-    EtherSwap internal immutable SWAP = new EtherSwap();
-    ERC20Swap internal immutable ERC20_SWAP = new ERC20Swap();
-    Router internal immutable ROUTER = new Router(address(SWAP), address(ERC20_SWAP));
-    SigUtils internal immutable SIG_UTILS = new SigUtils(SWAP.DOMAIN_SEPARATOR());
+    bytes32 internal constant TOKEN_PERMISSIONS_TYPEHASH = keccak256("TokenPermissions(address token,uint256 amount)");
+    string internal constant PERMIT2_WITNESS_TYPEHASH_STUB =
+        "PermitWitnessTransferFrom(TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline,";
+
+    EtherSwap internal immutable SWAP;
+    ERC20Swap internal immutable ERC20_SWAP;
+    ISignatureTransfer internal immutable PERMIT2;
+    Router internal immutable ROUTER;
+    SigUtils internal immutable SIG_UTILS;
     SigUtils internal immutable ERC20_SIG_UTILS;
     TestERC20 internal immutable TOKEN;
     TestERC20 internal immutable OUTPUT_TOKEN;
@@ -80,9 +87,17 @@ contract RouterTest is Test {
     uint256 internal lockupAmount = 1 ether;
     uint256 internal claimAddressKey = 0xA11CE;
     address internal claimAddress;
+    uint256 internal refundAddressKey = 0xB0B;
+    address internal refundAddress;
 
     constructor() {
         claimAddress = vm.addr(claimAddressKey);
+        refundAddress = vm.addr(refundAddressKey);
+        SWAP = new EtherSwap();
+        ERC20_SWAP = new ERC20Swap();
+        PERMIT2 = ISignatureTransfer(new DeployPermit2().deployPermit2());
+        ROUTER = new Router(address(SWAP), address(ERC20_SWAP), address(PERMIT2));
+        SIG_UTILS = new SigUtils(SWAP.DOMAIN_SEPARATOR());
         ERC20_SIG_UTILS = new SigUtils(ERC20_SWAP.DOMAIN_SEPARATOR());
         TOKEN = new TestERC20("Test", "TEST", 18, lockupAmount * 10);
         OUTPUT_TOKEN = new TestERC20("Output", "OUT", 18, lockupAmount * 10);
@@ -405,6 +420,143 @@ contract RouterTest is Test {
         ROUTER.claimCall(
             claimSignature, address(mockTarget), abi.encodeWithSelector(MockTarget.mockTarget.selector, 21), v, r, s
         );
+    }
+
+    function testExecuteAndLockEther() public {
+        uint256 timelock = block.number + 21;
+
+        MockTarget mockTarget = new MockTarget();
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 7)
+        });
+
+        ROUTER.executeAndLock{value: lockupAmount}(preimageHash, claimAddress, address(this), timelock, calls);
+
+        bytes32 hash = SWAP.hashValues(preimageHash, lockupAmount, claimAddress, address(this), timelock);
+        assertTrue(SWAP.swaps(hash));
+        assertEq(mockTarget.calls(), 7);
+        assertEq(address(ROUTER).balance, 0);
+    }
+
+    function testExecuteAndLockERC20() public {
+        uint256 timelock = block.number + 21;
+
+        MockDex dex = new MockDex(TOKEN);
+        require(TOKEN.transfer(address(dex), lockupAmount));
+
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(dex), value: lockupAmount, callData: abi.encodeWithSelector(MockDex.swap.selector)
+        });
+
+        ROUTER.executeAndLockERC20{value: lockupAmount}(
+            preimageHash, address(TOKEN), claimAddress, address(this), timelock, calls
+        );
+
+        bytes32 hash =
+            ERC20_SWAP.hashValues(preimageHash, lockupAmount, address(TOKEN), claimAddress, address(this), timelock);
+        assertTrue(ERC20_SWAP.swaps(hash));
+        assertEq(TOKEN.balanceOf(address(ROUTER)), 0);
+    }
+
+    function testExecuteAndLockERC20WithPermit2() public {
+        uint256 timelock = block.number + 21;
+
+        require(TOKEN.transfer(refundAddress, lockupAmount));
+
+        Router.Call[] memory calls = new Router.Call[](0);
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: address(TOKEN), amount: lockupAmount}),
+            nonce: 0,
+            deadline: block.timestamp + 100
+        });
+
+        bytes32 callsHash = keccak256(abi.encode(calls));
+        bytes32 witness = keccak256(
+            abi.encode(
+                ROUTER.TYPEHASH_EXECUTE_LOCK_ERC20(),
+                preimageHash,
+                address(TOKEN),
+                claimAddress,
+                refundAddress,
+                timelock,
+                callsHash
+            )
+        );
+        bytes memory signature = signPermit2WitnessTransfer(permit, witness, refundAddressKey);
+
+        vm.startPrank(refundAddress);
+        require(TOKEN.approve(address(PERMIT2), lockupAmount));
+        ROUTER.executeAndLockERC20WithPermit2(
+            preimageHash, address(TOKEN), claimAddress, refundAddress, timelock, calls, permit, signature
+        );
+        vm.stopPrank();
+
+        bytes32 hash =
+            ERC20_SWAP.hashValues(preimageHash, lockupAmount, address(TOKEN), claimAddress, refundAddress, timelock);
+        assertTrue(ERC20_SWAP.swaps(hash));
+        assertEq(TOKEN.balanceOf(address(ROUTER)), 0);
+        assertEq(TOKEN.balanceOf(refundAddress), 0);
+    }
+
+    function testExecuteAndLockERC20WithPermit2InvalidSignature() public {
+        uint256 timelock = block.number + 21;
+
+        require(TOKEN.transfer(refundAddress, lockupAmount));
+
+        Router.Call[] memory calls = new Router.Call[](0);
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: address(TOKEN), amount: lockupAmount}),
+            nonce: 0,
+            deadline: block.timestamp + 100
+        });
+
+        bytes32 callsHash = keccak256(abi.encode(calls));
+        bytes32 witness = keccak256(
+            abi.encode(
+                ROUTER.TYPEHASH_EXECUTE_LOCK_ERC20(),
+                preimageHash,
+                address(TOKEN),
+                claimAddress,
+                refundAddress,
+                timelock,
+                callsHash
+            )
+        );
+        bytes memory signature = signPermit2WitnessTransfer(permit, witness, refundAddressKey);
+        signature[0] ^= 0x01;
+
+        vm.startPrank(refundAddress);
+        require(TOKEN.approve(address(PERMIT2), lockupAmount));
+        vm.expectRevert();
+        ROUTER.executeAndLockERC20WithPermit2(
+            preimageHash, address(TOKEN), claimAddress, refundAddress, timelock, calls, permit, signature
+        );
+        vm.stopPrank();
+    }
+
+    function signPermit2WitnessTransfer(
+        ISignatureTransfer.PermitTransferFrom memory permit,
+        bytes32 witness,
+        uint256 privateKey
+    ) internal view returns (bytes memory) {
+        bytes32 typehash = keccak256(
+            abi.encodePacked(PERMIT2_WITNESS_TYPEHASH_STUB, ROUTER.TYPESTRING_EXECUTE_LOCK_ERC20())
+        );
+        bytes32 tokenPermissionsHash = keccak256(abi.encode(TOKEN_PERMISSIONS_TYPEHASH, permit.permitted));
+        bytes32 msgHash = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                PERMIT2.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(typehash, tokenPermissionsHash, address(ROUTER), permit.nonce, permit.deadline, witness)
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, msgHash);
+        return bytes.concat(r, s, bytes1(v));
     }
 
     function signClaim(uint256 timelock) internal view returns (Router.Claim memory) {

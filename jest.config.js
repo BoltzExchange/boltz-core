@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
   testEnvironment: 'node',
-  modulePathIgnorePatterns: ['dist'],
+  modulePathIgnorePatterns: ['dist', 'solidity-lib'],
   transform: {
     '^.+\\.[tj]s$': '@swc/jest',
   },
