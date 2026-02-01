@@ -15,6 +15,7 @@ import {
   tweakMusig,
 } from '../../../../lib/liquid/swap/TaprootUtils';
 import * as Musig from '../../../../lib/musig/Musig';
+import { fundingAddressTree } from '../../../../lib/swap/SwapTree';
 import { createLeaf, toXOnly } from '../../../../lib/swap/TaprootUtils';
 
 describe('TaprootUtils', () => {
@@ -83,6 +84,37 @@ describe('TaprootUtils', () => {
     );
   });
 
+  test('should tweak Musig with FundingAddressTree', async () => {
+    const refundKeys = secp256k1.getPublicKey(
+      secp256k1.utils.randomPrivateKey(),
+    );
+    const timeoutBlockHeight = 800000;
+
+    const tree = fundingAddressTree(true, refundKeys, timeoutBlockHeight);
+
+    const ourMusigKey = secp256k1.utils.randomPrivateKey();
+    const musig = Musig.create(
+      ourMusigKey,
+      [ourMusigKey, secp256k1.utils.randomPrivateKey()].map((key) =>
+        secp256k1.getPublicKey(key),
+      ),
+    );
+
+    const tweakedMusig = tweakMusig(musig, tree.tree);
+
+    expect(Buffer.from(tweakedMusig.aggPubkey)).toEqual(
+      Buffer.from(
+        secp.ecc.xOnlyPointAddTweak(
+          toXOnly(musig.aggPubkey),
+          tapTweakHash(
+            Buffer.from(musig.aggPubkey),
+            toHashTree(tree.tree).hash,
+          ),
+        )!.xOnlyPubkey,
+      ),
+    );
+  });
+
   test('should create control blocks', () => {
     const internalKey = toXOnly(
       secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
@@ -116,7 +148,7 @@ describe('TaprootUtils', () => {
     expect(() =>
       createControlBlock(
         toHashTree(taptree),
-        createLeaf(false, [
+        createLeaf(true, [
           ops.OP_RIPEMD160,
           randomBytes(20),
           ops.OP_EQUALVERIFY,
@@ -126,5 +158,40 @@ describe('TaprootUtils', () => {
         ),
       ),
     ).toThrow('leaf not in tree');
+  });
+
+  test('should create control blocks with FundingAddressTree (single-leaf tree)', () => {
+    const refundKeys = secp256k1.getPublicKey(
+      secp256k1.utils.randomPrivateKey(),
+    );
+    const timeoutBlockHeight = 800000;
+
+    const tree = fundingAddressTree(true, refundKeys, timeoutBlockHeight);
+    const hashTree = toHashTree(tree.tree);
+
+    const internalKey = toXOnly(
+      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+    );
+
+    const controlBlock = createControlBlock(
+      hashTree,
+      tree.refundLeaf,
+      Buffer.from(internalKey),
+    );
+
+    // For a single-leaf tree, the path is empty, so the control block should be:
+    // [version | parity] + internalKey (no path elements)
+    const tweakResult = secp.ecc.xOnlyPointAddTweak(
+      internalKey,
+      tapTweakHash(Buffer.from(internalKey), hashTree.hash),
+    )!;
+
+    expect(controlBlock).toEqual(
+      Buffer.concat([
+        Buffer.from([tree.refundLeaf.version | tweakResult.parity]),
+        internalKey,
+      ]),
+    );
+    expect(controlBlock.length).toEqual(33);
   });
 });

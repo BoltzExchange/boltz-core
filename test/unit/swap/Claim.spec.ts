@@ -2,9 +2,12 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
 import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../lib/consts/Enums';
+import { Errors } from '../../../lib/consts/Errors';
 import type { ClaimDetails } from '../../../lib/consts/Types';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import { p2trOutput } from '../../../lib/swap/Scripts';
+import { fundingAddressTree } from '../../../lib/swap/SwapTree';
+import { toXOnly } from '../../../lib/swap/TaprootUtils';
 import { claimDetails, claimDetailsMap } from './ClaimDetails';
 
 describe('Claim', () => {
@@ -117,4 +120,30 @@ describe('Claim', () => {
       ).toThrow('not all Taproot inputs have an internal key');
     },
   );
+
+  test('should not claim FundingAddressTree (no claim leaf)', () => {
+    const privateKey = secp256k1.utils.randomPrivateKey();
+    const publicKey = secp256k1.getPublicKey(privateKey);
+    const tree = fundingAddressTree(false, publicKey, 800000);
+
+    expect(() =>
+      constructClaimTransaction(
+        [
+          {
+            type: OutputType.Taproot,
+            swapTree: tree,
+            internalKey: toXOnly(publicKey),
+            privateKey,
+            preimage: randomBytes(32),
+            transactionId: randomBytes(32).toString('hex'),
+            vout: 0,
+            script: p2trOutput(toXOnly(publicKey)),
+            amount: 10000n,
+          },
+        ],
+        p2trOutput(toXOnly(publicKey)),
+        1000n,
+      ),
+    ).toThrow(Errors.claimRequiresClaimLeaf);
+  });
 });

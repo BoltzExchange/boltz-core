@@ -1,6 +1,10 @@
 import type { Transaction, TxOutput } from 'liquidjs-lib';
 import type { OutputType } from '../../consts/Enums';
-import type { LiquidSwapTree, RefundDetails } from '../../consts/Types';
+import type {
+  FundingAddressTree,
+  LiquidSwapTree,
+  RefundDetails,
+} from '../../consts/Types';
 
 export type LiquidBaseRefundDetails = Omit<
   RefundDetails,
@@ -35,7 +39,7 @@ export type LiquidLegacyRefundDetails = (
 export type LiquidTaprootRefundDetails = LiquidBaseRefundDetails & {
   type: OutputType.Taproot;
   cooperative?: boolean;
-  swapTree?: LiquidSwapTree;
+  swapTree?: LiquidSwapTree | FundingAddressTree;
   internalKey?: Uint8Array;
   // Optional because covenant claims don't need to sign the transaction
   privateKey?: Uint8Array;

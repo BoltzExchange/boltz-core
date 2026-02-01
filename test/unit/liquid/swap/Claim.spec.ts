@@ -1,9 +1,16 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
 import zkp from '@vulpemventures/secp256k1-zkp';
+import { confidential } from 'liquidjs-lib';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
+import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../../lib/consts/Enums';
+import { Errors } from '../../../../lib/consts/Errors';
 import type { LiquidClaimDetails } from '../../../../lib/liquid';
 import { constructClaimTransaction, init } from '../../../../lib/liquid';
-import { liquidClaimDetailsMap } from './ClaimDetails';
+import { p2trOutput } from '../../../../lib/swap/Scripts';
+import { fundingAddressTree } from '../../../../lib/swap/SwapTree';
+import { toXOnly } from '../../../../lib/swap/TaprootUtils';
+import { lbtcRegtest, liquidClaimDetailsMap, nonce } from './ClaimDetails';
 
 describe('Liquid Claim', () => {
   const testClaim = (utxos: LiquidClaimDetails[], fee: bigint) => {
@@ -92,5 +99,33 @@ describe('Liquid Claim', () => {
         1n,
       ),
     ).toThrow('all or none inputs have to be blinded');
+  });
+
+  test('should not claim FundingAddressTree (no claim leaf)', () => {
+    const privateKey = secp256k1.utils.randomPrivateKey();
+    const publicKey = secp256k1.getPublicKey(privateKey);
+    const tree = fundingAddressTree(true, publicKey, 800000);
+
+    expect(() =>
+      constructClaimTransaction(
+        [
+          {
+            type: OutputType.Taproot,
+            swapTree: tree,
+            internalKey: Buffer.from(toXOnly(publicKey)),
+            privateKey,
+            preimage: randomBytes(32),
+            transactionId: randomBytes(32).toString('hex'),
+            vout: 0,
+            script: Buffer.from(p2trOutput(toXOnly(publicKey))),
+            nonce,
+            asset: lbtcRegtest,
+            value: confidential.satoshiToConfidentialValue(10000),
+          },
+        ],
+        Buffer.from(p2trOutput(toXOnly(publicKey))),
+        1000n,
+      ),
+    ).toThrow(Errors.claimRequiresClaimLeaf);
   });
 });
