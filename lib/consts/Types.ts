@@ -25,7 +25,7 @@ export type LegacyRefundDetails = BaseRefundDetails & {
 export type TaprootRefundDetails = BaseRefundDetails & {
   type: OutputType.Taproot;
   cooperative?: boolean;
-  swapTree?: SwapTree;
+  swapTree?: SwapTree | FundingAddressTree;
   internalKey?: Uint8Array;
 
   redeemScript?: never;
@@ -56,3 +56,7 @@ export type FundingAddressTree = {
   tree: TapTree;
   refundLeaf: TapLeaf;
 };
+
+export const isSwapTree = (
+  tree: SwapTree | FundingAddressTree,
+): tree is SwapTree => 'claimLeaf' in tree;

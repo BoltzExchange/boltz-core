@@ -3,7 +3,13 @@ import { concatBytes } from '@noble/hashes/utils.js';
 import { Script, SigHash, Transaction } from '@scure/btc-signer';
 import { signECDSA, signSchnorr } from '@scure/btc-signer/utils.js';
 import { OutputType } from '../Boltz';
-import type { ClaimDetails } from '../consts/Types';
+import { Errors } from '../consts/Errors';
+import {
+  type ClaimDetails,
+  type FundingAddressTree,
+  type SwapTree,
+  isSwapTree,
+} from '../consts/Types';
 import { createControlBlock, taprootHashTree } from './TaprootUtils';
 
 const LEGACY_SIGHASH = SigHash.ALL;
@@ -24,19 +30,35 @@ export const validateInputs = (
       .filter((utxo) => utxo.type !== OutputType.Taproot)
       .some((utxo) => utxo.redeemScript === undefined)
   ) {
-    throw Error('not all non Taproot inputs have a redeem script');
+    throw new Error('not all non Taproot inputs have a redeem script');
   }
 
   const relevantTaprootOutputs = utxos.filter(isRelevantTaprootOutput);
 
   if (relevantTaprootOutputs.some((utxo) => utxo.swapTree === undefined)) {
-    throw Error('not all Taproot inputs have a swap tree');
+    throw new Error('not all Taproot inputs have a swap tree');
   }
 
   if (relevantTaprootOutputs.some((utxo) => utxo.internalKey === undefined)) {
-    throw Error('not all Taproot inputs have an internal key');
+    throw new Error('not all Taproot inputs have an internal key');
   }
 };
+
+export const getClaimLeaf = (
+  swapTree: SwapTree | FundingAddressTree,
+): SwapTree['claimLeaf'] => {
+  if (!isSwapTree(swapTree)) {
+    throw new Error(Errors.claimRequiresClaimLeaf);
+  }
+
+  return swapTree.claimLeaf;
+};
+
+export const getTapLeaf = (
+  isRefund: boolean,
+  swapTree: SwapTree | FundingAddressTree,
+): SwapTree['refundLeaf'] =>
+  isRefund ? swapTree.refundLeaf : getClaimLeaf(swapTree);
 
 export const constructClaimTransaction = (
   utxos: ClaimDetails[],
@@ -108,12 +130,10 @@ export const constructClaimTransaction = (
       }
 
       if (utxo.swapTree === undefined || utxo.internalKey === undefined) {
-        throw Error('swap tree or internal key is undefined');
+        throw new Error('swap tree or internal key is undefined');
       }
 
-      const tapLeaf = isRefund
-        ? utxo.swapTree.refundLeaf
-        : utxo.swapTree.claimLeaf;
+      const tapLeaf = getTapLeaf(isRefund, utxo.swapTree);
 
       const sigHash = tx.preimageWitnessV1(
         index,

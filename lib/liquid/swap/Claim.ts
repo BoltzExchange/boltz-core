@@ -21,7 +21,10 @@ import {
 } from 'liquidjs-lib';
 import type { Network } from 'liquidjs-lib/src/networks';
 import { OutputType } from '../../consts/Enums';
+import type { LiquidSwapTree } from '../../consts/Types';
 import {
+  getClaimLeaf,
+  getTapLeaf,
   isRelevantTaprootOutput,
   signLegacy,
   validateInputs,
@@ -56,7 +59,8 @@ const validateLiquidInputs = (
     taprootInputs.some(
       (utxo) =>
         utxo.privateKey === undefined &&
-        utxo.swapTree?.covenantClaimLeaf === undefined,
+        (utxo.swapTree as LiquidSwapTree | undefined)?.covenantClaimLeaf ===
+          undefined,
     )
   ) {
     throw new Error('not all Taproot signature claims have keys');
@@ -207,9 +211,7 @@ export const constructClaimTransaction = (
         throw new Error('swap tree or internal key is undefined');
       }
 
-      const leafHash = tapLeafHash(
-        isRefund ? utxo.swapTree.refundLeaf : utxo.swapTree.claimLeaf,
-      );
+      const leafHash = tapLeafHash(getTapLeaf(isRefund, utxo.swapTree));
       const signature = signSchnorr(
         pset.getInputPreimage(
           i,
@@ -298,8 +300,8 @@ export const constructClaimTransaction = (
           const tapleaf = isRefund
             ? utxo.swapTree.refundLeaf
             : isCovenantClaim
-              ? utxo.swapTree.covenantClaimLeaf
-              : utxo.swapTree.claimLeaf;
+              ? (utxo.swapTree as LiquidSwapTree).covenantClaimLeaf
+              : getClaimLeaf(utxo.swapTree);
 
           if (tapleaf === undefined) {
             throw new Error('tapleaf is undefined');
