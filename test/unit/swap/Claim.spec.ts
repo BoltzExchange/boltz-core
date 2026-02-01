@@ -1,9 +1,12 @@
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
 import { randomBytes } from 'crypto';
 import { getHexBuffer } from '../../../lib/Utils';
 import { OutputType } from '../../../lib/consts/Enums';
+import { Errors } from '../../../lib/consts/Errors';
 import type { ClaimDetails } from '../../../lib/consts/Types';
 import { constructClaimTransaction } from '../../../lib/swap/Claim';
 import { p2trOutput } from '../../../lib/swap/Scripts';
+import { fundingAddressTree } from '../../../lib/swap/SwapTree';
 import { ECPair } from '../Utils';
 import { claimDetails, claimDetailsMap } from './ClaimDetails';
 
@@ -108,4 +111,30 @@ describe('Claim', () => {
       ).toThrow('not all Taproot inputs have an internal key');
     },
   );
+
+  test('should not claim FundingAddressTree (no claim leaf)', () => {
+    const keys = ECPair.makeRandom();
+    const publicKey = Buffer.from(keys.publicKey);
+    const tree = fundingAddressTree(false, publicKey, 800000);
+
+    expect(() =>
+      constructClaimTransaction(
+        [
+          {
+            type: OutputType.Taproot,
+            swapTree: tree,
+            internalKey: toXOnly(publicKey),
+            keys,
+            preimage: randomBytes(32),
+            txHash: randomBytes(32),
+            vout: 0,
+            script: p2trOutput(toXOnly(publicKey)),
+            value: 10000,
+          },
+        ],
+        p2trOutput(toXOnly(publicKey)),
+        1000,
+      ),
+    ).toThrow(Errors.claimRequiresClaimLeaf);
+  });
 });

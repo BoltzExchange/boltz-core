@@ -78,9 +78,18 @@ export const createControlBlock = (
   leaf: Tapleaf,
   internalKey: Buffer,
 ): Buffer => {
-  const path = liquidFindScriptPath(hashTree, tapLeafHash(leaf));
-  if (path === undefined || path.length === 0) {
-    throw 'leaf not in tree';
+  const leafHash = tapLeafHash(leaf);
+  const path = liquidFindScriptPath(hashTree, leafHash);
+
+  // In Taproot, the script path from a leaf to the root consists of sibling hashes.
+  // For single-leaf trees (e.g. FundingAddressTree), there are no siblings, so the
+  // path is empty and the leaf hash equals the root hash. This is valid because the
+  // control block only needs the internal key - no additional path elements are required
+  if (
+    path === undefined ||
+    (path.length === 0 && !hashTree.hash.equals(leafHash))
+  ) {
+    throw new Error('leaf not in tree');
   }
 
   const outputKey = secp.ecc.xOnlyPointAddTweak(

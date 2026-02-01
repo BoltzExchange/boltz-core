@@ -1,0 +1,3 @@
+export const Errors = {
+  claimRequiresClaimLeaf: 'claim requires a swap tree with claim leaf',
+} as const;

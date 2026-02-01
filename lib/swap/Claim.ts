@@ -8,7 +8,13 @@ import { tapleafHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341';
 import * as varuint from 'varuint-bitcoin';
 import { getHexString } from '../Utils';
 import { OutputType } from '../consts/Enums';
-import type { ClaimDetails } from '../consts/Types';
+import { Errors } from '../consts/Errors';
+import {
+  type ClaimDetails,
+  type FundingAddressTree,
+  type SwapTree,
+  isSwapTree,
+} from '../consts/Types';
 import { encodeSignature, scriptBuffersToScript } from './SwapUtils';
 import { createControlBlock, hashForWitnessV1 } from './TaprootUtils';
 
@@ -26,19 +32,35 @@ export const validateInputs = (
       .filter((utxo) => utxo.type !== OutputType.Taproot)
       .some((utxo) => utxo.redeemScript === undefined)
   ) {
-    throw 'not all non Taproot inputs have a redeem script';
+    throw new Error('not all non Taproot inputs have a redeem script');
   }
 
   const relevantTaprootOutputs = utxos.filter(isRelevantTaprootOutput);
 
   if (relevantTaprootOutputs.some((utxo) => utxo.swapTree === undefined)) {
-    throw 'not all Taproot inputs have a swap tree';
+    throw new Error('not all Taproot inputs have a swap tree');
   }
 
   if (relevantTaprootOutputs.some((utxo) => utxo.internalKey === undefined)) {
-    throw 'not all Taproot inputs have an internal key';
+    throw new Error('not all Taproot inputs have an internal key');
   }
 };
+
+export const getClaimLeaf = (
+  swapTree: SwapTree | FundingAddressTree,
+): SwapTree['claimLeaf'] => {
+  if (!isSwapTree(swapTree)) {
+    throw new Error(Errors.claimRequiresClaimLeaf);
+  }
+
+  return swapTree.claimLeaf;
+};
+
+export const getTapLeaf = (
+  isRefund: boolean,
+  swapTree: SwapTree | FundingAddressTree,
+): SwapTree['refundLeaf'] =>
+  isRefund ? swapTree.refundLeaf : getClaimLeaf(swapTree);
 
 /**
  * Claim swaps
@@ -123,9 +145,7 @@ export const constructClaimTransaction = (
     // When the Taproot output is spent cooperatively, we leave it empty
     if (utxo.type === OutputType.Taproot) {
       if (utxo.cooperative !== true) {
-        const tapLeaf = isRefund
-          ? utxo.swapTree!.refundLeaf
-          : utxo.swapTree!.claimLeaf;
+        const tapLeaf = getTapLeaf(isRefund, utxo.swapTree!);
         const sigHash = hashForWitnessV1(
           utxos,
           tx,

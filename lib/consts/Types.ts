@@ -24,7 +24,7 @@ export type RefundDetails = TransactionOutput & {
   redeemScript?: Buffer;
 
   // Set for type Taproot
-  swapTree?: SwapTree;
+  swapTree?: SwapTree | FundingAddressTree;
 
   // Set for type Taproot
   internalKey?: Buffer;
@@ -66,3 +66,7 @@ export type FundingAddressTree = {
   tree: Taptree;
   refundLeaf: Tapleaf;
 };
+
+export const isSwapTree = (
+  tree: SwapTree | FundingAddressTree,
+): tree is SwapTree => 'claimLeaf' in tree;

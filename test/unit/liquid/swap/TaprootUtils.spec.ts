@@ -18,6 +18,7 @@ import {
   tweakMusig,
 } from '../../../../lib/liquid/swap/TaprootUtils';
 import Musig from '../../../../lib/musig/Musig';
+import { fundingAddressTree } from '../../../../lib/swap/SwapTree';
 import { createLeaf } from '../../../../lib/swap/TaprootUtils';
 import { ECPair } from '../../Utils';
 
@@ -151,7 +152,7 @@ describe('TaprootUtils', () => {
     expect(() =>
       createControlBlock(
         toHashTree(taptree),
-        createLeaf(false, [
+        createLeaf(true, [
           ops.OP_RIPEMD160,
           randomBytes(20),
           ops.OP_EQUALVERIFY,
@@ -159,5 +160,36 @@ describe('TaprootUtils', () => {
         toXOnly(Buffer.from(ECPair.makeRandom().publicKey)),
       ),
     ).toThrow('leaf not in tree');
+  });
+
+  test('should create control blocks with FundingAddressTree (single-leaf tree)', () => {
+    const refundKeys = Buffer.from(ECPair.makeRandom().publicKey);
+    const timeoutBlockHeight = 800000;
+
+    const tree = fundingAddressTree(true, refundKeys, timeoutBlockHeight);
+    const hashTree = toHashTree(tree.tree);
+
+    const internalKey = toXOnly(Buffer.from(ECPair.makeRandom().publicKey));
+
+    const controlBlock = createControlBlock(
+      hashTree,
+      tree.refundLeaf,
+      internalKey,
+    );
+
+    // For a single-leaf tree, the path is empty, so the control block should be:
+    // [version | parity] + internalKey (no path elements)
+    const tweakResult = secp.ecc.xOnlyPointAddTweak(
+      internalKey,
+      tapTweakHash(internalKey, hashTree.hash),
+    )!;
+
+    expect(controlBlock).toEqual(
+      Buffer.concat([
+        Buffer.from([tree.refundLeaf.version | tweakResult.parity]),
+        internalKey,
+      ]),
+    );
+    expect(controlBlock.length).toEqual(33);
   });
 });

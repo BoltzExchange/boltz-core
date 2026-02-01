@@ -21,7 +21,13 @@ import { reverseBuffer, varuint } from 'liquidjs-lib/src/bufferutils';
 import type { Network } from 'liquidjs-lib/src/networks';
 import { getHexString } from '../../Utils';
 import { OutputType } from '../../consts/Enums';
-import { isRelevantTaprootOutput, validateInputs } from '../../swap/Claim';
+import type { LiquidSwapTree } from '../../consts/Types';
+import {
+  getClaimLeaf,
+  getTapLeaf,
+  isRelevantTaprootOutput,
+  validateInputs,
+} from '../../swap/Claim';
 import { scriptBuffersToScript } from '../../swap/SwapUtils';
 import { getOutputValue } from '../Utils';
 import Networks from '../consts/Networks';
@@ -52,7 +58,8 @@ const validateLiquidInputs = (
     taprootInputs.some(
       (utxo) =>
         utxo.keys === undefined &&
-        utxo.swapTree!.covenantClaimLeaf === undefined,
+        (utxo.swapTree as LiquidSwapTree | undefined)?.covenantClaimLeaf ===
+          undefined,
     )
   ) {
     throw 'not all Taproot signature claims have keys';
@@ -201,9 +208,7 @@ export const constructClaimTransaction = (
         continue;
       }
 
-      const leafHash = tapLeafHash(
-        isRefund ? utxo.swapTree!.refundLeaf : utxo.swapTree!.claimLeaf,
-      );
+      const leafHash = tapLeafHash(getTapLeaf(isRefund, utxo.swapTree!));
       const signature = utxo.keys!.signSchnorr(
         pset.getInputPreimage(
           i,
@@ -288,8 +293,12 @@ export const constructClaimTransaction = (
           const tapleaf = isRefund
             ? utxo.swapTree!.refundLeaf
             : isCovenantClaim
-              ? utxo.swapTree!.covenantClaimLeaf!
-              : utxo.swapTree!.claimLeaf;
+              ? (utxo.swapTree as LiquidSwapTree).covenantClaimLeaf
+              : getClaimLeaf(utxo.swapTree!);
+
+          if (tapleaf === undefined) {
+            throw new Error('tapleaf is undefined');
+          }
 
           const witness = isRefund
             ? [signatures[i]]
