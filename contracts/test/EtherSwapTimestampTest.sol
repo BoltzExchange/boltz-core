@@ -3,6 +3,7 @@
 pragma solidity ^0.8.33;
 
 import {Test} from "forge-std/Test.sol";
+import {EtherSwap} from "../EtherSwap.sol";
 import {EtherSwapTimestamp} from "../EtherSwapTimestamp.sol";
 
 contract EtherSwapTimestampTest is Test {
@@ -35,7 +36,7 @@ contract EtherSwapTimestampTest is Test {
 
         vm.warp(timelock - 1);
 
-        vm.expectRevert("EtherSwap: swap has not timed out yet");
+        vm.expectRevert(EtherSwap.SwapNotTimedOut.selector);
         swap.refund(preimageHash, lockupAmount, claimAddress, timelock);
     }
 

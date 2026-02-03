@@ -46,6 +46,23 @@ contract EtherSwap {
     /// @dev Mapping between value hashes of swaps and whether they have Ether locked in the contract
     mapping(bytes32 => bool) public swaps;
 
+    // Errors
+
+    /// @dev Thrown when the sent Ether amount is not greater than the prepay amount
+    error InvalidPrepayAmount();
+    /// @dev Thrown when the recovered address from a signature is invalid
+    error InvalidSignature();
+    /// @dev Thrown when the swap timelock has not expired yet
+    error SwapNotTimedOut();
+    /// @dev Thrown when trying to claim a commitment as a regular swap
+    error CommitmentCannotBeClaimedAsSwap();
+    /// @dev Thrown when the locked amount is zero
+    error ZeroAmount();
+    /// @dev Thrown when a swap with the same hash already exists
+    error SwapAlreadyExists();
+    /// @dev Thrown when no swap is found for the given hash
+    error SwapNotFound();
+
     // Events
 
     event Lockup(
@@ -105,7 +122,7 @@ contract EtherSwap {
         uint256 prepayAmount
     ) external payable {
         // Revert on underflow in next statement
-        require(msg.value > prepayAmount, "EtherSwap: sent amount must be greater than the prepay amount");
+        require(msg.value > prepayAmount, InvalidPrepayAmount());
 
         // Lock the amount of Ether sent minus the prepay amount in the contract
         lockEther(preimageHash, msg.value - prepayAmount, claimAddress, msg.sender, timelock);
@@ -183,7 +200,8 @@ contract EtherSwap {
         uint256 swapAmount = 0;
 
         unchecked {
-            for (uint256 i = 0; i < preimages.length; i++) {
+            uint256 len = preimages.length;
+            for (uint256 i = 0; i < len; ++i) {
                 swapAmount = amounts[i];
                 prepareClaim(preimages[i], swapAmount, msg.sender, refundAddresses[i], timelocks[i]);
 
@@ -205,7 +223,8 @@ contract EtherSwap {
         uint256 swapAmount = 0;
 
         unchecked {
-            for (uint256 i = 0; i < entries.length; i++) {
+            uint256 len = entries.length;
+            for (uint256 i = 0; i < len; ++i) {
                 swapAmount = entries[i].amount;
 
                 // If the commitment signature is not empty, it means the claim is a commitment
@@ -300,7 +319,7 @@ contract EtherSwap {
             r,
             s
         );
-        require(recoveredAddress != address(0) && recoveredAddress == claimAddress, "EtherSwap: invalid signature");
+        require(recoveredAddress != address(0) && recoveredAddress == claimAddress, InvalidSignature());
 
         refundInternal(preimageHash, amount, claimAddress, refundAddress, timelock);
     }
@@ -361,7 +380,7 @@ contract EtherSwap {
     {
         // Make sure the timelock has expired already
         // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
-        require(timelock <= currentTime(), "EtherSwap: swap has not timed out yet");
+        require(timelock <= currentTime(), SwapNotTimedOut());
         refundInternal(preimageHash, amount, claimAddress, refundAddress, timelock);
     }
 
@@ -414,7 +433,7 @@ contract EtherSwap {
         address refundAddress,
         uint256 timelock
     ) public pure returns (bytes32 result) {
-        assembly {
+        assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore(ptr, preimageHash)
             mstore(add(ptr, 0x20), amount)
@@ -459,7 +478,7 @@ contract EtherSwap {
         bytes32 preimageHash = sha256(abi.encodePacked(preimage));
         require(
             checkCommitmentSignature(preimageHash, amount, claimAddress, refundAddress, timelock, v, r, s),
-            "EtherSwap: invalid signature"
+            InvalidSignature()
         );
 
         // Delete the swap from the mapping to ensure that it cannot be claimed or refunded anymore
@@ -489,7 +508,7 @@ contract EtherSwap {
         bytes32 preimageHash = sha256(abi.encodePacked(preimage));
 
         // Commitments are to bytes32(0) and can only be claimed as commitment
-        require(preimageHash != bytes32(0), "EtherSwap: commitment cannot be claimed as swap");
+        require(preimageHash != bytes32(0), CommitmentCannotBeClaimedAsSwap());
 
         bytes32 hash = hashValues(preimageHash, amount, claimAddress, refundAddress, timelock);
 
@@ -518,13 +537,13 @@ contract EtherSwap {
         uint256 timelock
     ) private {
         // Locking zero WEI in the contract is pointless
-        require(amount > 0, "EtherSwap: locked amount must not be zero");
+        require(amount > 0, ZeroAmount());
 
         // Hash the values of the swap
         bytes32 hash = hashValues(preimageHash, amount, claimAddress, refundAddress, timelock);
 
         // Make sure no swap with this value hash exists yet
-        require(!swaps[hash], "EtherSwap: swap exists already");
+        require(!swaps[hash], SwapAlreadyExists());
 
         // Save to the state that funds were locked for this swap
         swaps[hash] = true;
@@ -554,7 +573,7 @@ contract EtherSwap {
     /// @dev This function reverts if the swap has no Ether locked in the contract
     /// @param hash Value hash of the swap
     function checkSwapIsLocked(bytes32 hash) private view {
-        require(swaps[hash], "EtherSwap: swap has no Ether locked in the contract");
+        require(swaps[hash], SwapNotFound());
     }
 
     function currentTime() internal view virtual returns (uint256) {

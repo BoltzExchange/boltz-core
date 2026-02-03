@@ -86,7 +86,7 @@ contract EtherSwapFuzzTest is Test {
         assertTrue(swap.swaps(swap.hashValues(preimageHash, amount, claimAddress, address(this), timelock)));
 
         vm.startPrank(claimAddress);
-        vm.expectRevert("EtherSwap: swap has no Ether locked in the contract");
+        vm.expectRevert(EtherSwap.SwapNotFound.selector);
         swap.claim(invalidPreimage, amount, address(this), timelock);
     }
 
@@ -127,7 +127,7 @@ contract EtherSwapFuzzTest is Test {
         swap.lock{value: amount}(preimageHash, claimAddress, timelock);
         assertTrue(swap.swaps(swap.hashValues(preimageHash, amount, claimAddress, address(this), timelock)));
 
-        vm.expectRevert("EtherSwap: swap has not timed out yet");
+        vm.expectRevert(EtherSwap.SwapNotTimedOut.selector);
         swap.refund(preimageHash, amount, claimAddress, timelock);
 
         assertTrue(swap.swaps(swap.hashValues(preimageHash, amount, claimAddress, address(this), timelock)));
@@ -148,7 +148,7 @@ contract EtherSwapFuzzTest is Test {
         swap.lock{value: amount}(preimageHash, claimAddress, timelock);
         assertTrue(swap.swaps(swap.hashValues(preimageHash, amount, claimAddress, address(this), timelock)));
 
-        vm.expectRevert("EtherSwap: invalid signature");
+        vm.expectRevert(EtherSwap.InvalidSignature.selector);
         swap.refundCooperative(preimageHash, amount, claimAddress, timelock, v, r, s);
 
         assertTrue(swap.swaps(swap.hashValues(preimageHash, amount, claimAddress, address(this), timelock)));

@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "4.0.0-alpha.3",
+  "version": "4.0.0-alpha.4",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -40,6 +40,7 @@
   "files": [
     "LICENSE",
     "README.md",
+    ".gitmodules",
     "foundry.toml",
     "remappings.txt",
     "out/ERC20.sol/ERC20.json",
@@ -47,7 +48,6 @@
     "out/TestERC20.sol/TestERC20.json",
     "out/EtherSwap.sol/EtherSwap.json",
     "out/ERC20Swap.sol/ERC20Swap.json",
-    "contracts/lib",
     "contracts/*.sol",
     "contracts/script/*.sol",
     "typechain/*",
@@ -56,12 +56,11 @@
   "dependencies": {
     "@boltz/bitcoin-ops": "^2.0.0",
     "@noble/hashes": "^2.0.1",
-    "@openzeppelin/contracts": "^5.4.0",
     "@scure/base": "^2.0.0",
     "@scure/btc-signer": "^2.0.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.11",
+    "@biomejs/biome": "^2.3.12",
     "@eslint/js": "^9.39.2",
     "@swc/core": "^1.15.10",
     "@swc/jest": "^0.2.39",
@@ -76,7 +75,7 @@
     "eslint-plugin-n": "^17.23.2",
     "ethers": "^6.16.0",
     "git-cliff": "^2.12.0",
-    "globals": "^17.0.0",
+    "globals": "^17.1.0",
     "jest": "^30.2.0",
     "prettier": "^3.8.1",
     "slip77": "^0.2.0",

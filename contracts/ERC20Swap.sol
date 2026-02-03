@@ -48,6 +48,21 @@ contract ERC20Swap {
     /// @dev Mapping between value hashes of swaps and whether they have tokens locked in the contract
     mapping(bytes32 => bool) public swaps;
 
+    // Errors
+
+    /// @dev Thrown when the recovered address from a signature is invalid
+    error InvalidSignature();
+    /// @dev Thrown when the locked amount is zero
+    error ZeroAmount();
+    /// @dev Thrown when a swap with the same hash already exists
+    error SwapAlreadyExists();
+    /// @dev Thrown when the swap timelock has not expired yet
+    error SwapNotTimedOut();
+    /// @dev Thrown when trying to claim a commitment as a regular swap
+    error CommitmentCannotBeClaimedAsSwap();
+    /// @dev Thrown when no swap is found for the given hash
+    error SwapNotFound();
+
     // Events
 
     event Lockup(
@@ -183,7 +198,8 @@ contract ERC20Swap {
         uint256 swapAmount = 0;
 
         unchecked {
-            for (uint256 i = 0; i < preimages.length; i++) {
+            uint256 len = preimages.length;
+            for (uint256 i = 0; i < len; ++i) {
                 swapAmount = amounts[i];
                 prepareClaim(preimages[i], swapAmount, tokenAddress, msg.sender, refundAddresses[i], timelocks[i]);
 
@@ -205,7 +221,8 @@ contract ERC20Swap {
         uint256 swapAmount = 0;
 
         unchecked {
-            for (uint256 i = 0; i < entries.length; i++) {
+            uint256 len = entries.length;
+            for (uint256 i = 0; i < len; ++i) {
                 swapAmount = entries[i].amount;
 
                 // If the commitment signature is not empty, it means the claim is a commitment
@@ -313,7 +330,7 @@ contract ERC20Swap {
             r,
             s
         );
-        require(recoveredAddress != address(0) && recoveredAddress == claimAddress, "ERC20Swap: invalid signature");
+        require(recoveredAddress != address(0) && recoveredAddress == claimAddress, InvalidSignature());
 
         refundInternal(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
     }
@@ -339,13 +356,13 @@ contract ERC20Swap {
         uint256 timelock
     ) public {
         // Locking zero tokens in the contract is pointless
-        require(amount > 0, "ERC20Swap: locked amount must not be zero");
+        require(amount > 0, ZeroAmount());
 
         // Hash the values of the swap
         bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
 
         // Make sure no swap with this value hash exists yet
-        require(!swaps[hash], "ERC20Swap: swap exists already");
+        require(!swaps[hash], SwapAlreadyExists());
 
         // Save to the state that funds were locked for this swap
         swaps[hash] = true;
@@ -425,7 +442,7 @@ contract ERC20Swap {
     ) public {
         // Make sure the timelock has expired already
         // If the timelock is wrong, so will be the value hash of the swap which results in no swap being found
-        require(timelock <= currentTime(), "ERC20Swap: swap has not timed out yet");
+        require(timelock <= currentTime(), SwapNotTimedOut());
         refundInternal(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
     }
 
@@ -486,7 +503,7 @@ contract ERC20Swap {
         address refundAddress,
         uint256 timelock
     ) public pure returns (bytes32 result) {
-        assembly {
+        assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore(ptr, preimageHash)
             mstore(add(ptr, 0x20), amount)
@@ -536,7 +553,7 @@ contract ERC20Swap {
             checkCommitmentSignature(
                 preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock, v, r, s
             ),
-            "ERC20Swap: invalid signature"
+            InvalidSignature()
         );
 
         // Delete the swap from the mapping to ensure that it cannot be claimed or refunded anymore
@@ -567,7 +584,7 @@ contract ERC20Swap {
         bytes32 preimageHash = sha256(abi.encodePacked(preimage));
 
         // Commitments are to bytes32(0) and can only be claimed as commitment
-        require(preimageHash != bytes32(0), "ERC20Swap: commitment cannot be claimed as swap");
+        require(preimageHash != bytes32(0), CommitmentCannotBeClaimedAsSwap());
 
         bytes32 hash = hashValues(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
 
@@ -605,7 +622,7 @@ contract ERC20Swap {
     /// @dev This function reverts if the swap has no tokens locked in the contract
     /// @param hash Value hash of the swap
     function checkSwapIsLocked(bytes32 hash) private view {
-        require(swaps[hash], "ERC20Swap: swap has no tokens locked in the contract");
+        require(swaps[hash], SwapNotFound());
     }
 
     function currentTime() internal view virtual returns (uint256) {
