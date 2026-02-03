@@ -3,6 +3,7 @@
 pragma solidity ^0.8.33;
 
 import {Test} from "forge-std/Test.sol";
+import {ERC20Swap} from "../ERC20Swap.sol";
 import {ERC20SwapTimestamp} from "../ERC20SwapTimestamp.sol";
 import {TestERC20} from "../TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -39,7 +40,7 @@ contract ERC20SwapTimestampTest is Test {
 
         vm.warp(timelock - 1);
 
-        vm.expectRevert("ERC20Swap: swap has not timed out yet");
+        vm.expectRevert(ERC20Swap.SwapNotTimedOut.selector);
         swap.refund(preimageHash, lockupAmount, address(token), claimAddress, timelock);
     }
 

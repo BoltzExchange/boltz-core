@@ -77,6 +77,9 @@ contract Router is ReentrancyGuard {
     /// @dev Thrown when the sweep amount is greater than the contract balance
     error InsufficientBalance();
 
+    /// @dev Thrown when the token address doesn't match the permit token
+    error TokenMismatch();
+
     /// @dev Version of the contract used for compatibility checks
     uint8 public constant VERSION = 2;
 
@@ -502,6 +505,10 @@ contract Router is ReentrancyGuard {
         ISignatureTransfer.PermitTransferFrom calldata permit,
         bytes calldata signature
     ) internal {
+        if (tokenAddress != permit.permitted.token) {
+            revert TokenMismatch();
+        }
+
         bytes32 witness;
         {
             bytes32 typeHash = TYPEHASH_EXECUTE_LOCK_ERC20;
@@ -558,7 +565,7 @@ contract Router is ReentrancyGuard {
         uint256 length = calls.length;
         Call calldata c;
 
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; ++i) {
             c = calls[i];
 
             revertIfRestrictedTarget(c.target);
@@ -572,9 +579,10 @@ contract Router is ReentrancyGuard {
     }
 
     function sweep(address destination, address token, uint256 minAmountOut) internal {
-        uint256 balance = 0;
+        uint256 balance;
+        bool isEther = token == address(0);
 
-        if (token == address(0)) {
+        if (isEther) {
             balance = address(this).balance;
         } else {
             balance = IERC20(token).balanceOf(address(this));
@@ -584,7 +592,7 @@ contract Router is ReentrancyGuard {
             revert InsufficientBalance();
         }
 
-        if (token == address(0)) {
+        if (isEther) {
             TransferHelper.transferEther(payable(destination), balance);
         } else {
             TransferHelper.safeTransferToken(token, destination, balance);

@@ -89,7 +89,7 @@ contract ERC20SwapTest is Test {
     }
 
     function testLockup0ValueFail() external {
-        vm.expectRevert("ERC20Swap: locked amount must not be zero");
+        vm.expectRevert(ERC20Swap.ZeroAmount.selector);
         swap.lock(preimageHash, 0, address(token), claimAddress, block.number);
     }
 
@@ -138,7 +138,7 @@ contract ERC20SwapTest is Test {
         uint256 timelock = block.number;
         lock(timelock);
 
-        vm.expectRevert("ERC20Swap: swap exists already");
+        vm.expectRevert(ERC20Swap.SwapAlreadyExists.selector);
         lock(timelock);
     }
 
@@ -149,14 +149,10 @@ contract ERC20SwapTest is Test {
 
         lock(timelock);
 
+        bytes32 invalidPreimage = sha256("incorrect");
+        vm.expectRevert(ERC20Swap.SwapNotFound.selector);
         vm.prank(claimAddress);
-        try swap.claim(sha256("incorrect"), lockupAmount, address(token), address(this), timelock) {
-            fail();
-        } catch Error(string memory exception) {
-            assertEq(string(exception), "ERC20Swap: swap has no tokens locked in the contract");
-        } catch (bytes memory) {
-            fail();
-        }
+        swap.claim(invalidPreimage, lockupAmount, address(token), address(this), timelock);
     }
 
     function testClaim() external {
@@ -225,7 +221,7 @@ contract ERC20SwapTest is Test {
 
         (uint8 v, bytes32 r, bytes32 s) = generateClaimSignature(timelock);
 
-        vm.expectRevert("ERC20Swap: swap has no tokens locked in the contract");
+        vm.expectRevert(ERC20Swap.SwapNotFound.selector);
         swap.claim(preimage, lockupAmount, address(token), address(this), timelock, v, r, s);
     }
 
@@ -283,7 +279,7 @@ contract ERC20SwapTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = generateCommitSignature(actualPreimageHash, lockupAmount, timelock);
 
         vm.prank(claimAddress);
-        vm.expectRevert("ERC20Swap: invalid signature");
+        vm.expectRevert(ERC20Swap.InvalidSignature.selector);
         swap.claim(bytes32(0), lockupAmount, address(token), claimAddress, refundAddress, timelock, v, r, s);
     }
 
@@ -313,7 +309,7 @@ contract ERC20SwapTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(claimAddressKey, digest);
 
         vm.prank(claimAddress);
-        vm.expectRevert("ERC20Swap: invalid signature");
+        vm.expectRevert(ERC20Swap.InvalidSignature.selector);
         swap.claim(preimage, lockupAmount, address(token), claimAddress, refundAddress, timelock, v, r, s);
     }
 
@@ -505,13 +501,8 @@ contract ERC20SwapTest is Test {
         vm.startPrank(claimAddress);
         swap.claim(preimage, lockupAmount, address(token), address(this), timelock);
 
-        try swap.claim(preimage, lockupAmount, address(token), address(this), timelock) {
-            fail();
-        } catch Error(string memory exception) {
-            assertEq(string(exception), "ERC20Swap: swap has no tokens locked in the contract");
-        } catch (bytes memory) {
-            fail();
-        }
+        vm.expectRevert(ERC20Swap.SwapNotFound.selector);
+        swap.claim(preimage, lockupAmount, address(token), address(this), timelock);
     }
 
     function testClaimBatchTwiceFail() external {
@@ -537,13 +528,8 @@ contract ERC20SwapTest is Test {
         timelocks[1] = timelock;
 
         vm.prank(claimAddress);
-        try swap.claimBatch(address(token), preimages, amounts, refundAddresses, timelocks) {
-            fail();
-        } catch Error(string memory exception) {
-            assertEq(string(exception), "ERC20Swap: swap has no tokens locked in the contract");
-        } catch (bytes memory) {
-            fail();
-        }
+        vm.expectRevert(ERC20Swap.SwapNotFound.selector);
+        swap.claimBatch(address(token), preimages, amounts, refundAddresses, timelocks);
     }
 
     function testRefund() external {
@@ -593,7 +579,7 @@ contract ERC20SwapTest is Test {
 
         swap.refund(preimageHash, lockupAmount, address(token), claimAddress, timelock);
 
-        vm.expectRevert("ERC20Swap: swap has no tokens locked in the contract");
+        vm.expectRevert(ERC20Swap.SwapNotFound.selector);
         swap.refund(preimageHash, lockupAmount, address(token), claimAddress, timelock);
     }
 
@@ -603,7 +589,7 @@ contract ERC20SwapTest is Test {
         token.approve(address(swap), lockupAmount);
         lock(timelock);
 
-        vm.expectRevert("ERC20Swap: swap has not timed out yet");
+        vm.expectRevert(ERC20Swap.SwapNotTimedOut.selector);
         swap.refund(preimageHash, lockupAmount, address(token), claimAddress, timelock);
     }
 
@@ -643,7 +629,7 @@ contract ERC20SwapTest is Test {
         bytes32 r = keccak256("invalid");
         bytes32 s = keccak256("sig");
 
-        vm.expectRevert("ERC20Swap: invalid signature");
+        vm.expectRevert(ERC20Swap.InvalidSignature.selector);
         swap.refundCooperative(preimageHash, lockupAmount, address(token), claimAddress, timelock, v, r, s);
     }
 

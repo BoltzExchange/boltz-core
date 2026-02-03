@@ -98,7 +98,7 @@ contract ERC20SwapFuzzTest is Test {
         );
 
         vm.startPrank(claimAddress);
-        vm.expectRevert("ERC20Swap: swap has no tokens locked in the contract");
+        vm.expectRevert(ERC20Swap.SwapNotFound.selector);
         swap.claim(invalidPreimage, amount, address(token), address(this), timelock);
     }
 
@@ -147,7 +147,7 @@ contract ERC20SwapFuzzTest is Test {
             swap.swaps(swap.hashValues(preimageHash, amount, address(token), claimAddress, address(this), timelock))
         );
 
-        vm.expectRevert("ERC20Swap: swap has not timed out yet");
+        vm.expectRevert(ERC20Swap.SwapNotTimedOut.selector);
         swap.refund(preimageHash, amount, address(token), claimAddress, timelock);
 
         assertTrue(
@@ -173,7 +173,7 @@ contract ERC20SwapFuzzTest is Test {
             swap.swaps(swap.hashValues(preimageHash, amount, address(token), claimAddress, address(this), timelock))
         );
 
-        vm.expectRevert("ERC20Swap: invalid signature");
+        vm.expectRevert(ERC20Swap.InvalidSignature.selector);
         swap.refundCooperative(preimageHash, amount, address(token), claimAddress, timelock, v, r, s);
 
         assertTrue(

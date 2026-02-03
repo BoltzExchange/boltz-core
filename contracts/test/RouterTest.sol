@@ -536,6 +536,52 @@ contract RouterTest is Test {
         vm.stopPrank();
     }
 
+    function testExecuteAndLockEtherFullBalance() public {
+        uint256 timelock = block.number + 21;
+
+        MockTarget mockTarget = new MockTarget();
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 7)
+        });
+
+        uint256 extraAmount = 1000;
+        uint256 totalAmount = lockupAmount + extraAmount;
+
+        ROUTER.executeAndLock{value: totalAmount}(preimageHash, claimAddress, address(this), timelock, calls);
+
+        bytes32 hash = SWAP.hashValues(preimageHash, totalAmount, claimAddress, address(this), timelock);
+        assertTrue(SWAP.swaps(hash));
+        assertEq(mockTarget.calls(), 7);
+        assertEq(address(ROUTER).balance, 0);
+    }
+
+    function testExecuteAndLockERC20FullBalance() public {
+        uint256 timelock = block.number + 21;
+
+        MockDex dex = new MockDex(TOKEN);
+        require(TOKEN.transfer(address(dex), lockupAmount));
+
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(dex), value: lockupAmount, callData: abi.encodeWithSelector(MockDex.swap.selector)
+        });
+
+        uint256 extraAmount = 500;
+        require(TOKEN.transfer(address(ROUTER), extraAmount));
+
+        ROUTER.executeAndLockERC20{value: lockupAmount}(
+            preimageHash, address(TOKEN), claimAddress, address(this), timelock, calls
+        );
+
+        uint256 expectedLockAmount = lockupAmount + extraAmount;
+        bytes32 hash = ERC20_SWAP.hashValues(
+            preimageHash, expectedLockAmount, address(TOKEN), claimAddress, address(this), timelock
+        );
+        assertTrue(ERC20_SWAP.swaps(hash));
+        assertEq(TOKEN.balanceOf(address(ROUTER)), 0);
+    }
+
     function signPermit2WitnessTransfer(
         ISignatureTransfer.PermitTransferFrom memory permit,
         bytes32 witness,
@@ -887,6 +933,104 @@ contract RouterTest is Test {
             r,
             s
         );
+    }
+
+    function testClaimCallRestrictedTarget() public {
+        uint256 timelock = block.number + 21;
+        SWAP.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        Router.Claim memory claim = signClaim(timelock);
+
+        vm.expectRevert(abi.encodeWithSelector(Router.SwapCallNotAllowed.selector));
+        vm.prank(claimAddress);
+        ROUTER.claimCall(claim, address(SWAP), "");
+    }
+
+    function testClaimERC20CallRestrictedTarget() public {
+        uint256 timelock = block.number + 21;
+        lockERC20Swap(timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(timelock);
+
+        vm.expectRevert(abi.encodeWithSelector(Router.SwapCallNotAllowed.selector));
+        vm.prank(claimAddress);
+        ROUTER.claimERC20Call(claim, address(ERC20_SWAP), "");
+    }
+
+    function testExecuteCallsRestrictedTarget() public {
+        uint256 timelock = block.number + 21;
+
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({target: address(SWAP), value: 0, callData: ""});
+
+        vm.expectRevert(abi.encodeWithSelector(Router.SwapCallNotAllowed.selector));
+        ROUTER.executeAndLock{value: lockupAmount}(preimageHash, claimAddress, address(this), timelock, calls);
+    }
+
+    function testExecuteCallsRestrictedTargetERC20() public {
+        uint256 timelock = block.number + 21;
+
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({target: address(ERC20_SWAP), value: 0, callData: ""});
+
+        vm.expectRevert(abi.encodeWithSelector(Router.SwapCallNotAllowed.selector));
+        ROUTER.executeAndLockERC20(preimageHash, address(TOKEN), claimAddress, address(this), timelock, calls);
+    }
+
+    function testExecuteCallsRestrictedTargetPermit2() public {
+        uint256 timelock = block.number + 21;
+
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({target: address(PERMIT2), value: 0, callData: ""});
+
+        vm.expectRevert(abi.encodeWithSelector(Router.SwapCallNotAllowed.selector));
+        ROUTER.executeAndLockERC20(preimageHash, address(TOKEN), claimAddress, address(this), timelock, calls);
+    }
+
+    function testClaimCallSignatureRestrictedTarget() public {
+        uint256 timelock = block.number + 21;
+        SWAP.lock{value: lockupAmount}(preimageHash, claimAddress, timelock);
+
+        bytes memory data = "";
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    ROUTER.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ROUTER.TYPEHASH_CLAIM_CALL(), preimage, address(SWAP), keccak256(data)))
+                )
+            )
+        );
+
+        Router.Claim memory claim = signClaim(timelock);
+
+        vm.expectRevert(abi.encodeWithSelector(Router.SwapCallNotAllowed.selector));
+        ROUTER.claimCall(claim, address(SWAP), data, v, r, s);
+    }
+
+    function testClaimERC20CallSignatureRestrictedTarget() public {
+        uint256 timelock = block.number + 21;
+        lockERC20Swap(timelock);
+
+        bytes memory data = "";
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            claimAddressKey,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    ROUTER.DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(ROUTER.TYPEHASH_CLAIM_CALL(), preimage, address(ERC20_SWAP), keccak256(data)))
+                )
+            )
+        );
+
+        Router.Erc20Claim memory claim = signErc20Claim(timelock);
+
+        vm.expectRevert(abi.encodeWithSelector(Router.SwapCallNotAllowed.selector));
+        ROUTER.claimERC20Call(claim, address(ERC20_SWAP), data, v, r, s);
     }
 
     function lockERC20Swap(uint256 timelock) internal {

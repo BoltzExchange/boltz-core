@@ -64,7 +64,7 @@ contract EtherSwapTest is Test {
     }
 
     function testLockup0ValueFail() external {
-        vm.expectRevert("EtherSwap: locked amount must not be zero");
+        vm.expectRevert(EtherSwap.ZeroAmount.selector);
         swap.lock(preimageHash, claimAddress, block.number);
     }
 
@@ -95,7 +95,7 @@ contract EtherSwapTest is Test {
 
         lock(timelock);
 
-        vm.expectRevert("EtherSwap: swap exists already");
+        vm.expectRevert(EtherSwap.SwapAlreadyExists.selector);
         lock(timelock);
     }
 
@@ -104,14 +104,10 @@ contract EtherSwapTest is Test {
 
         lock(timelock);
 
+        bytes32 invalidPreimage = sha256("incorrect");
+        vm.expectRevert(EtherSwap.SwapNotFound.selector);
         vm.prank(claimAddress);
-        try swap.claim(sha256("incorrect"), lockupAmount, address(this), timelock) {
-            fail();
-        } catch Error(string memory exception) {
-            assertEq(string(exception), "EtherSwap: swap has no Ether locked in the contract");
-        } catch (bytes memory) {
-            fail();
-        }
+        swap.claim(invalidPreimage, lockupAmount, address(this), timelock);
     }
 
     function testClaim() external {
@@ -191,7 +187,7 @@ contract EtherSwapTest is Test {
             )
         );
 
-        vm.expectRevert("EtherSwap: swap has no Ether locked in the contract");
+        vm.expectRevert(EtherSwap.SwapNotFound.selector);
         swap.claim(preimage, lockupAmount, address(this), timelock, v, r, s);
     }
 
@@ -235,7 +231,7 @@ contract EtherSwapTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = generateCommitSignature(actualPreimageHash, lockupAmount, timelock);
 
         vm.prank(claimAddress);
-        vm.expectRevert("EtherSwap: invalid signature");
+        vm.expectRevert(EtherSwap.InvalidSignature.selector);
         swap.claim(bytes32(0), lockupAmount, claimAddress, refundAddress, timelock, v, r, s);
     }
 
@@ -255,7 +251,7 @@ contract EtherSwapTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(claimAddressKey, digest);
 
         vm.prank(claimAddress);
-        vm.expectRevert("EtherSwap: invalid signature");
+        vm.expectRevert(EtherSwap.InvalidSignature.selector);
         swap.claim(preimage, lockupAmount, claimAddress, refundAddress, timelock, v, r, s);
     }
 
@@ -432,13 +428,8 @@ contract EtherSwapTest is Test {
         vm.startPrank(claimAddress);
         swap.claim(preimage, lockupAmount, address(this), timelock);
 
-        try swap.claim(preimage, lockupAmount, address(this), timelock) {
-            fail();
-        } catch Error(string memory exception) {
-            assertEq(string(exception), "EtherSwap: swap has no Ether locked in the contract");
-        } catch (bytes memory) {
-            fail();
-        }
+        vm.expectRevert(EtherSwap.SwapNotFound.selector);
+        swap.claim(preimage, lockupAmount, address(this), timelock);
     }
 
     function testClaimBatchTwiceFail() external {
@@ -463,13 +454,8 @@ contract EtherSwapTest is Test {
         timelocks[1] = timelock;
 
         vm.prank(claimAddress);
-        try swap.claimBatch(preimages, amounts, refundAddresses, timelocks) {
-            fail();
-        } catch Error(string memory exception) {
-            assertEq(string(exception), "EtherSwap: swap has no Ether locked in the contract");
-        } catch (bytes memory) {
-            fail();
-        }
+        vm.expectRevert(EtherSwap.SwapNotFound.selector);
+        swap.claimBatch(preimages, amounts, refundAddresses, timelocks);
     }
 
     function testRefund() external {
@@ -514,7 +500,7 @@ contract EtherSwapTest is Test {
 
         swap.refund(preimageHash, lockupAmount, claimAddress, timelock);
 
-        vm.expectRevert("EtherSwap: swap has no Ether locked in the contract");
+        vm.expectRevert(EtherSwap.SwapNotFound.selector);
         swap.refund(preimageHash, lockupAmount, claimAddress, timelock);
     }
 
@@ -523,7 +509,7 @@ contract EtherSwapTest is Test {
 
         lock(timelock);
 
-        vm.expectRevert("EtherSwap: swap has not timed out yet");
+        vm.expectRevert(EtherSwap.SwapNotTimedOut.selector);
         swap.refund(preimageHash, lockupAmount, claimAddress, timelock);
     }
 
@@ -561,7 +547,7 @@ contract EtherSwapTest is Test {
         bytes32 r = keccak256("invalid");
         bytes32 s = keccak256("sig");
 
-        vm.expectRevert("EtherSwap: invalid signature");
+        vm.expectRevert(EtherSwap.InvalidSignature.selector);
         swap.refundCooperative(preimageHash, lockupAmount, claimAddress, timelock, v, r, s);
     }
 
@@ -610,12 +596,12 @@ contract EtherSwapTest is Test {
     }
 
     function testLockupPrepayMinerFeeGtValueFail() external {
-        vm.expectRevert("EtherSwap: sent amount must be greater than the prepay amount");
+        vm.expectRevert(EtherSwap.InvalidPrepayAmount.selector);
         swap.lockPrepayMinerfee{value: 1}(preimageHash, payable(claimAddress), block.number, 2);
     }
 
     function testLockupPrepayMinerFeeEqValueFail() external {
-        vm.expectRevert("EtherSwap: sent amount must be greater than the prepay amount");
+        vm.expectRevert(EtherSwap.InvalidPrepayAmount.selector);
         swap.lockPrepayMinerfee{value: 1}(preimageHash, payable(claimAddress), block.number, 1);
     }
 
