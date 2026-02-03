@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [3.1.1](https://github.com/BoltzExchange/boltz-core/compare/v3.1.0..v3.1.1) - 2026-02-03
+
+### Features
+
+- funding address - ([f2fcdf7](https://github.com/BoltzExchange/boltz-core/commit/f2fcdf7a938795d1937b2ab2a0ce9eb9f44eb157))
+- allow refund funding address trees - ([47c81bb](https://github.com/BoltzExchange/boltz-core/commit/47c81bb57ffdfeb4c97f8f0994409276e252a5db))
+
+### Miscellaneous Chores
+
+- update changelog for v3.1.0 - ([25c7e27](https://github.com/BoltzExchange/boltz-core/commit/25c7e27cf75310ddef3d9a2d8c69fbb46d76712e))
+
+---
 ## [3.1.0](https://github.com/BoltzExchange/boltz-core/compare/v3.0.0..v3.1.0) - 2025-12-09
 
 ### Bug Fixes
