@@ -77,9 +77,6 @@ contract Router is ReentrancyGuard {
     /// @dev Thrown when the sweep amount is greater than the contract balance
     error InsufficientBalance();
 
-    /// @dev Thrown when the token address doesn't match the permit token
-    error TokenMismatch();
-
     /// @dev Version of the contract used for compatibility checks
     uint8 public constant VERSION = 2;
 
@@ -505,10 +502,6 @@ contract Router is ReentrancyGuard {
         ISignatureTransfer.PermitTransferFrom calldata permit,
         bytes calldata signature
     ) internal {
-        if (tokenAddress != permit.permitted.token) {
-            revert TokenMismatch();
-        }
-
         bytes32 witness;
         {
             bytes32 typeHash = TYPEHASH_EXECUTE_LOCK_ERC20;
