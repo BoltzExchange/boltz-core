@@ -9,7 +9,7 @@ import tsEslint from 'typescript-eslint';
 export default [
   { files: ['**/*.{js,mjs,cjs,ts}'] },
   {
-    ignores: ['dist', 'contracts', 'typechain', 'node_modules'],
+    ignores: ['dist', 'contracts', 'solidity-lib', 'typechain', 'node_modules'],
   },
   { languageOptions: { globals: globals.node } },
 

@@ -2,7 +2,7 @@
 src = "contracts"
 test = "contracts/test"
 script = "contracts/script"
-libs = ["contracts/lib"]
+libs = ["solidity-lib"]
 gas_reports = ["EtherSwap", "ERC20Swap", "Router"]
 
 evm_version = "istanbul"
@@ -15,7 +15,7 @@ optimizer_runs = 10_000_000
 runs = 8192
 
 [fmt]
-ignore = ["contracts/lib/**/*"]
+ignore = ["solidity-lib/**/*"]
 
 [lint]
-ignore = ["contracts/lib/**/*"]
+ignore = ["solidity-lib/**/*"]

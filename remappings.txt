@@ -1,3 +1,3 @@
 @openzeppelin/=node_modules/@openzeppelin/
-ds-test/=contracts/lib/forge-std/lib/ds-test/src/
-forge-std/=contracts/lib/forge-std/src/
+forge-std/=solidity-lib/forge-std/src/
+permit2/=solidity-lib/permit2/src/
