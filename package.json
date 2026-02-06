@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -37,6 +37,7 @@
   "files": [
     "LICENSE",
     "README.md",
+    ".gitmodules",
     "foundry.toml",
     "remappings.txt",
     "out/ERC20.sol/ERC20.json",

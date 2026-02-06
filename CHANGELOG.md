@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [3.1.2](https://github.com/BoltzExchange/boltz-core/compare/v3.1.1..v3.1.2) - 2026-02-06
+
+### Miscellaneous Chores
+
+- update changelog for v3.1.1 - ([cae39ca](https://github.com/BoltzExchange/boltz-core/commit/cae39ca953302d5b9dfb9e106e551c8c65c3c625))
+
+### Refactoring
+
+- backport Router contract - ([6f2d309](https://github.com/BoltzExchange/boltz-core/commit/6f2d3097d39a2173dfa1350a63e38353a7aaf079))
+
+---
 ## [3.1.1](https://github.com/BoltzExchange/boltz-core/compare/v3.1.0..v3.1.1) - 2026-02-03
 
 ### Features
