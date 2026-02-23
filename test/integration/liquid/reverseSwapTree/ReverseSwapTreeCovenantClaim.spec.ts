@@ -353,7 +353,7 @@ describe.each`
         ).rejects.toEqual({
           code: -26,
           message:
-            'non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation)',
+            'mempool-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
         });
       },
     );
@@ -392,7 +392,7 @@ describe.each`
       ).rejects.toEqual({
         code: -26,
         message:
-          'non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation)',
+          'mempool-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
       });
     });
 
@@ -433,7 +433,7 @@ describe.each`
       ).rejects.toEqual({
         code: -26,
         message:
-          'non-mandatory-script-verify-flag (Script failed an OP_EQUALVERIFY operation)',
+          'mempool-script-verify-flag-failed (Script failed an OP_EQUALVERIFY operation)',
       });
     });
 
@@ -480,7 +480,7 @@ describe.each`
         ).rejects.toEqual({
           code: -26,
           message:
-            'non-mandatory-script-verify-flag (Script evaluated without error but finished with a false/empty top stack element)',
+            'mempool-script-verify-flag-failed (Script evaluated without error but finished with a false/empty top stack element)',
         });
       },
     );
