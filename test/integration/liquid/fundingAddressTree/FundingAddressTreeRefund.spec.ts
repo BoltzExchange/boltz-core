@@ -141,7 +141,7 @@ describe.each`
       await expect(refundSwap([utxo], timeout, blindingKey)).rejects.toEqual({
         code: -26,
         message:
-          'non-mandatory-script-verify-flag (Locktime requirement not satisfied)',
+          'mempool-script-verify-flag-failed (Locktime requirement not satisfied)',
       });
     });
 
@@ -152,7 +152,8 @@ describe.each`
 
       await expect(refundSwap([utxo], timeout, blindingKey)).rejects.toEqual({
         code: -26,
-        message: 'non-mandatory-script-verify-flag (Invalid Schnorr signature)',
+        message:
+          'mempool-script-verify-flag-failed (Invalid Schnorr signature)',
       });
     });
   },

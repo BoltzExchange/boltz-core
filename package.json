@@ -1,6 +1,6 @@
 {
   "name": "boltz-core",
-  "version": "4.0.0-alpha.4",
+  "version": "4.0.0",
   "description": "Core library of Boltz",
   "main": "dist/lib/Boltz.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "lint": "npm run lint:eslint && npm run lint:biome",
     "lint:eslint": "eslint --max-warnings 0 .",
     "lint:biome": "npx @biomejs/biome lint .",
-    "prettier": "npx prettier '{lib,test}/**/*.ts' *.json *.mjs *.js",
+    "prettier": "npx prettier '{lib,test}/**/*.ts' .github *.json *.mjs *.js",
     "prettier:write": "npm run prettier -- --write",
     "prettier:check": "npm run prettier -- --check",
     "docker:start": "./startRegtest.sh",
@@ -60,19 +60,19 @@
     "@scure/btc-signer": "^2.0.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.14",
+    "@biomejs/biome": "^2.4.4",
     "@eslint/js": "^9.39.2",
-    "@swc/core": "^1.15.11",
+    "@swc/core": "^1.15.13",
     "@swc/jest": "^0.2.39",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.2.0",
+    "@types/node": "^25.3.0",
     "@types/ws": "^8.18.1",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jest": "^29.12.2",
-    "eslint-plugin-n": "^17.23.2",
+    "eslint-plugin-jest": "^29.15.0",
+    "eslint-plugin-n": "^17.24.0",
     "ethers": "^6.16.0",
     "git-cliff": "^2.12.0",
     "globals": "^17.3.0",
@@ -81,7 +81,7 @@
     "slip77": "^0.2.0",
     "typechain": "^8.3.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0",
+    "typescript-eslint": "^8.56.0",
     "ws": "^8.19.0"
   },
   "peerDependencies": {

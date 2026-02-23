@@ -3,6 +3,53 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [4.0.0](https://github.com/BoltzExchange/boltz-core/compare/v3.1.0..v4.0.0) - 2026-02-23
+
+### Bug Fixes
+
+- ESM module imports (#156) - ([cd0fc04](https://github.com/BoltzExchange/boltz-core/commit/cd0fc044348a2b4e3a233e869ea217618780934b))
+- ignore ESM import workaround in tests - ([650f5b0](https://github.com/BoltzExchange/boltz-core/commit/650f5b01bad41d9729e55962cf34f21531d61099))
+- remove redundant token check (#165) - ([003cb43](https://github.com/BoltzExchange/boltz-core/commit/003cb438ab708f2d75d51d0b573d4780befa1fc4))
+
+### Features
+
+- timestamp based contracts (#155) - ([c1f441c](https://github.com/BoltzExchange/boltz-core/commit/c1f441c7fb9fad1622aad9e34b5e51e0eb52d50e))
+- ERC20Swap claims in Router (#162) - ([febcab6](https://github.com/BoltzExchange/boltz-core/commit/febcab61d00522a20a71942655f40c90be87679f))
+- funding address - ([41140a3](https://github.com/BoltzExchange/boltz-core/commit/41140a37844e6fe0c7e1fb30f1c66cbc026d5980))
+- allow refund funding address trees - ([aea768f](https://github.com/BoltzExchange/boltz-core/commit/aea768f81ac0a27e0cdf1495fb49927fe259694a))
+- swap lockups in Router - ([af2671d](https://github.com/BoltzExchange/boltz-core/commit/af2671df33d9df34d946c22f1f1fbef93bf4b5df))
+
+### Miscellaneous Chores
+
+- update changelog for v3.1.0 - ([ab7c477](https://github.com/BoltzExchange/boltz-core/commit/ab7c477d1309027dcc1a3e10512f7660e58253d5))
+- make forge lint more strict - ([3e88766](https://github.com/BoltzExchange/boltz-core/commit/3e88766d5b6e9acab4521b161555e0cd61b07913))
+- misc dependency bumps - ([61420c3](https://github.com/BoltzExchange/boltz-core/commit/61420c348145509d23ee1c57678c60e2e243262f))
+- update GitHub actions uses - ([ced638a](https://github.com/BoltzExchange/boltz-core/commit/ced638af02c15c16a70d29795fe7877b46c5ef1a))
+- update forge-std - ([d1cb988](https://github.com/BoltzExchange/boltz-core/commit/d1cb9886003baf1fd3afc975bb3dfe8223097c04))
+- update dependencies (#154) - ([e5ac1fe](https://github.com/BoltzExchange/boltz-core/commit/e5ac1fe33b8bd83f048b8a4e569566fbb6d5fe25))
+- bump dependencies - ([af0db1c](https://github.com/BoltzExchange/boltz-core/commit/af0db1c3c6be6022a1857fe24da471c073bc53b7))
+- index claim address of Lockup events - ([e3ada1b](https://github.com/BoltzExchange/boltz-core/commit/e3ada1bc576a8d9a85ec10e8f464ed71d823b954))
+- forge clean before tests - ([fb6e16a](https://github.com/BoltzExchange/boltz-core/commit/fb6e16a20d3c7042c3b46dac802c830626593d51))
+- switch OpenZeppelin to foundry dependency - ([86d6442](https://github.com/BoltzExchange/boltz-core/commit/86d6442d23fd31b1f7dd3abb418693d4f05aa14b))
+- update dependencies (#164) - ([26b2e22](https://github.com/BoltzExchange/boltz-core/commit/26b2e229da6fe52b8670a59b9dbd38593633891f))
+- update dependencies - ([01ecfe7](https://github.com/BoltzExchange/boltz-core/commit/01ecfe795cbfb78537c0574df1c735995ce27856))
+
+### Refactoring
+
+- use @scure/btc-signer for Musig2 (#152) - ([68b6ab3](https://github.com/BoltzExchange/boltz-core/commit/68b6ab3410e6f8fcb8073697a7fc68324b93f86d))
+- use @scure/btc-signer - ([8affb59](https://github.com/BoltzExchange/boltz-core/commit/8affb59548cf15c2c5ed9db9addbf16c29d7780b))
+- improve type safety with unions - ([96297c1](https://github.com/BoltzExchange/boltz-core/commit/96297c151ad72bdb245ddba586b4534533590e32))
+- improve strictness and code quality - ([01a2b56](https://github.com/BoltzExchange/boltz-core/commit/01a2b568543fa2541157554d78aa8a64b7e9e5a8))
+- use typestate pattern for Musig - ([b097b2f](https://github.com/BoltzExchange/boltz-core/commit/b097b2f198644f33d47641dd3f02bd7d83da8ad8))
+- use modern errors in contracts - ([4359238](https://github.com/BoltzExchange/boltz-core/commit/43592380079990af264e410f34a10eec6bd2955c))
+- separate Permit2 owner and refundAddress - ([710dfa3](https://github.com/BoltzExchange/boltz-core/commit/710dfa3dbd58f2aa073cba47a4d26363a4792bcd))
+
+### Tests
+
+- add fuzz test for hashValues - ([47509b4](https://github.com/BoltzExchange/boltz-core/commit/47509b44c9dfe3f170b91c120608e1cd6d02c9d6))
+- use SWC instead of ts-jest - ([937d18a](https://github.com/BoltzExchange/boltz-core/commit/937d18a3204761eca494fda8a6d485a2a9dfce99))
+
+---
 ## [3.1.0](https://github.com/BoltzExchange/boltz-core/compare/v3.0.0..v3.1.0) - 2025-12-09
 
 ### Bug Fixes
