@@ -455,6 +455,7 @@ contract Router is ReentrancyGuard {
     /// @param timelock The block height after which a refund becomes possible
     /// @param calls Array of arbitrary calls to execute before locking
     /// @param permit Permit2 transfer permit signed by the token owner
+    /// @param owner The address of the token owner who signed the permit
     /// @param signature Signature over the Permit2 transfer permit and witness data
     function executeAndLockERC20WithPermit2(
         bytes32 preimageHash,
@@ -464,6 +465,7 @@ contract Router is ReentrancyGuard {
         uint256 timelock,
         Call[] calldata calls,
         ISignatureTransfer.PermitTransferFrom calldata permit,
+        address owner,
         bytes calldata signature
     ) external payable nonReentrant {
         bytes32 callsHash;
@@ -474,7 +476,9 @@ contract Router is ReentrancyGuard {
             }
         }
 
-        permit2Transfer(tokenAddress, preimageHash, claimAddress, refundAddress, timelock, callsHash, permit, signature);
+        permit2Transfer(
+            preimageHash, tokenAddress, claimAddress, refundAddress, timelock, callsHash, permit, owner, signature
+        );
         executeCalls(calls);
         lockErc20FromBalance(preimageHash, tokenAddress, claimAddress, refundAddress, timelock);
     }
@@ -493,13 +497,14 @@ contract Router is ReentrancyGuard {
     }
 
     function permit2Transfer(
-        address tokenAddress,
         bytes32 preimageHash,
+        address tokenAddress,
         address claimAddress,
         address refundAddress,
         uint256 timelock,
         bytes32 callsHash,
         ISignatureTransfer.PermitTransferFrom calldata permit,
+        address owner,
         bytes calldata signature
     ) internal {
         bytes32 witness;
@@ -522,7 +527,7 @@ contract Router is ReentrancyGuard {
         PERMIT2.permitWitnessTransferFrom(
             permit,
             ISignatureTransfer.SignatureTransferDetails({to: address(this), requestedAmount: permit.permitted.amount}),
-            refundAddress,
+            owner,
             witness,
             TYPESTRING_EXECUTE_LOCK_ERC20,
             signature

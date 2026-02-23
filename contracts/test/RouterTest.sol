@@ -489,7 +489,7 @@ contract RouterTest is Test {
         vm.startPrank(refundAddress);
         require(TOKEN.approve(address(PERMIT2), lockupAmount));
         ROUTER.executeAndLockERC20WithPermit2(
-            preimageHash, address(TOKEN), claimAddress, refundAddress, timelock, calls, permit, signature
+            preimageHash, address(TOKEN), claimAddress, refundAddress, timelock, calls, permit, refundAddress, signature
         );
         vm.stopPrank();
 
@@ -531,9 +531,92 @@ contract RouterTest is Test {
         require(TOKEN.approve(address(PERMIT2), lockupAmount));
         vm.expectRevert();
         ROUTER.executeAndLockERC20WithPermit2(
-            preimageHash, address(TOKEN), claimAddress, refundAddress, timelock, calls, permit, signature
+            preimageHash, address(TOKEN), claimAddress, refundAddress, timelock, calls, permit, refundAddress, signature
         );
         vm.stopPrank();
+    }
+
+    function testExecuteAndLockERC20WithPermit2DifferentOwner() public {
+        uint256 ownerKey = 0xC0FFEE;
+        address owner = vm.addr(ownerKey);
+        uint256 timelock = block.number + 21;
+
+        require(TOKEN.transfer(owner, lockupAmount));
+
+        Router.Call[] memory calls = new Router.Call[](0);
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: address(TOKEN), amount: lockupAmount}),
+            nonce: 0,
+            deadline: block.timestamp + 100
+        });
+
+        bytes32 callsHash = keccak256(abi.encode(calls));
+        bytes32 witness = keccak256(
+            abi.encode(
+                ROUTER.TYPEHASH_EXECUTE_LOCK_ERC20(),
+                preimageHash,
+                address(TOKEN),
+                claimAddress,
+                refundAddress,
+                timelock,
+                callsHash
+            )
+        );
+        bytes memory signature = signPermit2WitnessTransfer(permit, witness, ownerKey);
+
+        vm.prank(owner);
+        require(TOKEN.approve(address(PERMIT2), lockupAmount));
+
+        ROUTER.executeAndLockERC20WithPermit2(
+            preimageHash, address(TOKEN), claimAddress, refundAddress, timelock, calls, permit, owner, signature
+        );
+
+        bytes32 hash =
+            ERC20_SWAP.hashValues(preimageHash, lockupAmount, address(TOKEN), claimAddress, refundAddress, timelock);
+        assertTrue(ERC20_SWAP.swaps(hash));
+        assertEq(TOKEN.balanceOf(address(ROUTER)), 0);
+        assertEq(TOKEN.balanceOf(owner), 0);
+    }
+
+    function testExecuteAndLockERC20WithPermit2WrongOwner() public {
+        uint256 signerKey = 0xC0FFEE;
+        address signer = vm.addr(signerKey);
+        uint256 wrongOwnerKey = 0xC0FFEF;
+        address wrongOwner = vm.addr(wrongOwnerKey);
+        uint256 timelock = block.number + 21;
+
+        require(TOKEN.transfer(signer, lockupAmount));
+
+        Router.Call[] memory calls = new Router.Call[](0);
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({token: address(TOKEN), amount: lockupAmount}),
+            nonce: 0,
+            deadline: block.timestamp + 100
+        });
+
+        bytes32 callsHash = keccak256(abi.encode(calls));
+        bytes32 witness = keccak256(
+            abi.encode(
+                ROUTER.TYPEHASH_EXECUTE_LOCK_ERC20(),
+                preimageHash,
+                address(TOKEN),
+                claimAddress,
+                refundAddress,
+                timelock,
+                callsHash
+            )
+        );
+        bytes memory signature = signPermit2WitnessTransfer(permit, witness, signerKey);
+
+        vm.prank(signer);
+        require(TOKEN.approve(address(PERMIT2), lockupAmount));
+
+        vm.expectRevert();
+        ROUTER.executeAndLockERC20WithPermit2(
+            preimageHash, address(TOKEN), claimAddress, refundAddress, timelock, calls, permit, wrongOwner, signature
+        );
+        assertEq(TOKEN.balanceOf(signer), lockupAmount);
+        assertEq(TOKEN.balanceOf(address(ROUTER)), 0);
     }
 
     function testExecuteAndLockEtherFullBalance() public {
