@@ -5,6 +5,7 @@ pragma solidity ^0.8.33;
 import {TransferHelper} from "./TransferHelper.sol";
 import {EtherSwap} from "./EtherSwap.sol";
 import {ERC20Swap} from "./ERC20Swap.sol";
+import {OFT} from "./interfaces/OFT.sol";
 import {ISignatureTransfer} from "permit2/interfaces/ISignatureTransfer.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -64,6 +65,37 @@ contract Router is ReentrancyGuard {
         bytes callData;
     }
 
+    /// @dev User-supplied OFT destination and message options.
+    /// The router derives the token amount, minimum amount, and native fee at execution time.
+    /// @param dstEid Destination endpoint ID
+    /// @param to Recipient address encoded as bytes32
+    /// @param extraOptions Additional LayerZero options for the send
+    /// @param composeMsg The composed message payload for the send
+    /// @param oftCmd The OFT command bytes, if used by the implementation
+    struct SendData {
+        uint32 dstEid;
+        bytes32 to;
+        bytes extraOptions;
+        bytes composeMsg;
+        bytes oftCmd;
+    }
+
+    /// @dev User-supplied authorization for an OFT send after the claim has executed.
+    /// @param minAmountLd The minimum amount that must remain for the OFT send after executing `calls`
+    /// @param lzTokenFee The LayerZero token fee to use for the send
+    /// @param refundAddress The address that receives any excess native fee refund from the OFT
+    /// @param v Final byte of the signature
+    /// @param r Second 32 bytes of the signature
+    /// @param s First 32 bytes of the signature
+    struct ClaimSendAuthorization {
+        uint256 minAmountLd;
+        uint256 lzTokenFee;
+        address refundAddress;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
     /// @dev Thrown when the claimer address doesn't match the transaction sender
     error ClaimInvalidAddress();
 
@@ -84,6 +116,11 @@ contract Router is ReentrancyGuard {
         keccak256("Claim(bytes32 preimage,address token,uint256 minAmountOut,address destination)");
     bytes32 public constant TYPEHASH_CLAIM_CALL =
         keccak256("ClaimCall(bytes32 preimage,address callee,bytes32 callData)");
+    bytes32 public constant TYPEHASH_CLAIM_SEND = keccak256(
+        "ClaimSend(bytes32 preimage,address token,address oft,bytes32 sendData,uint256 minAmountLD,uint256 lzTokenFee,address refundAddress)"
+    );
+    bytes32 public constant TYPEHASH_SEND_DATA =
+        keccak256("SendData(uint32 dstEid,bytes32 to,bytes32 extraOptions,bytes32 composeMsg,bytes32 oftCmd)");
     bytes32 public constant TYPEHASH_EXECUTE_LOCK_ERC20 = keccak256(
         "ExecuteAndLockERC20(bytes32 preimageHash,address token,address claimAddress,address refundAddress,uint256 timelock,bytes32 callsHash)"
     );
@@ -332,6 +369,73 @@ contract Router is ReentrancyGuard {
         sweep(destination, token, minAmountOut);
     }
 
+    /// @dev Claims tokens from the ERC20Swap contract, executes arbitrary calls, then sends the router's balance through an OFT token
+    /// This version uses EIP-712 signature verification to allow the claimer to authorize someone else to execute the claim
+    /// @param claim The claim parameters for the ERC20Swap contract
+    /// @param calls Array of arbitrary calls to execute after claiming
+    /// @param token The token whose router balance will be sent
+    /// @param oft The OFT contract that executes the cross-chain send
+    /// @param sendData The destination and message options for the OFT send.
+    /// The router derives both `amountLD` and `minAmountLD` from the post-call token balance.
+    /// @param auth The signed authorization for the OFT send, including `minAmountLd`, `lzTokenFee`, and the refund address.
+    /// The router derives the native fee from its post-call Ether balance.
+    function claimERC20ExecuteOft(
+        Erc20Claim calldata claim,
+        Call[] calldata calls,
+        address token,
+        address oft,
+        SendData calldata sendData,
+        ClaimSendAuthorization calldata auth
+    ) external payable nonReentrant {
+        if (
+            claimERC20Swap(claim)
+                != ecrecover(
+                    keccak256(
+                        abi.encodePacked(
+                            "\x19\x01",
+                            DOMAIN_SEPARATOR,
+                            keccak256(
+                                abi.encode(
+                                    TYPEHASH_CLAIM_SEND,
+                                    claim.preimage,
+                                    token,
+                                    oft,
+                                    hashSendData(sendData),
+                                    auth.minAmountLd,
+                                    auth.lzTokenFee,
+                                    auth.refundAddress
+                                )
+                            )
+                        )
+                    ),
+                    auth.v,
+                    auth.r,
+                    auth.s
+                )
+        ) {
+            revert ClaimInvalidAddress();
+        }
+
+        executeCalls(calls);
+        uint256 amountLd = IERC20(token).balanceOf(address(this));
+        if (amountLd < auth.minAmountLd) {
+            revert InsufficientBalance();
+        }
+        OFT(oft).send{value: address(this).balance}(
+            OFT.SendParam({
+                dstEid: sendData.dstEid,
+                to: sendData.to,
+                amountLD: amountLd,
+                minAmountLD: auth.minAmountLd,
+                extraOptions: sendData.extraOptions,
+                composeMsg: sendData.composeMsg,
+                oftCmd: sendData.oftCmd
+            }),
+            OFT.MessagingFee({nativeFee: address(this).balance, lzTokenFee: auth.lzTokenFee}),
+            auth.refundAddress
+        );
+    }
+
     /// @dev Claims tokens from the ERC20Swap contract and performs a single external call
     /// @notice This function does not sweep remaining funds to the claimer, so ensure that the callee consumes all tokens
     /// @param claim The claim parameters for the ERC20Swap contract
@@ -551,6 +655,25 @@ contract Router is ReentrancyGuard {
             claim.r,
             claim.s
         );
+    }
+
+    function hashSendData(SendData calldata sendData) internal pure returns (bytes32) {
+        return hashBytes(
+            abi.encode(
+                TYPEHASH_SEND_DATA,
+                sendData.dstEid,
+                sendData.to,
+                keccak256(sendData.extraOptions),
+                keccak256(sendData.composeMsg),
+                keccak256(sendData.oftCmd)
+            )
+        );
+    }
+
+    function hashBytes(bytes memory data) internal pure returns (bytes32 dataHash) {
+        assembly ("memory-safe") {
+            dataHash := keccak256(add(data, 0x20), mload(data))
+        }
     }
 
     function revertIfRestrictedTarget(address target) internal view {

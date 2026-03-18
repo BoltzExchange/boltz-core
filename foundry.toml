@@ -5,11 +5,15 @@ script = "contracts/script"
 libs = ["solidity-lib"]
 gas_reports = ["EtherSwap", "ERC20Swap", "Router"]
 solc_version = "0.8.33"
-evm_version = "istanbul"
 
 [profile.release]
 optimizer = true
 optimizer_runs = 10_000_000
+
+[profile.release-rsk]
+optimizer = true
+optimizer_runs = 10_000_000
+evm_version = "istanbul"
 
 [fuzz]
 runs = 8192

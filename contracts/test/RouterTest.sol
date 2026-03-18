@@ -4,6 +4,7 @@ pragma solidity ^0.8.33;
 
 import {Test} from "forge-std/Test.sol";
 import {Router} from "../Router.sol";
+import {OFT} from "../interfaces/OFT.sol";
 import {SigUtils} from "./SigUtils.sol";
 import {EtherSwap} from "../EtherSwap.sol";
 import {ERC20Swap} from "../ERC20Swap.sol";
@@ -65,6 +66,100 @@ contract MockERC20Target {
 
     function revertTarget() public pure {
         revert("revert");
+    }
+}
+
+contract MockOFT is TestERC20, OFT {
+    address public lastSender;
+    uint32 public lastDstEid;
+    bytes32 public lastTo;
+    // forge-lint: disable-next-item(mixed-case-variable)
+    uint256 public lastAmountLD;
+    // forge-lint: disable-next-item(mixed-case-variable)
+    uint256 public lastMinAmountLD;
+    bytes public lastExtraOptions;
+    bytes public lastComposeMsg;
+    bytes public lastOftCmd;
+    uint256 public lastNativeFee;
+    uint256 public lastLzTokenFee;
+    address public lastRefundAddress;
+    uint256 public lastMsgValue;
+
+    constructor(string memory name, string memory symbol, uint8 initialDecimals, uint256 initialSupply)
+        TestERC20(name, symbol, initialDecimals, initialSupply)
+    {}
+
+    function send(SendParam calldata _sendParam, MessagingFee calldata _fee, address _refundAddress)
+        external
+        payable
+        override
+        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+    {
+        _transfer(msg.sender, address(this), _sendParam.amountLD);
+
+        lastSender = msg.sender;
+        lastDstEid = _sendParam.dstEid;
+        lastTo = _sendParam.to;
+        lastAmountLD = _sendParam.amountLD;
+        lastMinAmountLD = _sendParam.minAmountLD;
+        lastExtraOptions = _sendParam.extraOptions;
+        lastComposeMsg = _sendParam.composeMsg;
+        lastOftCmd = _sendParam.oftCmd;
+        lastNativeFee = _fee.nativeFee;
+        lastLzTokenFee = _fee.lzTokenFee;
+        lastRefundAddress = _refundAddress;
+        lastMsgValue = msg.value;
+
+        msgReceipt = MessagingReceipt({guid: bytes32(uint256(1)), nonce: 1, fee: _fee});
+        oftReceipt = OFTReceipt({amountSentLD: _sendParam.amountLD, amountReceivedLD: _sendParam.minAmountLD});
+    }
+}
+
+contract MockOFTAdapter is OFT {
+    TestERC20 internal immutable TOKEN;
+
+    address public lastSender;
+    uint32 public lastDstEid;
+    bytes32 public lastTo;
+    // forge-lint: disable-next-item(mixed-case-variable)
+    uint256 public lastAmountLD;
+    // forge-lint: disable-next-item(mixed-case-variable)
+    uint256 public lastMinAmountLD;
+    bytes public lastExtraOptions;
+    bytes public lastComposeMsg;
+    bytes public lastOftCmd;
+    uint256 public lastNativeFee;
+    uint256 public lastLzTokenFee;
+    address public lastRefundAddress;
+    uint256 public lastMsgValue;
+
+    constructor(TestERC20 token) {
+        TOKEN = token;
+    }
+
+    function send(SendParam calldata _sendParam, MessagingFee calldata _fee, address _refundAddress)
+        external
+        payable
+        override
+        returns (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt)
+    {
+        require(TOKEN.transferFrom(msg.sender, address(this), _sendParam.amountLD));
+
+        lastSender = msg.sender;
+        lastDstEid = _sendParam.dstEid;
+        lastTo = _sendParam.to;
+        lastAmountLD = _sendParam.amountLD;
+        lastMinAmountLD = _sendParam.minAmountLD;
+        lastExtraOptions = _sendParam.extraOptions;
+        lastComposeMsg = _sendParam.composeMsg;
+        lastOftCmd = _sendParam.oftCmd;
+        lastNativeFee = _fee.nativeFee;
+        lastLzTokenFee = _fee.lzTokenFee;
+        lastRefundAddress = _refundAddress;
+        lastMsgValue = msg.value;
+
+        msgReceipt = MessagingReceipt({guid: bytes32(uint256(1)), nonce: 1, fee: _fee});
+        oftReceipt = OFTReceipt({amountSentLD: _sendParam.amountLD, amountReceivedLD: _sendParam.minAmountLD});
     }
 }
 
@@ -907,6 +1002,339 @@ contract RouterTest is Test {
         ROUTER.claimERC20Execute(claim, calls, address(TOKEN), lockupAmount, destination, v, r, s);
     }
 
+    function testClaimERC20ExecuteSendSignature() public {
+        uint256 timelock = block.number + 21;
+        MockOFT oft = new MockOFT("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        lockERC20Swap(oft, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(oft, lockupAmount, timelock);
+
+        MockTarget mockTarget = new MockTarget();
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(mockTarget), value: 0, callData: abi.encodeWithSelector(MockTarget.mockTarget.selector, 3)
+        });
+
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount;
+        uint256 lzTokenFee = 0;
+        address sendRefundAddress = address(0xBEEF);
+        Router.ClaimSendAuthorization memory auth = signClaimSend(
+            claimAddressKey, address(oft), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress
+        );
+
+        executeClaimSend(claim, calls, address(oft), address(oft), sendData, nativeFee, auth);
+
+        assertEq(mockTarget.calls(), 3);
+        assertEq(oft.lastSender(), address(ROUTER));
+        assertEq(oft.lastDstEid(), sendData.dstEid);
+        assertEq(oft.lastTo(), sendData.to);
+        assertEq(oft.lastAmountLD(), lockupAmount);
+        assertEq(oft.lastMinAmountLD(), minAmountLd);
+        assertEq(oft.lastExtraOptions(), sendData.extraOptions);
+        assertEq(oft.lastComposeMsg(), sendData.composeMsg);
+        assertEq(oft.lastOftCmd(), sendData.oftCmd);
+        assertEq(oft.lastNativeFee(), nativeFee);
+        assertEq(oft.lastLzTokenFee(), lzTokenFee);
+        assertEq(oft.lastRefundAddress(), sendRefundAddress);
+        assertEq(oft.lastMsgValue(), nativeFee);
+        assertEq(oft.balanceOf(address(oft)), lockupAmount);
+    }
+
+    function testClaimERC20ExecuteSendSignatureWithAdapter() public {
+        uint256 timelock = block.number + 21;
+        TestERC20 token = new TestERC20("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        MockOFTAdapter oft = new MockOFTAdapter(token);
+        lockERC20Swap(token, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(token, lockupAmount, timelock);
+        Router.Call[] memory calls = new Router.Call[](0);
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount;
+        uint256 lzTokenFee = 0;
+        address sendRefundAddress = address(0xBEEF);
+        Router.ClaimSendAuthorization memory auth = signClaimSend(
+            claimAddressKey, address(token), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress
+        );
+
+        vm.prank(address(ROUTER));
+        token.approve(address(oft), type(uint256).max);
+
+        executeClaimSend(claim, calls, address(token), address(oft), sendData, nativeFee, auth);
+
+        assertEq(oft.lastSender(), address(ROUTER));
+        assertEq(oft.lastAmountLD(), lockupAmount);
+        assertEq(oft.lastMinAmountLD(), minAmountLd);
+        assertEq(token.balanceOf(address(oft)), lockupAmount);
+    }
+
+    function testClaimERC20ExecuteSendSignatureUsesRemainingBalance() public {
+        uint256 timelock = block.number + 21;
+        MockOFT oft = new MockOFT("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        lockERC20Swap(oft, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(oft, lockupAmount, timelock);
+
+        uint256 spentAmount = lockupAmount / 3;
+        address recipient = address(0xCAFE);
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(oft),
+            value: 0,
+            callData: abi.encodeWithSignature("transfer(address,uint256)", recipient, spentAmount)
+        });
+
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount - spentAmount;
+        uint256 lzTokenFee = 0;
+        address sendRefundAddress = address(0xBEEF);
+        Router.ClaimSendAuthorization memory auth = signClaimSend(
+            claimAddressKey, address(oft), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress
+        );
+
+        executeClaimSend(claim, calls, address(oft), address(oft), sendData, nativeFee, auth);
+
+        assertEq(oft.balanceOf(recipient), spentAmount);
+        assertEq(oft.lastAmountLD(), lockupAmount - spentAmount);
+        assertEq(oft.lastMinAmountLD(), minAmountLd);
+        assertEq(oft.balanceOf(address(oft)), lockupAmount - spentAmount);
+    }
+
+    function testClaimERC20ExecuteSendSignatureRevertsBelowMinAmount() public {
+        uint256 timelock = block.number + 21;
+        MockOFT oft = new MockOFT("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        lockERC20Swap(oft, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(oft, lockupAmount, timelock);
+
+        uint256 spentAmount = lockupAmount / 3;
+        Router.Call[] memory calls = new Router.Call[](1);
+        calls[0] = Router.Call({
+            target: address(oft),
+            value: 0,
+            callData: abi.encodeWithSignature("transfer(address,uint256)", address(0xCAFE), spentAmount)
+        });
+
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount;
+        uint256 lzTokenFee = 0;
+        address sendRefundAddress = address(0xBEEF);
+
+        Router.ClaimSendAuthorization memory auth = signClaimSend(
+            claimAddressKey, address(oft), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(Router.InsufficientBalance.selector));
+        ROUTER.claimERC20ExecuteOft{value: nativeFee}(claim, calls, address(oft), address(oft), sendData, auth);
+    }
+
+    function testClaimERC20ExecuteSendSignatureInvalid() public {
+        uint256 wrongKey = 0xBAD;
+        uint256 timelock = block.number + 21;
+        MockOFT oft = new MockOFT("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        lockERC20Swap(oft, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(oft, lockupAmount, timelock);
+        Router.Call[] memory calls = new Router.Call[](0);
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount;
+        uint256 lzTokenFee = 0;
+        address sendRefundAddress = address(0xBEEF);
+
+        Router.ClaimSendAuthorization memory auth =
+            signClaimSend(wrongKey, address(oft), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress);
+
+        vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
+        ROUTER.claimERC20ExecuteOft{value: nativeFee}(claim, calls, address(oft), address(oft), sendData, auth);
+    }
+
+    function testClaimERC20ExecuteSendSignatureInvalidSendParamMutation() public {
+        uint256 timelock = block.number + 21;
+        MockOFT oft = new MockOFT("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        lockERC20Swap(oft, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(oft, lockupAmount, timelock);
+        Router.Call[] memory calls = new Router.Call[](0);
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount;
+        uint256 lzTokenFee = 0;
+        address sendRefundAddress = address(0xBEEF);
+
+        Router.ClaimSendAuthorization memory auth = signClaimSend(
+            claimAddressKey, address(oft), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress
+        );
+
+        sendData.extraOptions = hex"4321";
+
+        vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
+        ROUTER.claimERC20ExecuteOft{value: nativeFee}(claim, calls, address(oft), address(oft), sendData, auth);
+    }
+
+    function testClaimERC20ExecuteSendSignatureInvalidMinAmountMutation() public {
+        uint256 timelock = block.number + 21;
+        MockOFT oft = new MockOFT("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        lockERC20Swap(oft, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(oft, lockupAmount, timelock);
+        Router.Call[] memory calls = new Router.Call[](0);
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount;
+        uint256 lzTokenFee = 0;
+        address sendRefundAddress = address(0xBEEF);
+
+        Router.ClaimSendAuthorization memory auth = signClaimSend(
+            claimAddressKey, address(oft), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
+        ROUTER.claimERC20ExecuteOft{value: nativeFee}(
+            claim,
+            calls,
+            address(oft),
+            address(oft),
+            sendData,
+            Router.ClaimSendAuthorization({
+                minAmountLd: minAmountLd - 1,
+                lzTokenFee: auth.lzTokenFee,
+                refundAddress: auth.refundAddress,
+                v: auth.v,
+                r: auth.r,
+                s: auth.s
+            })
+        );
+    }
+
+    function testClaimERC20ExecuteSendSignatureInvalidFeeMutation() public {
+        uint256 timelock = block.number + 21;
+        MockOFT oft = new MockOFT("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        lockERC20Swap(oft, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(oft, lockupAmount, timelock);
+        Router.Call[] memory calls = new Router.Call[](0);
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount;
+        uint256 lzTokenFee = 1;
+        address sendRefundAddress = address(0xBEEF);
+
+        Router.ClaimSendAuthorization memory auth = signClaimSend(
+            claimAddressKey, address(oft), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
+        ROUTER.claimERC20ExecuteOft{value: nativeFee}(
+            claim,
+            calls,
+            address(oft),
+            address(oft),
+            sendData,
+            Router.ClaimSendAuthorization({
+                minAmountLd: auth.minAmountLd,
+                lzTokenFee: 2,
+                refundAddress: auth.refundAddress,
+                v: auth.v,
+                r: auth.r,
+                s: auth.s
+            })
+        );
+    }
+
+    function testClaimERC20ExecuteSendSignatureInvalidRefundAddressMutation() public {
+        uint256 timelock = block.number + 21;
+        MockOFT oft = new MockOFT("Mock OFT", "MOFT", 18, lockupAmount * 10);
+        lockERC20Swap(oft, lockupAmount, timelock);
+
+        Router.Erc20Claim memory claim = signErc20Claim(oft, lockupAmount, timelock);
+        Router.Call[] memory calls = new Router.Call[](0);
+        Router.SendData memory sendData = Router.SendData({
+            dstEid: 30101,
+            to: bytes32(uint256(uint160(claimAddress))),
+            extraOptions: hex"1234",
+            composeMsg: hex"5678",
+            oftCmd: hex"9abc"
+        });
+        uint256 nativeFee = 0.01 ether;
+        uint256 minAmountLd = lockupAmount;
+        uint256 lzTokenFee = 0;
+        address sendRefundAddress = address(0xBEEF);
+
+        Router.ClaimSendAuthorization memory auth = signClaimSend(
+            claimAddressKey, address(oft), address(oft), sendData, minAmountLd, lzTokenFee, sendRefundAddress
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(Router.ClaimInvalidAddress.selector));
+        ROUTER.claimERC20ExecuteOft{value: nativeFee}(
+            claim,
+            calls,
+            address(oft),
+            address(oft),
+            sendData,
+            Router.ClaimSendAuthorization({
+                minAmountLd: auth.minAmountLd,
+                lzTokenFee: auth.lzTokenFee,
+                refundAddress: address(0xFEED),
+                v: auth.v,
+                r: auth.r,
+                s: auth.s
+            })
+        );
+    }
+
     function testClaimERC20Call() public {
         uint256 timelock = block.number + 21;
         lockERC20Swap(timelock);
@@ -1117,32 +1545,96 @@ contract RouterTest is Test {
     }
 
     function lockERC20Swap(uint256 timelock) internal {
-        TOKEN.approve(address(ERC20_SWAP), lockupAmount);
-        ERC20_SWAP.lock(preimageHash, lockupAmount, address(TOKEN), claimAddress, timelock);
+        lockERC20Swap(TOKEN, lockupAmount, timelock);
+    }
+
+    function lockERC20Swap(TestERC20 token, uint256 amount, uint256 timelock) internal {
+        token.approve(address(ERC20_SWAP), amount);
+        ERC20_SWAP.lock(preimageHash, amount, address(token), claimAddress, timelock);
     }
 
     function signErc20Claim(uint256 timelock) internal view returns (Router.Erc20Claim memory) {
+        return signErc20Claim(TOKEN, lockupAmount, timelock);
+    }
+
+    function signErc20Claim(TestERC20 token, uint256 amount, uint256 timelock)
+        internal
+        view
+        returns (Router.Erc20Claim memory)
+    {
         bytes32 message = ERC20_SIG_UTILS.hashErc20SwapClaim(
-            ERC20_SWAP.TYPEHASH_CLAIM(),
-            preimage,
-            lockupAmount,
-            address(TOKEN),
-            address(this),
-            timelock,
-            address(ROUTER)
+            ERC20_SWAP.TYPEHASH_CLAIM(), preimage, amount, address(token), address(this), timelock, address(ROUTER)
         );
         bytes32 digest = ERC20_SIG_UTILS.getTypedDataHash(message);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(claimAddressKey, digest);
 
         return Router.Erc20Claim({
             preimage: preimage,
-            amount: lockupAmount,
-            tokenAddress: address(TOKEN),
+            amount: amount,
+            tokenAddress: address(token),
             refundAddress: address(this),
             timelock: timelock,
             v: v,
             r: r,
             s: s
         });
+    }
+
+    function signClaimSend(
+        uint256 privateKey,
+        address token,
+        address oft,
+        Router.SendData memory sendData,
+        uint256 minAmountLd,
+        uint256 lzTokenFee,
+        address sendRefundAddress
+    ) internal view returns (Router.ClaimSendAuthorization memory) {
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                ROUTER.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        ROUTER.TYPEHASH_CLAIM_SEND(),
+                        preimage,
+                        token,
+                        oft,
+                        hashSendData(sendData),
+                        minAmountLd,
+                        lzTokenFee,
+                        sendRefundAddress
+                    )
+                )
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+        return Router.ClaimSendAuthorization({
+            minAmountLd: minAmountLd, lzTokenFee: lzTokenFee, refundAddress: sendRefundAddress, v: v, r: r, s: s
+        });
+    }
+
+    function executeClaimSend(
+        Router.Erc20Claim memory claim,
+        Router.Call[] memory calls,
+        address token,
+        address oft,
+        Router.SendData memory sendData,
+        uint256 nativeFee,
+        Router.ClaimSendAuthorization memory auth
+    ) internal {
+        ROUTER.claimERC20ExecuteOft{value: nativeFee}(claim, calls, token, oft, sendData, auth);
+    }
+
+    function hashSendData(Router.SendData memory sendData) internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                ROUTER.TYPEHASH_SEND_DATA(),
+                sendData.dstEid,
+                sendData.to,
+                keccak256(sendData.extraOptions),
+                keccak256(sendData.composeMsg),
+                keccak256(sendData.oftCmd)
+            )
+        );
     }
 }
