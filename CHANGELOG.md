@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [4.0.1](https://github.com/BoltzExchange/boltz-core/compare/v4.0.0..v4.0.1) - 2026-03-18
+
+### Features
+
+- sweep into OFT - ([633d568](https://github.com/BoltzExchange/boltz-core/commit/633d568c609dec412cfeac599a5a4ebdb4cffb3d))
+
+### Miscellaneous Chores
+
+- bump minimatch (#169) - ([7c2de93](https://github.com/BoltzExchange/boltz-core/commit/7c2de93c8a43c3c906e14f34e311af587bab2ba7))
+- bump version to v4.0.1 - ([12077a5](https://github.com/BoltzExchange/boltz-core/commit/12077a59e81bb0e267d4bcc96cac13a5bafc1a55))
+
+---
 ## [4.0.0](https://github.com/BoltzExchange/boltz-core/compare/v3.1.0..v4.0.0) - 2026-02-23
 
 ### Bug Fixes
@@ -33,6 +45,7 @@ All notable changes to this project will be documented in this file. See [conven
 - switch OpenZeppelin to foundry dependency - ([86d6442](https://github.com/BoltzExchange/boltz-core/commit/86d6442d23fd31b1f7dd3abb418693d4f05aa14b))
 - update dependencies (#164) - ([26b2e22](https://github.com/BoltzExchange/boltz-core/commit/26b2e229da6fe52b8670a59b9dbd38593633891f))
 - update dependencies - ([01ecfe7](https://github.com/BoltzExchange/boltz-core/commit/01ecfe795cbfb78537c0574df1c735995ce27856))
+- bump version to v4.0.0 - ([b4462bb](https://github.com/BoltzExchange/boltz-core/commit/b4462bb9b10985ab0b730abebd814e7ed082c4be))
 
 ### Refactoring
 
@@ -42,7 +55,7 @@ All notable changes to this project will be documented in this file. See [conven
 - improve strictness and code quality - ([01a2b56](https://github.com/BoltzExchange/boltz-core/commit/01a2b568543fa2541157554d78aa8a64b7e9e5a8))
 - use typestate pattern for Musig - ([b097b2f](https://github.com/BoltzExchange/boltz-core/commit/b097b2f198644f33d47641dd3f02bd7d83da8ad8))
 - use modern errors in contracts - ([4359238](https://github.com/BoltzExchange/boltz-core/commit/43592380079990af264e410f34a10eec6bd2955c))
-- separate Permit2 owner and refundAddress - ([710dfa3](https://github.com/BoltzExchange/boltz-core/commit/710dfa3dbd58f2aa073cba47a4d26363a4792bcd))
+- separate Permit2 owner and refundAddress - ([b9be4f4](https://github.com/BoltzExchange/boltz-core/commit/b9be4f475aef2851065958a09a5d895611051a6a))
 
 ### Tests
 
