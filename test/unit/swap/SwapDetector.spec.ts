@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { Script, Transaction } from '@scure/btc-signer';
 import { hash160 } from '@scure/btc-signer/utils.js';
@@ -24,9 +24,7 @@ describe('SwapDetector', () => {
     ${OutputType.Compatibility} | ${reverseSwapScript} | ${'P2SH nested P2WSH reverse swap'}
     ${OutputType.Legacy}        | ${reverseSwapScript} | ${'P2SH reverse swap'}
   `('should detect $name', async ({ type, scriptFunc }) => {
-    const publicKey = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
-    );
+    const publicKey = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
     const redeemScript = scriptFunc(sha256(publicKey), publicKey, publicKey, 1);
 
     const expectedAmount = 42n;
@@ -38,7 +36,7 @@ describe('SwapDetector', () => {
     transaction.addOutput({
       amount: 12n,
       script: p2pkhOutput(
-        hash160(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
+        hash160(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
       ),
     });
     transaction.addOutput({
@@ -60,9 +58,7 @@ describe('SwapDetector', () => {
   });
 
   test('should detect tweaked Taproot keys', () => {
-    const publicKey = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
-    );
+    const publicKey = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
     const tweakedKeys = toXOnly(publicKey);
 
     const transaction = new Transaction({
@@ -91,9 +87,7 @@ describe('SwapDetector', () => {
   });
 
   test('should return undefined no swap can be found', () => {
-    const publicKey = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
-    );
+    const publicKey = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
     const transaction = new Transaction({
       allowUnknownOutputs: true,
     });

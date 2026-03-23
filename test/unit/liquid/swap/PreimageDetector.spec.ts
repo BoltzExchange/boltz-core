@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import zkp from '@vulpemventures/secp256k1-zkp';
@@ -15,8 +15,8 @@ import swapScript from '../../../../lib/swap/SwapScript';
 import { lbtcRegtest, nonce } from './ClaimDetails';
 
 describe('Liquid PreimageDetector', () => {
-  const claimKeys = secp256k1.utils.randomPrivateKey();
-  const refundKeys = secp256k1.utils.randomPrivateKey();
+  const claimKeys = secp256k1.utils.randomSecretKey();
+  const refundKeys = secp256k1.utils.randomSecretKey();
 
   const preimage = hex.decode(
     '7568110bcf788e974f918332f357dec2c33b2d76b2f61f9873afcb8f1598c91e',

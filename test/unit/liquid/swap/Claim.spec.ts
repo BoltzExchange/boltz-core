@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { confidential } from 'liquidjs-lib';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
@@ -102,7 +102,7 @@ describe('Liquid Claim', () => {
   });
 
   test('should not claim FundingAddressTree (no claim leaf)', () => {
-    const privateKey = secp256k1.utils.randomPrivateKey();
+    const privateKey = secp256k1.utils.randomSecretKey();
     const publicKey = secp256k1.getPublicKey(privateKey);
     const tree = fundingAddressTree(true, publicKey, 800000);
 

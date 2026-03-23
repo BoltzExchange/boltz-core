@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { Script, type ScriptType } from '@scure/btc-signer';
 import { TAP_LEAF_VERSION } from '@scure/btc-signer/payment.js';
@@ -69,7 +69,7 @@ describe('TaprootUtils', () => {
       'SHA256',
       randomBytes(32),
       'EQUALVERIFY',
-      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
       'CHECKSIGVERIFY',
     ] as ScriptType;
 
@@ -80,14 +80,14 @@ describe('TaprootUtils', () => {
 
   test('should tweak Musig', async () => {
     const secp = await zkp();
-    const ourMusigKey = secp256k1.utils.randomPrivateKey();
+    const ourMusigKey = secp256k1.utils.randomSecretKey();
 
     const musig = Musig.create(
       ourMusigKey,
       [
         ourMusigKey,
-        secp256k1.utils.randomPrivateKey(),
-        secp256k1.utils.randomPrivateKey(),
+        secp256k1.utils.randomSecretKey(),
+        secp256k1.utils.randomSecretKey(),
       ].map((key) => secp256k1.getPublicKey(key)),
     );
     const tweakedMusig = tweakMusig(musig, taptree);
@@ -124,7 +124,7 @@ describe('TaprootUtils', () => {
       createControlBlock(
         taprootHashTree(taptree),
         createLeaf(false, ['RIPEMD160', randomBytes(20), 'EQUALVERIFY']),
-        toXOnly(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
+        toXOnly(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
       ),
     ).toThrow('leaf not in tree');
   });

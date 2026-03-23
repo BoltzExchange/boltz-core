@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { Transaction } from '@scure/btc-signer';
 import { taprootTweakPubkey } from '@scure/btc-signer/utils.js';
@@ -82,7 +82,7 @@ describe('FundingAddressTree refund', () => {
   test('should not refund via script path when refund key is invalid', async () => {
     const timeout = (await bitcoinClient.getBlockchainInfo()).blocks;
     const { utxo } = await createFundingAddressOutput(timeout);
-    utxo.privateKey = secp256k1.utils.randomPrivateKey();
+    utxo.privateKey = secp256k1.utils.randomSecretKey();
 
     await expect(refundSwap([utxo], timeout)).rejects.toMatchObject({
       code: -26,

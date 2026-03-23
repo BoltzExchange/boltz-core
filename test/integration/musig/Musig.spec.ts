@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { Address, OutScript, SigHash, Transaction } from '@scure/btc-signer';
 import { equalBytes } from '@scure/btc-signer/utils.js';
@@ -35,8 +35,8 @@ describe('Musig', () => {
   });
 
   test('should spend Musig P2TR outputs', async () => {
-    const ourKey = secp256k1.utils.randomPrivateKey();
-    const theirKey = secp256k1.utils.randomPrivateKey();
+    const ourKey = secp256k1.utils.randomSecretKey();
+    const theirKey = secp256k1.utils.randomSecretKey();
 
     const keyAgg = Musig.create(
       ourKey,

@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { OutputType } from '../../../lib/consts/Enums';
 import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
 import swapTree from '../../../lib/swap/SwapTree';
@@ -53,7 +53,7 @@ describe.each`
       treeFunc,
       timeout,
     );
-    utxo.privateKey = secp256k1.utils.randomPrivateKey();
+    utxo.privateKey = secp256k1.utils.randomSecretKey();
 
     await expect(refundSwap([utxo], timeout)).rejects.toMatchObject({
       code: -26,

@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { Feature, Networks, reverseSwapTree } from '../../../lib/liquid';
 import { p2trOutput } from '../../../lib/swap/Scripts';

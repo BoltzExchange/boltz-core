@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { Script } from '@scure/btc-signer';
 import { randomBytes } from 'node:crypto';
 import {
@@ -12,15 +12,13 @@ import { toXOnly, tweakMusig } from '../../../lib/swap/TaprootUtils';
 
 describe('SwapTree', () => {
   test('should extract claim public key from swap tree', () => {
-    const claimKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
-    );
+    const claimKeys = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
 
     const tree = swapTree(
       false,
       randomBytes(32),
       claimKeys,
-      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
       123,
     );
 
@@ -29,13 +27,13 @@ describe('SwapTree', () => {
 
   test('should extract refund public key from swap tree', () => {
     const refundKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
+      secp256k1.utils.randomSecretKey(),
     );
 
     const tree = swapTree(
       false,
       randomBytes(32),
-      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
       refundKeys,
       123,
     );
@@ -49,7 +47,7 @@ describe('SwapTree', () => {
 describe('FundingAddressTree', () => {
   test('should create funding address tree with refund leaf', () => {
     const refundKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
+      secp256k1.utils.randomSecretKey(),
     );
     const timeoutBlockHeight = 800000;
 
@@ -63,7 +61,7 @@ describe('FundingAddressTree', () => {
 
   test('should create funding address tree for Liquid', () => {
     const refundKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
+      secp256k1.utils.randomSecretKey(),
     );
     const timeoutBlockHeight = 123;
 
@@ -82,16 +80,16 @@ describe('FundingAddressTree', () => {
 
   test('should work with tweakMusig', () => {
     const refundKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
+      secp256k1.utils.randomSecretKey(),
     );
     const timeoutBlockHeight = 800000;
 
     const tree = fundingAddressTree(false, refundKeys, timeoutBlockHeight);
 
-    const ourMusigKey = secp256k1.utils.randomPrivateKey();
+    const ourMusigKey = secp256k1.utils.randomSecretKey();
     const musig = Musig.create(
       ourMusigKey,
-      [ourMusigKey, secp256k1.utils.randomPrivateKey()].map((key) =>
+      [ourMusigKey, secp256k1.utils.randomSecretKey()].map((key) =>
         secp256k1.getPublicKey(key),
       ),
     );

@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { OutputType, swapScript } from '../../../lib/Boltz';
 import swapTree from '../../../lib/swap/SwapTree';
 import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils';
@@ -65,7 +65,7 @@ describe('SwapScript refund', () => {
       swapScript,
       bestBlockHeight,
     );
-    utxo.privateKey = secp256k1.utils.randomPrivateKey();
+    utxo.privateKey = secp256k1.utils.randomSecretKey();
 
     await expect(refundSwap([utxo], bestBlockHeight)).rejects.toMatchObject({
       code: -26,

@@ -180,7 +180,7 @@ export const constructClaimTransaction = (
           1,
           Buffer.of(ops.OP_RETURN),
           Buffer.from(
-            secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+            secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
           ),
           0,
         ).toPartialOutput(),

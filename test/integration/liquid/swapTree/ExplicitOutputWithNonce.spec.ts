@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { signSchnorr } from '@scure/btc-signer/utils.js';
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';

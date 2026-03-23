@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address, networks } from 'liquidjs-lib';
@@ -54,8 +54,8 @@ describe.each`
         (await elementsClient.getBlockchainInfo()).blocks + 21;
 
       const preimageHash = sha256(preimage);
-      const ourKeys = secp256k1.utils.randomPrivateKey();
-      const theirKeys = secp256k1.utils.randomPrivateKey();
+      const ourKeys = secp256k1.utils.randomSecretKey();
+      const theirKeys = secp256k1.utils.randomSecretKey();
 
       const expectedOutput = address.toOutputScript(
         outputAddress || (await elementsClient.getNewAddress()),
@@ -260,7 +260,7 @@ describe.each`
             outputAddress = address.fromOutputScript(
               Buffer.from(
                 p2trOutput(
-                  secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+                  secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
                 ),
               ),
               networks.regtest,
