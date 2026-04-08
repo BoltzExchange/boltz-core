@@ -6,6 +6,7 @@ import {TransferHelper} from "./TransferHelper.sol";
 import {EtherSwap} from "./EtherSwap.sol";
 import {ERC20Swap} from "./ERC20Swap.sol";
 import {OFT} from "./interfaces/OFT.sol";
+import {ITokenMessengerV2} from "./interfaces/ITokenMessengerV2.sol";
 import {ISignatureTransfer} from "permit2/interfaces/ISignatureTransfer.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -22,9 +23,9 @@ contract Router is ReentrancyGuard {
     /// @param amount The amount of Ether locked in the swap
     /// @param refundAddress The address that can claim a refund after timelock expires
     /// @param timelock The timestamp after which a refund becomes possible
-    /// @param v Final byte of the signature
-    /// @param r Second 32 bytes of the signature
-    /// @param s First 32 bytes of the signature
+    /// @param v Recovery identifier (27 or 28); the final byte of a packed 65-byte signature
+    /// @param r First 32 bytes of the signature
+    /// @param s Second 32 bytes of the signature
     struct Claim {
         bytes32 preimage;
         uint256 amount;
@@ -41,9 +42,9 @@ contract Router is ReentrancyGuard {
     /// @param tokenAddress The address of the ERC20 token locked in the swap
     /// @param refundAddress The address that can claim a refund after timelock expires
     /// @param timelock The timestamp after which a refund becomes possible
-    /// @param v Final byte of the signature
-    /// @param r Second 32 bytes of the signature
-    /// @param s First 32 bytes of the signature
+    /// @param v Recovery identifier (27 or 28); the final byte of a packed 65-byte signature
+    /// @param r First 32 bytes of the signature
+    /// @param s Second 32 bytes of the signature
     struct Erc20Claim {
         bytes32 preimage;
         uint256 amount;
@@ -84,13 +85,42 @@ contract Router is ReentrancyGuard {
     /// @param minAmountLd The minimum amount that must remain for the OFT send after executing `calls`
     /// @param lzTokenFee The LayerZero token fee to use for the send
     /// @param refundAddress The address that receives any excess native fee refund from the OFT
-    /// @param v Final byte of the signature
-    /// @param r Second 32 bytes of the signature
-    /// @param s First 32 bytes of the signature
+    /// @param v Recovery identifier (27 or 28); the final byte of a packed 65-byte signature
+    /// @param r First 32 bytes of the signature
+    /// @param s Second 32 bytes of the signature
     struct ClaimSendAuthorization {
         uint256 minAmountLd;
         uint256 lzTokenFee;
         address refundAddress;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
+    /// @dev User-supplied CCTP destination and settlement options.
+    /// The router derives the token amount at execution time.
+    /// @param destinationDomain Destination CCTP domain
+    /// @param mintRecipient Recipient on the destination chain encoded as bytes32
+    /// @param destinationCaller Optional destination caller encoded as bytes32
+    /// @param maxFee Maximum CCTP fee allowed for the burn
+    /// @param minFinalityThreshold Minimum finality threshold for the burn
+    /// @param hookData Optional CCTP hook payload
+    struct CctpData {
+        uint32 destinationDomain;
+        bytes32 mintRecipient;
+        bytes32 destinationCaller;
+        uint256 maxFee;
+        uint32 minFinalityThreshold;
+        bytes hookData;
+    }
+
+    /// @dev User-supplied authorization for a CCTP burn after the claim has executed.
+    /// @param minAmount The minimum amount that must remain for the CCTP burn after executing `calls`
+    /// @param v Recovery identifier (27 or 28); the final byte of a packed 65-byte signature
+    /// @param r First 32 bytes of the signature
+    /// @param s Second 32 bytes of the signature
+    struct ClaimCctpAuthorization {
+        uint256 minAmount;
         uint8 v;
         bytes32 r;
         bytes32 s;
@@ -106,7 +136,7 @@ contract Router is ReentrancyGuard {
     /// @dev Thrown when a call targets a swap contract
     error SwapCallNotAllowed();
 
-    /// @dev Thrown when the sweep amount is greater than the contract balance
+    /// @dev Thrown when the router's balance is below the required minimum for the operation
     error InsufficientBalance();
 
     /// @dev Version of the contract used for compatibility checks
@@ -121,6 +151,12 @@ contract Router is ReentrancyGuard {
     );
     bytes32 public constant TYPEHASH_SEND_DATA =
         keccak256("SendData(uint32 dstEid,bytes32 to,bytes32 extraOptions,bytes32 composeMsg,bytes32 oftCmd)");
+    bytes32 public constant TYPEHASH_CLAIM_CCTP = keccak256(
+        "ClaimCctp(bytes32 preimage,address token,address tokenMessenger,bytes32 cctpData,uint256 minAmount)"
+    );
+    bytes32 public constant TYPEHASH_CCTP_DATA = keccak256(
+        "CctpData(uint32 destinationDomain,bytes32 mintRecipient,bytes32 destinationCaller,uint256 maxFee,uint32 minFinalityThreshold,bytes32 hookData)"
+    );
     bytes32 public constant TYPEHASH_EXECUTE_LOCK_ERC20 = keccak256(
         "ExecuteAndLockERC20(bytes32 preimageHash,address token,address claimAddress,address refundAddress,uint256 timelock,bytes32 callsHash)"
     );
@@ -160,7 +196,7 @@ contract Router is ReentrancyGuard {
     /// @param claim The claim parameters for the EtherSwap contract
     /// @param calls Array of arbitrary calls to execute after claiming
     /// @param token The token address to sweep (address(0) for Ether)
-    /// @param minAmountOut The amount to sweep to the claimer
+    /// @param minAmountOut The minimum amount to sweep to the claimer
     //
     // Flow:
     // 1. Claim funds from the EtherSwap contract
@@ -185,11 +221,11 @@ contract Router is ReentrancyGuard {
     /// @param claim The claim parameters for the EtherSwap contract
     /// @param calls Array of arbitrary calls to execute after claiming
     /// @param token The token address to sweep (address(0) for Ether)
-    /// @param minAmountOut The amount to sweep to the destination
+    /// @param minAmountOut The minimum amount to sweep to the destination
     /// @param destination The address where the swept funds will be sent
-    /// @param v Final byte of the signature
-    /// @param r Second 32 bytes of the signature
-    /// @param s First 32 bytes of the signature
+    /// @param v Recovery identifier (27 or 28); the final byte of a packed 65-byte signature
+    /// @param r First 32 bytes of the signature
+    /// @param s Second 32 bytes of the signature
     //
     // Flow:
     // 1. Claim funds from the EtherSwap contract
@@ -210,17 +246,8 @@ contract Router is ReentrancyGuard {
         // The signature covers: preimage, token, minAmountOut, and destination
         if (
             claimSwap(claim)
-                != ecrecover(
-                    keccak256(
-                        abi.encodePacked(
-                            "\x19\x01",
-                            DOMAIN_SEPARATOR,
-                            keccak256(abi.encode(TYPEHASH_CLAIM, claim.preimage, token, minAmountOut, destination))
-                        )
-                    ),
-                    v,
-                    r,
-                    s
+                != recoverTypedDataSigner(
+                    keccak256(abi.encode(TYPEHASH_CLAIM, claim.preimage, token, minAmountOut, destination)), v, r, s
                 )
         ) {
             revert ClaimInvalidAddress();
@@ -256,9 +283,9 @@ contract Router is ReentrancyGuard {
     /// @param claim The claim parameters for the EtherSwap contract
     /// @param callee The contract address to call after claiming
     /// @param callData The encoded function calldata for the call
-    /// @param v Final byte of the EIP-712 signature authorizing this call
-    /// @param r Second 32 bytes of the EIP-712 signature authorizing this call
-    /// @param s First 32 bytes of the EIP-712 signature authorizing this call
+    /// @param v Recovery identifier (27 or 28); the final byte of a packed 65-byte EIP-712 signature authorizing this call
+    /// @param r First 32 bytes of the EIP-712 signature authorizing this call
+    /// @param s Second 32 bytes of the EIP-712 signature authorizing this call
     //
     // Flow:
     // 1. Claim funds from the EtherSwap contract
@@ -271,17 +298,8 @@ contract Router is ReentrancyGuard {
         // Verify that the claimer has signed authorization for this specific call
         if (
             claimSwap(claim)
-                != ecrecover(
-                    keccak256(
-                        abi.encodePacked(
-                            "\x19\x01",
-                            DOMAIN_SEPARATOR,
-                            keccak256(abi.encode(TYPEHASH_CLAIM_CALL, claim.preimage, callee, keccak256(callData)))
-                        )
-                    ),
-                    v,
-                    r,
-                    s
+                != recoverTypedDataSigner(
+                    keccak256(abi.encode(TYPEHASH_CLAIM_CALL, claim.preimage, callee, keccak256(callData))), v, r, s
                 )
         ) {
             revert ClaimInvalidAddress();
@@ -299,7 +317,7 @@ contract Router is ReentrancyGuard {
     /// @param claim The claim parameters for the ERC20Swap contract
     /// @param calls Array of arbitrary calls to execute after claiming
     /// @param token The token address to sweep (address(0) for Ether)
-    /// @param minAmountOut The amount to sweep to the claimer
+    /// @param minAmountOut The minimum amount to sweep to the claimer
     //
     // Flow:
     // 1. Claim tokens from the ERC20Swap contract
@@ -324,11 +342,11 @@ contract Router is ReentrancyGuard {
     /// @param claim The claim parameters for the ERC20Swap contract
     /// @param calls Array of arbitrary calls to execute after claiming
     /// @param token The token address to sweep (address(0) for Ether)
-    /// @param minAmountOut The amount to sweep to the destination
+    /// @param minAmountOut The minimum amount to sweep to the destination
     /// @param destination The address where the swept funds will be sent
-    /// @param v Final byte of the signature
-    /// @param r Second 32 bytes of the signature
-    /// @param s First 32 bytes of the signature
+    /// @param v Recovery identifier (27 or 28); the final byte of a packed 65-byte signature
+    /// @param r First 32 bytes of the signature
+    /// @param s Second 32 bytes of the signature
     //
     // Flow:
     // 1. Claim tokens from the ERC20Swap contract
@@ -349,17 +367,8 @@ contract Router is ReentrancyGuard {
         // The signature covers: preimage, token, minAmountOut, and destination
         if (
             claimERC20Swap(claim)
-                != ecrecover(
-                    keccak256(
-                        abi.encodePacked(
-                            "\x19\x01",
-                            DOMAIN_SEPARATOR,
-                            keccak256(abi.encode(TYPEHASH_CLAIM, claim.preimage, token, minAmountOut, destination))
-                        )
-                    ),
-                    v,
-                    r,
-                    s
+                != recoverTypedDataSigner(
+                    keccak256(abi.encode(TYPEHASH_CLAIM, claim.preimage, token, minAmountOut, destination)), v, r, s
                 )
         ) {
             revert ClaimInvalidAddress();
@@ -389,23 +398,17 @@ contract Router is ReentrancyGuard {
     ) external payable nonReentrant {
         if (
             claimERC20Swap(claim)
-                != ecrecover(
+                != recoverTypedDataSigner(
                     keccak256(
-                        abi.encodePacked(
-                            "\x19\x01",
-                            DOMAIN_SEPARATOR,
-                            keccak256(
-                                abi.encode(
-                                    TYPEHASH_CLAIM_SEND,
-                                    claim.preimage,
-                                    token,
-                                    oft,
-                                    hashSendData(sendData),
-                                    auth.minAmountLd,
-                                    auth.lzTokenFee,
-                                    auth.refundAddress
-                                )
-                            )
+                        abi.encode(
+                            TYPEHASH_CLAIM_SEND,
+                            claim.preimage,
+                            token,
+                            oft,
+                            hashSendData(sendData),
+                            auth.minAmountLd,
+                            auth.lzTokenFee,
+                            auth.refundAddress
                         )
                     ),
                     auth.v,
@@ -441,6 +444,64 @@ contract Router is ReentrancyGuard {
         sendBalanceToOft(token, oft, sendData, minAmountLd, lzTokenFee, refundAddress);
     }
 
+    /// @dev Claims tokens from the ERC20Swap contract, executes arbitrary calls, then burns the router's balance through CCTP
+    /// This version uses EIP-712 signature verification to allow the claimer to authorize someone else to execute the claim
+    /// @param claim The claim parameters for the ERC20Swap contract
+    /// @param calls Array of arbitrary calls to execute after claiming
+    /// @param token The token whose router balance will be burned
+    /// @param tokenMessenger The CCTP Token Messenger contract that executes the burn
+    /// @param cctpData The destination and settlement options for the CCTP burn
+    /// @param auth The signed authorization for the CCTP burn, including the minimum remaining amount
+    function claimERC20ExecuteCctp(
+        Erc20Claim calldata claim,
+        Call[] calldata calls,
+        address token,
+        address tokenMessenger,
+        CctpData calldata cctpData,
+        ClaimCctpAuthorization calldata auth
+    ) external payable nonReentrant {
+        if (
+            claimERC20Swap(claim)
+                != recoverTypedDataSigner(
+                    keccak256(
+                        abi.encode(
+                            TYPEHASH_CLAIM_CCTP,
+                            claim.preimage,
+                            token,
+                            tokenMessenger,
+                            hashCctpData(cctpData),
+                            auth.minAmount
+                        )
+                    ),
+                    auth.v,
+                    auth.r,
+                    auth.s
+                )
+        ) {
+            revert ClaimInvalidAddress();
+        }
+
+        executeCalls(calls);
+        sendBalanceToCctp(token, tokenMessenger, cctpData, auth.minAmount);
+    }
+
+    /// @dev Executes arbitrary calls, then burns the router's token balance through CCTP
+    /// @param calls Array of arbitrary calls to execute before the CCTP burn
+    /// @param token The token whose router balance will be burned
+    /// @param tokenMessenger The CCTP Token Messenger contract that executes the burn
+    /// @param cctpData The destination and settlement options for the CCTP burn
+    /// @param minAmount The minimum amount that must remain for the CCTP burn after executing `calls`
+    function executeCctp(
+        Call[] calldata calls,
+        address token,
+        address tokenMessenger,
+        CctpData calldata cctpData,
+        uint256 minAmount
+    ) external payable nonReentrant {
+        executeCalls(calls);
+        sendBalanceToCctp(token, tokenMessenger, cctpData, minAmount);
+    }
+
     /// @dev Claims tokens from the ERC20Swap contract and performs a single external call
     /// @notice This function does not sweep remaining funds to the claimer, so ensure that the callee consumes all tokens
     /// @param claim The claim parameters for the ERC20Swap contract
@@ -473,9 +534,9 @@ contract Router is ReentrancyGuard {
     /// @param claim The claim parameters for the ERC20Swap contract
     /// @param callee The contract address to call after claiming
     /// @param callData The encoded function calldata for the call
-    /// @param v Final byte of the EIP-712 signature authorizing this call
-    /// @param r Second 32 bytes of the EIP-712 signature authorizing this call
-    /// @param s First 32 bytes of the EIP-712 signature authorizing this call
+    /// @param v Recovery identifier (27 or 28); the final byte of a packed 65-byte EIP-712 signature authorizing this call
+    /// @param r First 32 bytes of the EIP-712 signature authorizing this call
+    /// @param s Second 32 bytes of the EIP-712 signature authorizing this call
     //
     // Flow:
     // 1. Claim tokens from the ERC20Swap contract
@@ -493,17 +554,8 @@ contract Router is ReentrancyGuard {
         // Verify that the claimer has signed authorization for this specific call
         if (
             claimERC20Swap(claim)
-                != ecrecover(
-                    keccak256(
-                        abi.encodePacked(
-                            "\x19\x01",
-                            DOMAIN_SEPARATOR,
-                            keccak256(abi.encode(TYPEHASH_CLAIM_CALL, claim.preimage, callee, keccak256(callData)))
-                        )
-                    ),
-                    v,
-                    r,
-                    s
+                != recoverTypedDataSigner(
+                    keccak256(abi.encode(TYPEHASH_CLAIM_CALL, claim.preimage, callee, keccak256(callData))), v, r, s
                 )
         ) {
             revert ClaimInvalidAddress();
@@ -675,9 +727,34 @@ contract Router is ReentrancyGuard {
         );
     }
 
+    function hashCctpData(CctpData calldata cctpData) internal pure returns (bytes32) {
+        return hashBytes(
+            abi.encode(
+                TYPEHASH_CCTP_DATA,
+                cctpData.destinationDomain,
+                cctpData.mintRecipient,
+                cctpData.destinationCaller,
+                cctpData.maxFee,
+                cctpData.minFinalityThreshold,
+                keccak256(cctpData.hookData)
+            )
+        );
+    }
+
     function hashBytes(bytes memory data) internal pure returns (bytes32 dataHash) {
         assembly ("memory-safe") {
             dataHash := keccak256(add(data, 0x20), mload(data))
+        }
+    }
+
+    function recoverTypedDataSigner(bytes32 structHash, uint8 v, bytes32 r, bytes32 s) internal view returns (address) {
+        return ecrecover(keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)), v, r, s);
+    }
+
+    function getBridgeAmount(address token, uint256 minAmount) internal view returns (uint256 amount) {
+        amount = IERC20(token).balanceOf(address(this));
+        if (amount < minAmount) {
+            revert InsufficientBalance();
         }
     }
 
@@ -689,10 +766,7 @@ contract Router is ReentrancyGuard {
         uint256 lzTokenFee,
         address refundAddress
     ) internal {
-        uint256 amountLd = IERC20(token).balanceOf(address(this));
-        if (amountLd < minAmountLd) {
-            revert InsufficientBalance();
-        }
+        uint256 amountLd = getBridgeAmount(token, minAmountLd);
 
         uint256 nativeFee = address(this).balance;
         OFT(oft).send{value: nativeFee}(
@@ -708,6 +782,38 @@ contract Router is ReentrancyGuard {
             OFT.MessagingFee({nativeFee: nativeFee, lzTokenFee: lzTokenFee}),
             refundAddress
         );
+    }
+
+    function sendBalanceToCctp(address token, address tokenMessenger, CctpData calldata cctpData, uint256 minAmount)
+        internal
+    {
+        uint256 amount = getBridgeAmount(token, minAmount);
+        IERC20(token).forceApprove(tokenMessenger, amount);
+
+        if (cctpData.hookData.length == 0) {
+            ITokenMessengerV2(tokenMessenger)
+                .depositForBurn(
+                    amount,
+                    cctpData.destinationDomain,
+                    cctpData.mintRecipient,
+                    token,
+                    cctpData.destinationCaller,
+                    cctpData.maxFee,
+                    cctpData.minFinalityThreshold
+                );
+        } else {
+            ITokenMessengerV2(tokenMessenger)
+                .depositForBurnWithHook(
+                    amount,
+                    cctpData.destinationDomain,
+                    cctpData.mintRecipient,
+                    token,
+                    cctpData.destinationCaller,
+                    cctpData.maxFee,
+                    cctpData.minFinalityThreshold,
+                    cctpData.hookData
+                );
+        }
     }
 
     function revertIfRestrictedTarget(address target) internal view {
