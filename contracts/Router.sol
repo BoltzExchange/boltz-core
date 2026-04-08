@@ -417,23 +417,28 @@ contract Router is ReentrancyGuard {
         }
 
         executeCalls(calls);
-        uint256 amountLd = IERC20(token).balanceOf(address(this));
-        if (amountLd < auth.minAmountLd) {
-            revert InsufficientBalance();
-        }
-        OFT(oft).send{value: address(this).balance}(
-            OFT.SendParam({
-                dstEid: sendData.dstEid,
-                to: sendData.to,
-                amountLD: amountLd,
-                minAmountLD: auth.minAmountLd,
-                extraOptions: sendData.extraOptions,
-                composeMsg: sendData.composeMsg,
-                oftCmd: sendData.oftCmd
-            }),
-            OFT.MessagingFee({nativeFee: address(this).balance, lzTokenFee: auth.lzTokenFee}),
-            auth.refundAddress
-        );
+        sendBalanceToOft(token, oft, sendData, auth.minAmountLd, auth.lzTokenFee, auth.refundAddress);
+    }
+
+    /// @dev Executes arbitrary calls, then sends the router's token balance through an OFT token
+    /// @param calls Array of arbitrary calls to execute before the OFT send
+    /// @param token The token whose router balance will be sent
+    /// @param oft The OFT contract that executes the cross-chain send
+    /// @param sendData The destination and message options for the OFT send
+    /// @param minAmountLd The minimum amount that must remain for the OFT send after executing `calls`
+    /// @param lzTokenFee The LayerZero token fee to use for the send
+    /// @param refundAddress The address that receives any excess native fee refund from the OFT
+    function executeOft(
+        Call[] calldata calls,
+        address token,
+        address oft,
+        SendData calldata sendData,
+        uint256 minAmountLd,
+        uint256 lzTokenFee,
+        address refundAddress
+    ) external payable nonReentrant {
+        executeCalls(calls);
+        sendBalanceToOft(token, oft, sendData, minAmountLd, lzTokenFee, refundAddress);
     }
 
     /// @dev Claims tokens from the ERC20Swap contract and performs a single external call
@@ -674,6 +679,35 @@ contract Router is ReentrancyGuard {
         assembly ("memory-safe") {
             dataHash := keccak256(add(data, 0x20), mload(data))
         }
+    }
+
+    function sendBalanceToOft(
+        address token,
+        address oft,
+        SendData calldata sendData,
+        uint256 minAmountLd,
+        uint256 lzTokenFee,
+        address refundAddress
+    ) internal {
+        uint256 amountLd = IERC20(token).balanceOf(address(this));
+        if (amountLd < minAmountLd) {
+            revert InsufficientBalance();
+        }
+
+        uint256 nativeFee = address(this).balance;
+        OFT(oft).send{value: nativeFee}(
+            OFT.SendParam({
+                dstEid: sendData.dstEid,
+                to: sendData.to,
+                amountLD: amountLd,
+                minAmountLD: minAmountLd,
+                extraOptions: sendData.extraOptions,
+                composeMsg: sendData.composeMsg,
+                oftCmd: sendData.oftCmd
+            }),
+            OFT.MessagingFee({nativeFee: nativeFee, lzTokenFee: lzTokenFee}),
+            refundAddress
+        );
     }
 
     function revertIfRestrictedTarget(address target) internal view {

@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { SigHash } from '@scure/btc-signer';
 import { equalBytes } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'node:crypto';
@@ -125,7 +125,7 @@ describe.each`
       false,
       treeFunc,
     );
-    utxo.privateKey = secp256k1.utils.randomPrivateKey();
+    utxo.privateKey = secp256k1.utils.randomSecretKey();
 
     await expect(claimSwap([utxo])).rejects.toMatchObject({
       code: -26,

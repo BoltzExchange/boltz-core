@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import { script as bitcoinScript } from 'bitcoinjs-lib';
@@ -23,9 +23,7 @@ describe('Liquid SwapDetector', () => {
     ${OutputType.Compatibility} | ${reverseSwapScript} | ${'P2SH nested P2WSH reverse swap'}
     ${OutputType.Legacy}        | ${reverseSwapScript} | ${'P2SH reverse swap'}
   `('should detect $name', async ({ type, scriptFunc }) => {
-    const publicKey = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
-    );
+    const publicKey = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
     const redeemScript = scriptFunc(sha256(publicKey), publicKey, publicKey, 1);
 
     const expectedAmount = 42;
@@ -35,7 +33,7 @@ describe('Liquid SwapDetector', () => {
     transaction.addOutput(
       Buffer.from(
         p2pkhOutput(
-          hash160(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
+          hash160(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
         ),
       ),
       confidential.satoshiToConfidentialValue(12),

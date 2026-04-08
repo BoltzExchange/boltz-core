@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { networks } from 'liquidjs-lib';
 import { randomBytes } from 'node:crypto';
 import {
@@ -13,8 +13,8 @@ describe('ReverseSwapTree', () => {
     expect(() =>
       reverseSwapTree(
         randomBytes(32),
-        secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
-        secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+        secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
+        secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
         123,
         [
           {
@@ -23,7 +23,7 @@ describe('ReverseSwapTree', () => {
             assetHash: networks.regtest.assetHash,
             outputScript: Buffer.from(
               p2trOutput(
-                secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+                secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
               ),
             ),
           },
@@ -33,7 +33,7 @@ describe('ReverseSwapTree', () => {
             assetHash: networks.regtest.assetHash,
             outputScript: Buffer.from(
               p2trOutput(
-                secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+                secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
               ),
             ),
           },
@@ -48,8 +48,8 @@ describe('ReverseSwapTree', () => {
     expect(() =>
       reverseSwapTree(
         randomBytes(32),
-        secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
-        secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+        secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
+        secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
         123,
         [
           {

@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { randomBytes } from 'node:crypto';
 import {
   extractClaimPublicKeyFromReverseSwapTree,
@@ -9,15 +9,13 @@ import { toXOnly } from '../../../lib/swap/TaprootUtils';
 
 describe('ReverseSwapTree', () => {
   test('should extract claim public key from swap tree', () => {
-    const claimKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
-    );
+    const claimKeys = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
 
     const tree = reverseSwapTree(
       false,
       randomBytes(32),
       claimKeys,
-      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
       123,
     );
 
@@ -28,13 +26,13 @@ describe('ReverseSwapTree', () => {
 
   test('should extract refund public key from swap tree', () => {
     const refundKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
+      secp256k1.utils.randomSecretKey(),
     );
 
     const tree = reverseSwapTree(
       false,
       randomBytes(32),
-      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
       refundKeys,
       123,
     );

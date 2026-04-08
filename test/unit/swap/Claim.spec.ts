@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
 import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../lib/consts/Enums';
@@ -70,9 +70,7 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(
-            secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
-          ),
+          p2trOutput(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
           1n,
         ),
       ).toThrow('not all non Taproot inputs have a redeem script');
@@ -91,9 +89,7 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(
-            secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
-          ),
+          p2trOutput(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
           1n,
         ),
       ).toThrow('not all Taproot inputs have a swap tree');
@@ -112,9 +108,7 @@ describe('Claim', () => {
       expect(() =>
         constructClaimTransaction(
           details,
-          p2trOutput(
-            secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
-          ),
+          p2trOutput(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
           1n,
         ),
       ).toThrow('not all Taproot inputs have an internal key');
@@ -122,7 +116,7 @@ describe('Claim', () => {
   );
 
   test('should not claim FundingAddressTree (no claim leaf)', () => {
-    const privateKey = secp256k1.utils.randomPrivateKey();
+    const privateKey = secp256k1.utils.randomSecretKey();
     const publicKey = secp256k1.getPublicKey(privateKey);
     const tree = fundingAddressTree(false, publicKey, 800000);
 

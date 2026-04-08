@@ -1,5 +1,5 @@
 import ops from '@boltz/bitcoin-ops';
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341';
@@ -62,14 +62,14 @@ describe('TaprootUtils', () => {
   });
 
   test('should tweak Musig', async () => {
-    const ourMusigKey = secp256k1.utils.randomPrivateKey();
+    const ourMusigKey = secp256k1.utils.randomSecretKey();
 
     const musig = Musig.create(
       ourMusigKey,
       [
         ourMusigKey,
-        secp256k1.utils.randomPrivateKey(),
-        secp256k1.utils.randomPrivateKey(),
+        secp256k1.utils.randomSecretKey(),
+        secp256k1.utils.randomSecretKey(),
       ].map((key) => secp256k1.getPublicKey(key)),
     );
     const tweakedMusig = tweakMusig(musig, taptree);
@@ -86,16 +86,16 @@ describe('TaprootUtils', () => {
 
   test('should tweak Musig with FundingAddressTree', async () => {
     const refundKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
+      secp256k1.utils.randomSecretKey(),
     );
     const timeoutBlockHeight = 800000;
 
     const tree = fundingAddressTree(true, refundKeys, timeoutBlockHeight);
 
-    const ourMusigKey = secp256k1.utils.randomPrivateKey();
+    const ourMusigKey = secp256k1.utils.randomSecretKey();
     const musig = Musig.create(
       ourMusigKey,
-      [ourMusigKey, secp256k1.utils.randomPrivateKey()].map((key) =>
+      [ourMusigKey, secp256k1.utils.randomSecretKey()].map((key) =>
         secp256k1.getPublicKey(key),
       ),
     );
@@ -117,7 +117,7 @@ describe('TaprootUtils', () => {
 
   test('should create control blocks', () => {
     const internalKey = toXOnly(
-      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
     );
     const controlBlock = createControlBlock(
       toHashTree(taptree),
@@ -154,7 +154,7 @@ describe('TaprootUtils', () => {
           ops.OP_EQUALVERIFY,
         ]),
         Buffer.from(
-          toXOnly(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
+          toXOnly(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
         ),
       ),
     ).toThrow('leaf not in tree');
@@ -162,7 +162,7 @@ describe('TaprootUtils', () => {
 
   test('should create control blocks with FundingAddressTree (single-leaf tree)', () => {
     const refundKeys = secp256k1.getPublicKey(
-      secp256k1.utils.randomPrivateKey(),
+      secp256k1.utils.randomSecretKey(),
     );
     const timeoutBlockHeight = 800000;
 
@@ -170,7 +170,7 @@ describe('TaprootUtils', () => {
     const hashTree = toHashTree(tree.tree);
 
     const internalKey = toXOnly(
-      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
     );
 
     const controlBlock = createControlBlock(

@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'node:crypto';
@@ -14,7 +14,7 @@ import {
 describe('Liquid Utils', () => {
   test('should get P2TR introspection values', () => {
     const output = p2trOutput(
-      secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey()),
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
     );
 
     expect(getScriptIntrospectionValues(Buffer.from(output))).toEqual({
@@ -25,7 +25,7 @@ describe('Liquid Utils', () => {
 
   test('should get P2WPKH introspection values', () => {
     const output = p2wpkhOutput(
-      hash160(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
+      hash160(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
     );
 
     expect(getScriptIntrospectionValues(Buffer.from(output))).toEqual({
@@ -45,7 +45,7 @@ describe('Liquid Utils', () => {
 
   test('should get P2PKH introspection values', () => {
     const output = p2pkhOutput(
-      hash160(secp256k1.getPublicKey(secp256k1.utils.randomPrivateKey())),
+      hash160(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
     );
 
     expect(getScriptIntrospectionValues(Buffer.from(output))).toEqual({

@@ -2,13 +2,11 @@
   "include": ["lib"],
   "compilerOptions": {
     /* Language and Environment */
-    "target": "ES2016",
-    "lib": ["ES2016"],
+    "target": "ES2022",
+    "lib": ["ES2022"],
 
     /* Modules */
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "baseUrl": "./",
+    "module": "Node20",
     "resolveJsonModule": true,
 
     /* Emit */
@@ -40,6 +38,7 @@
     "skipLibCheck": true,
 
     /* Advanced */
-    "types": ["node", "jest"]
+    "types": ["node"],
+    "stableTypeOrdering": true
   }
 }

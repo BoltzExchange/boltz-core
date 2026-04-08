@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import zkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address } from 'liquidjs-lib';
 import { detectSwap, fundingAddressTree } from '../../../../lib/Boltz';
@@ -148,7 +148,7 @@ describe.each`
     test('should not refund via script path when refund key is invalid', async () => {
       const timeout = (await elementsClient.getBlockchainInfo()).blocks;
       const { utxo } = await createFundingAddressOutput(timeout, blindInputs);
-      utxo.privateKey = secp256k1.utils.randomPrivateKey();
+      utxo.privateKey = secp256k1.utils.randomSecretKey();
 
       await expect(refundSwap([utxo], timeout, blindingKey)).rejects.toEqual({
         code: -26,

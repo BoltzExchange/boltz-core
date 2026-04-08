@@ -1,4 +1,4 @@
-import { secp256k1 } from '@noble/curves/secp256k1';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import zkp from '@vulpemventures/secp256k1-zkp';
 import { randomBytes } from 'node:crypto';
@@ -172,7 +172,7 @@ describe.each`
         undefined,
         blindInputs,
       );
-      utxo.privateKey = secp256k1.utils.randomPrivateKey();
+      utxo.privateKey = secp256k1.utils.randomSecretKey();
 
       await expect(claimSwap([utxo], blindingKey)).rejects.toEqual({
         code: -26,
