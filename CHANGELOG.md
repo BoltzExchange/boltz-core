@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [4.0.2](https://github.com/BoltzExchange/boltz-core/compare/v4.0.1..v4.0.2) - 2026-04-08
+
+### Features
+
+- execute OFT - ([51d4fb7](https://github.com/BoltzExchange/boltz-core/commit/51d4fb75365c40582951ea6ebefaa293bc70d673))
+
+### Miscellaneous Chores
+
+- bump CHANGELOG.md for v4.0.1 - ([67653b4](https://github.com/BoltzExchange/boltz-core/commit/67653b44c7631b889bdf5aac9d320b149a75f928))
+- bump flatted from 3.3.1 to 3.4.2 (#171) - ([98db3c7](https://github.com/BoltzExchange/boltz-core/commit/98db3c76fa478bb20ba40f1c6b0761a58ad91f27))
+- bump picomatch (#172) - ([4389aa0](https://github.com/BoltzExchange/boltz-core/commit/4389aa0bdd69902da16e29c37cd14264cb256af8))
+- bump lodash-es from 4.17.23 to 4.18.1 (#173) - ([78bc272](https://github.com/BoltzExchange/boltz-core/commit/78bc2723c34b2cd2dada0336d53d7b8a881905d4))
+- bump lodash from 4.17.23 to 4.18.1 (#174) - ([a2eb4c9](https://github.com/BoltzExchange/boltz-core/commit/a2eb4c944814450e7ec96af377ede2c33b4e54cb))
+- bump dependencies - ([a97083b](https://github.com/BoltzExchange/boltz-core/commit/a97083bb553c75f34f479c7975799377c70dd946))
+
+---
 ## [4.0.1](https://github.com/BoltzExchange/boltz-core/compare/v4.0.0..v4.0.1) - 2026-03-18
 
 ### Features
