@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [4.0.3](https://github.com/BoltzExchange/boltz-core/compare/v4.0.2..v4.0.3) - 2026-04-08
+
+### Bug Fixes
+
+- NPM package exports - ([189bb83](https://github.com/BoltzExchange/boltz-core/commit/189bb83ce12658fde3ee3461ae5c96b22d431c6a))
+
+---
 ## [4.0.2](https://github.com/BoltzExchange/boltz-core/compare/v4.0.1..v4.0.2) - 2026-04-08
 
 ### Features
@@ -17,6 +24,7 @@ All notable changes to this project will be documented in this file. See [conven
 - bump lodash-es from 4.17.23 to 4.18.1 (#173) - ([78bc272](https://github.com/BoltzExchange/boltz-core/commit/78bc2723c34b2cd2dada0336d53d7b8a881905d4))
 - bump lodash from 4.17.23 to 4.18.1 (#174) - ([a2eb4c9](https://github.com/BoltzExchange/boltz-core/commit/a2eb4c944814450e7ec96af377ede2c33b4e54cb))
 - bump dependencies - ([a97083b](https://github.com/BoltzExchange/boltz-core/commit/a97083bb553c75f34f479c7975799377c70dd946))
+- bump version to v4.0.2 - ([92b1831](https://github.com/BoltzExchange/boltz-core/commit/92b1831cdb4fcd50bca0c27c84fcb294a8f6bbdd))
 
 ---
 ## [4.0.1](https://github.com/BoltzExchange/boltz-core/compare/v4.0.0..v4.0.1) - 2026-03-18
