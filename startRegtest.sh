@@ -76,7 +76,7 @@ echo "Resetting container"
 cleanup_container "$bitcoin_container"
 
 echo "Creating container"
-docker run -d --name "$bitcoin_container" -v "$mount_path" -p 18443:18443 boltz/bitcoin-core:30.2 "$bitcoin_config" > /dev/null
+docker run -d --name "$bitcoin_container" -v "$mount_path" -p 18443:18443 boltz/bitcoin-core:31.0 "$bitcoin_config" > /dev/null
 
 echo "Waiting for RPC"
 wait_for_rpc "$bitcoin_container" "Bitcoin Core" "${bitcoin_rpc[@]}" getblockchaininfo
@@ -92,7 +92,7 @@ echo "Resetting container"
 cleanup_container "$elements_container"
 
 echo "Creating container"
-docker run -d --name "$elements_container" -v "$mount_path" -p 18884:18884 boltz/elements:23.3.2 "$elements_config" > /dev/null
+docker run -d --name "$elements_container" -v "$mount_path" -p 18884:18884 boltz/elements:23.3.3 "$elements_config" > /dev/null
 
 echo "Waiting for RPC"
 wait_for_rpc "$elements_container" "Elements Core" "${elements_rpc[@]}" getblockchaininfo
