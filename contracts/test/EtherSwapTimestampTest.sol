@@ -17,7 +17,7 @@ contract EtherSwapTimestampTest is Test {
 
     event Refund(bytes32 indexed preimageHash);
 
-    EtherSwapTimestamp internal swap = new EtherSwapTimestamp();
+    EtherSwapTimestamp internal swap = new EtherSwapTimestamp(address(this));
 
     bytes32 internal preimage = sha256("");
     bytes32 internal preimageHash = sha256(abi.encodePacked(preimage));

@@ -8,6 +8,7 @@ import {BadERC20} from "../BadERC20.sol";
 import {ERC20Swap} from "../ERC20Swap.sol";
 import {TestERC20} from "../TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ERC20SwapTest is Test {
     event Lockup(
@@ -21,8 +22,10 @@ contract ERC20SwapTest is Test {
 
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
     event Refund(bytes32 indexed preimageHash);
+    event SweptToken(address indexed token, address indexed to, uint256 amount);
+    event SweptEther(address indexed to, uint256 amount);
 
-    ERC20Swap internal swap = new ERC20Swap();
+    ERC20Swap internal swap = new ERC20Swap(address(this));
 
     bytes32 internal preimage = sha256("");
     bytes32 internal preimageHash = sha256(abi.encodePacked(preimage));
@@ -49,7 +52,7 @@ contract ERC20SwapTest is Test {
     }
 
     function testCorrectVersion() external view {
-        assertEq(swap.VERSION(), 6);
+        assertEq(swap.VERSION(), 7);
     }
 
     function testShouldNotAcceptEther() external {
@@ -707,6 +710,194 @@ contract ERC20SwapTest is Test {
 
         assertTrue(querySwap(timelock));
         assertEq(claimAddress.balance, claimEthBalanceBefore + prepayAmount);
+    }
+
+    function testLockIncrementsLockedAmount() external {
+        token.approve(address(swap), lockupAmount);
+        lock(block.number);
+        assertEq(swap.lockedAmounts(address(token)), lockupAmount);
+    }
+
+    function testClaimDecrementsLockedAmount() external {
+        uint256 timelock = block.number;
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        vm.prank(claimAddress);
+        swap.claim(preimage, lockupAmount, address(token), address(this), timelock);
+
+        assertEq(swap.lockedAmounts(address(token)), 0);
+    }
+
+    function testRefundDecrementsLockedAmount() external {
+        uint256 timelock = block.number;
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        swap.refund(preimageHash, lockupAmount, address(token), claimAddress, timelock);
+
+        assertEq(swap.lockedAmounts(address(token)), 0);
+    }
+
+    function testBatchClaimDecrementsLockedAmount() external {
+        uint256 timelock = block.number;
+        token.approve(address(swap), lockupAmount);
+        swap.lock(preimageHash, lockupAmount, address(token), claimAddress, timelock);
+
+        bytes32 preimageSecond = sha256("2");
+        bytes32 preimageHashSecond = sha256(abi.encodePacked(preimageSecond));
+        uint256 lockupAmountSecond = 123;
+        uint256 timelockSecond = block.number + 21;
+
+        token.approve(address(swap), lockupAmountSecond);
+        swap.lock(preimageHashSecond, lockupAmountSecond, address(token), claimAddress, timelockSecond);
+
+        assertEq(swap.lockedAmounts(address(token)), lockupAmount + lockupAmountSecond);
+
+        bytes32[] memory preimages = new bytes32[](2);
+        preimages[0] = preimage;
+        preimages[1] = preimageSecond;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = lockupAmount;
+        amounts[1] = lockupAmountSecond;
+
+        address[] memory refundAddresses = new address[](2);
+        refundAddresses[0] = address(this);
+        refundAddresses[1] = address(this);
+
+        uint256[] memory timelocks = new uint256[](2);
+        timelocks[0] = timelock;
+        timelocks[1] = timelockSecond;
+
+        vm.prank(claimAddress);
+        swap.claimBatch(address(token), preimages, amounts, refundAddresses, timelocks);
+
+        assertEq(swap.lockedAmounts(address(token)), 0);
+    }
+
+    function testMultiTokenAccountingIsIndependent() external {
+        TestERC20 tokenB = new TestERC20("TestB", "TB", 18, lockupAmount * 2);
+        uint256 amountB = lockupAmount / 2;
+
+        token.approve(address(swap), lockupAmount);
+        swap.lock(preimageHash, lockupAmount, address(token), claimAddress, block.number);
+
+        bytes32 preimageHashB = sha256("B");
+        tokenB.approve(address(swap), amountB);
+        swap.lock(preimageHashB, amountB, address(tokenB), claimAddress, block.number);
+
+        assertEq(swap.lockedAmounts(address(token)), lockupAmount);
+        assertEq(swap.lockedAmounts(address(tokenB)), amountB);
+    }
+
+    function testSweepExcessTokens() external {
+        uint256 surplus = lockupAmount / 4;
+        require(token.transfer(address(swap), surplus));
+
+        assertEq(swap.lockedAmounts(address(token)), 0);
+        assertEq(token.balanceOf(address(swap)), surplus);
+
+        uint256 balanceBefore = token.balanceOf(DESTINATION);
+
+        vm.expectEmit(true, true, false, true, address(swap));
+        emit SweptToken(address(token), DESTINATION, surplus);
+
+        swap.sweepToken(address(token), DESTINATION);
+
+        assertEq(token.balanceOf(DESTINATION) - balanceBefore, surplus);
+        assertEq(token.balanceOf(address(swap)), 0);
+    }
+
+    function testSweepTokenOnlyOwner() external {
+        require(token.transfer(address(swap), lockupAmount));
+
+        vm.prank(claimAddress);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, claimAddress));
+        swap.sweepToken(address(token), claimAddress);
+    }
+
+    function testSweepTokenRevertsWhenNoExcess() external {
+        token.approve(address(swap), lockupAmount);
+        lock(block.number);
+
+        vm.expectRevert(ERC20Swap.NoExcess.selector);
+        swap.sweepToken(address(token), DESTINATION);
+    }
+
+    function testSweepTokenCannotDrainLocked() external {
+        uint256 surplus = lockupAmount / 3;
+        uint256 timelock = block.number;
+
+        token.approve(address(swap), lockupAmount);
+        lock(timelock);
+
+        require(token.transfer(address(swap), surplus));
+
+        uint256 balanceBefore = token.balanceOf(DESTINATION);
+        swap.sweepToken(address(token), DESTINATION);
+
+        assertEq(token.balanceOf(DESTINATION) - balanceBefore, surplus);
+        assertEq(token.balanceOf(address(swap)), lockupAmount);
+        assertTrue(querySwap(timelock));
+
+        // The originally locked amount is still claimable after sweep
+        vm.prank(claimAddress);
+        swap.claim(preimage, lockupAmount, address(token), address(this), timelock);
+        assertEq(token.balanceOf(address(swap)), 0);
+    }
+
+    function testSweepEther() external {
+        // ERC20Swap never retains ether between calls, so any balance is a force-send to be recovered
+        uint256 surplus = 0.25 ether;
+        vm.deal(address(swap), surplus);
+
+        uint256 balanceBefore = DESTINATION.balance;
+
+        vm.expectEmit(true, false, false, true, address(swap));
+        emit SweptEther(DESTINATION, surplus);
+
+        swap.sweepEther(payable(DESTINATION));
+
+        assertEq(DESTINATION.balance - balanceBefore, surplus);
+        assertEq(address(swap).balance, 0);
+    }
+
+    function testSweepEtherOnlyOwner() external {
+        // Force-send excess ether so the sweep would succeed if the auth check weren't in place
+        vm.deal(address(swap), 1 ether);
+
+        vm.prank(claimAddress);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, claimAddress));
+        swap.sweepEther(payable(claimAddress));
+    }
+
+    function testSweepEtherRevertsWhenNoBalance() external {
+        vm.expectRevert(ERC20Swap.NoExcess.selector);
+        swap.sweepEther(payable(DESTINATION));
+    }
+
+    function testOwnershipTwoStepTransfer() external {
+        address newOwner = vm.addr(0xC0FFEE);
+
+        swap.transferOwnership(newOwner);
+        assertEq(swap.owner(), address(this));
+        assertEq(swap.pendingOwner(), newOwner);
+
+        vm.prank(newOwner);
+        swap.acceptOwnership();
+        assertEq(swap.owner(), newOwner);
+        assertEq(swap.pendingOwner(), address(0));
+
+        // Old owner can no longer sweep
+        require(token.transfer(address(swap), lockupAmount));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        swap.sweepToken(address(token), address(this));
+
+        // New owner can sweep
+        vm.prank(newOwner);
+        swap.sweepToken(address(token), newOwner);
+        assertEq(token.balanceOf(newOwner), lockupAmount);
     }
 
     function lock(uint256 timelock) internal {
