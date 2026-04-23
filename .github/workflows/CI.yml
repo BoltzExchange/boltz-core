@@ -54,3 +54,45 @@ jobs:
 
       - name: Contract tests
         run: forge clean && npm run test:solidity
+
+  build-bun:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest]
+        bun-version: [1.3]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Use Bun ${{ matrix.bun-version }}
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ matrix.bun-version }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start regtest containers
+        run: bun --bun run docker:start
+
+      - name: Compile
+        run: bun --bun run compile
+
+      - name: Unit tests
+        run: bun --bun run test:unit:bun
+
+      - name: Integration tests
+        run: bun --bun run test:int:bun
