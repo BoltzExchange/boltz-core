@@ -3,11 +3,31 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [4.0.4](https://github.com/BoltzExchange/boltz-core/compare/v4.0.3..v4.0.4) - 2026-04-24
+
+### Bug Fixes
+
+- wait for chain RPC readiness (#176) - ([eef413d](https://github.com/BoltzExchange/boltz-core/commit/eef413de359791ccd69d29a322c6b5dd1608a2a3))
+
+### Features
+
+- sweep to CCTP (#178) - ([2033fa9](https://github.com/BoltzExchange/boltz-core/commit/2033fa904b733d91844923b2ae2b92cd491633ed))
+
+### Miscellaneous Chores
+
+- bump NPM dependencies (#179) - ([7c11486](https://github.com/BoltzExchange/boltz-core/commit/7c114869e376d4d985c210c3fccb6fa5ece2c8a4))
+- run CI against Bun (#182) - ([eed0f37](https://github.com/BoltzExchange/boltz-core/commit/eed0f374348d9140bed5e23be36f1ad82b201a15))
+
+---
 ## [4.0.3](https://github.com/BoltzExchange/boltz-core/compare/v4.0.2..v4.0.3) - 2026-04-08
 
 ### Bug Fixes
 
 - NPM package exports - ([189bb83](https://github.com/BoltzExchange/boltz-core/commit/189bb83ce12658fde3ee3461ae5c96b22d431c6a))
+
+### Miscellaneous Chores
+
+- bump version to v4.0.3 - ([b01f3cd](https://github.com/BoltzExchange/boltz-core/commit/b01f3cd63e0636d4b7a6a280b455fe880cdd9d82))
 
 ---
 ## [4.0.2](https://github.com/BoltzExchange/boltz-core/compare/v4.0.1..v4.0.2) - 2026-04-08
