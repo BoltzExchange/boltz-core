@@ -71,7 +71,11 @@ export const generateKeys = () => {
 };
 
 export const encodeAddress = (outputScript: Uint8Array) => {
-  return Address(Networks.regtest).encode(OutScript.decode(outputScript));
+  return Address(Networks.regtest).encode(
+    OutScript.decode(outputScript) as unknown as Parameters<
+      ReturnType<typeof Address>['encode']
+    >[0],
+  );
 };
 
 const sendFundsToOutput = async <

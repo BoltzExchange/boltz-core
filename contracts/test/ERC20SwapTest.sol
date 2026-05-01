@@ -7,6 +7,7 @@ import {SigUtils} from "./SigUtils.sol";
 import {BadERC20} from "../BadERC20.sol";
 import {ERC20Swap} from "../ERC20Swap.sol";
 import {TestERC20} from "../TestERC20.sol";
+import {TransferHelper} from "../TransferHelper.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20SwapTest is Test {
@@ -94,7 +95,7 @@ contract ERC20SwapTest is Test {
     }
 
     function testLockupNoApprovalFail() external {
-        vm.expectRevert("TransferHelper: could not transferFrom ERC20 tokens");
+        vm.expectRevert(TransferHelper.TokenTransferFromFailed.selector);
         lock(block.number);
     }
 

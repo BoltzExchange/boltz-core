@@ -6,6 +6,10 @@
 pragma solidity ^0.8.33;
 
 library TransferHelper {
+    error EtherTransferFailed();
+    error TokenTransferFailed();
+    error TokenTransferFromFailed();
+
     /// Transfers Ether to an address
     /// @dev This function reverts if transferring the Ether fails
     /// @dev Please note that ".call" forwards all leftover gas which means that sending Ether to accounts and contract is possible but also that you should specify or sanity check the gas limit
@@ -13,7 +17,7 @@ library TransferHelper {
     /// @param amount Amount of Ether to send in WEI
     function transferEther(address payable to, uint256 amount) internal {
         (bool success,) = to.call{value: amount}("");
-        require(success, "TransferHelper: could not transfer Ether");
+        require(success, EtherTransferFailed());
     }
 
     /// Transfers token to an address
@@ -25,9 +29,7 @@ library TransferHelper {
     function safeTransferToken(address token, address to, uint256 value) internal {
         // bytes4(keccak256(bytes('transfer(address,uint256)')));
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0xa9059cbb, to, value));
-        require(
-            success && (data.length == 0 || abi.decode(data, (bool))), "TransferHelper: could not transfer ERC20 tokens"
-        );
+        require(success && (data.length == 0 || abi.decode(data, (bool))), TokenTransferFailed());
     }
 
     /// Transfers token from one address to another
@@ -41,9 +43,6 @@ library TransferHelper {
     function safeTransferTokenFrom(address token, address from, address to, uint256 value) internal {
         // bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, value));
-        require(
-            success && (data.length == 0 || abi.decode(data, (bool))),
-            "TransferHelper: could not transferFrom ERC20 tokens"
-        );
+        require(success && (data.length == 0 || abi.decode(data, (bool))), TokenTransferFromFailed());
     }
 }

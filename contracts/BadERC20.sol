@@ -20,6 +20,13 @@ interface IBadERC20 {
 }
 
 contract BadERC20 is IBadERC20 {
+    error InsufficientAllowance();
+    error InsufficientBalance();
+    error ApproveFromZeroAddress();
+    error ApproveToZeroAddress();
+    error TransferFromZeroAddress();
+    error TransferToZeroAddress();
+
     uint8 public decimals;
 
     mapping(address => uint256) private _balances;
@@ -59,24 +66,24 @@ contract BadERC20 is IBadERC20 {
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][msg.sender];
-        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+        require(currentAllowance >= amount, InsufficientAllowance());
         _approve(sender, msg.sender, currentAllowance - amount);
     }
 
     function _approve(address owner, address spender, uint256 amount) internal {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+        require(owner != address(0), ApproveFromZeroAddress());
+        require(spender != address(0), ApproveToZeroAddress());
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
 
     function _transfer(address sender, address recipient, uint256 amount) internal {
-        require(sender != address(0), "ERC20: transfer from the zero address");
-        require(recipient != address(0), "ERC20: transfer to the zero address");
+        require(sender != address(0), TransferFromZeroAddress());
+        require(recipient != address(0), TransferToZeroAddress());
 
         uint256 senderBalance = _balances[sender];
-        require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
+        require(senderBalance >= amount, InsufficientBalance());
         _balances[sender] = senderBalance - amount;
         _balances[recipient] += amount;
 

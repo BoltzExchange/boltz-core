@@ -145,7 +145,7 @@ export const constructClaimTransaction = (
         tapLeaf.version,
       );
       const signature = signSchnorr(sigHash, utxo.privateKey);
-      const witness = [signature];
+      const witness: Uint8Array[] = [signature];
 
       if (!isRefund) {
         witness.push(utxo.preimage);
