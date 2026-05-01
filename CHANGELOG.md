@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [4.0.5](https://github.com/BoltzExchange/boltz-core/compare/v4.0.4..v4.0.5) - 2026-05-01
+
+### Miscellaneous Chores
+
+- bump dependencies - ([d02261c](https://github.com/BoltzExchange/boltz-core/commit/d02261cea03f88de5eb33b8c7f887b2ee2289021))
+
+---
 ## [4.0.4](https://github.com/BoltzExchange/boltz-core/compare/v4.0.3..v4.0.4) - 2026-04-24
 
 ### Bug Fixes
@@ -17,6 +24,7 @@ All notable changes to this project will be documented in this file. See [conven
 
 - bump NPM dependencies (#179) - ([7c11486](https://github.com/BoltzExchange/boltz-core/commit/7c114869e376d4d985c210c3fccb6fa5ece2c8a4))
 - run CI against Bun (#182) - ([eed0f37](https://github.com/BoltzExchange/boltz-core/commit/eed0f374348d9140bed5e23be36f1ad82b201a15))
+- bump version to v4.0.4 (#183) - ([21a8c28](https://github.com/BoltzExchange/boltz-core/commit/21a8c2867db972a634e68a6bfcb4f37ab026fba0))
 
 ---
 ## [4.0.3](https://github.com/BoltzExchange/boltz-core/compare/v4.0.2..v4.0.3) - 2026-04-08

@@ -29,7 +29,7 @@ describe('Musig', () => {
     expect(
       Address(Networks.regtest).encode({
         type: 'tr',
-        pubkey: musig.aggPubkey,
+        pubkey: musig.aggPubkey as Uint8Array<ArrayBuffer>,
       }),
     ).toMatchSnapshot();
   });
@@ -69,7 +69,7 @@ describe('Musig', () => {
     });
     tx.addOutput({
       script: OutScript.encode(
-        Address(Networks.regtest).decode(await bitcoinClient.getNewAddress()),
+        Address(Networks.regtest).decode(await bitcoinClient.getNewAddress())!,
       ),
       amount: amount - 1_000n,
     });
