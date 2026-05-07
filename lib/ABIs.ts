@@ -1,7 +1,7 @@
-import ERC20ABI from '../out/ERC20.sol/ERC20.json';
-import ERC20SwapABI from '../out/ERC20Swap.sol/ERC20Swap.json';
-import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json';
-import RouterABI from '../out/Router.sol/Router.json';
+import ERC20ABI from '../out/ERC20.sol/ERC20.json' with { type: 'json' };
+import ERC20SwapABI from '../out/ERC20Swap.sol/ERC20Swap.json' with { type: 'json' };
+import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json' with { type: 'json' };
+import RouterABI from '../out/Router.sol/Router.json' with { type: 'json' };
 
 export const ContractABIs: {
   ERC20: unknown[];

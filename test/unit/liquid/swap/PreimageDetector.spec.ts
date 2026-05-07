@@ -1,18 +1,21 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { hash160 } from '@scure/btc-signer/utils.js';
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { confidential } from 'liquidjs-lib';
-import { OutputType } from '../../../../lib/consts/Enums';
-import { constructClaimTransaction, init } from '../../../../lib/liquid';
-import { detectPreimage } from '../../../../lib/swap/PreimageDetector';
-import reverseSwapScript from '../../../../lib/swap/ReverseSwapScript';
+import { OutputType } from '../../../../lib/consts/Enums.ts';
+import {
+  constructClaimTransaction,
+  init,
+} from '../../../../lib/liquid/index.ts';
+import { detectPreimage } from '../../../../lib/swap/PreimageDetector.ts';
+import reverseSwapScript from '../../../../lib/swap/ReverseSwapScript.ts';
 import {
   outputFunctionForType,
   p2wpkhOutput,
-} from '../../../../lib/swap/Scripts';
-import swapScript from '../../../../lib/swap/SwapScript';
-import { lbtcRegtest, nonce } from './ClaimDetails';
+} from '../../../../lib/swap/Scripts.ts';
+import swapScript from '../../../../lib/swap/SwapScript.ts';
+import zkp from '../../../zkp.ts';
+import { lbtcRegtest, nonce } from './ClaimDetails.ts';
 
 describe('Liquid PreimageDetector', () => {
   const claimKeys = secp256k1.utils.randomSecretKey();

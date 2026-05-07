@@ -1,22 +1,22 @@
-import ops from '@boltz/bitcoin-ops';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
-import zkp from '@vulpemventures/secp256k1-zkp';
-import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341';
+import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341.js';
 import { randomBytes } from 'node:crypto';
-import type { TapLeaf, TapTree } from '../../../../lib/consts/Types';
-import { init } from '../../../../lib/liquid';
-import { secp } from '../../../../lib/liquid/init';
+import type { TapLeaf, TapTree } from '../../../../lib/consts/Types.ts';
+import ops from '../../../../lib/internal/bitcoinOps.ts';
+import { init } from '../../../../lib/liquid/index.ts';
+import { secp } from '../../../../lib/liquid/init.ts';
 import {
   createControlBlock,
   tapLeafHash,
   tapTweakHash,
   toHashTree,
   tweakMusig,
-} from '../../../../lib/liquid/swap/TaprootUtils';
-import * as Musig from '../../../../lib/musig/Musig';
-import { fundingAddressTree } from '../../../../lib/swap/SwapTree';
-import { createLeaf, toXOnly } from '../../../../lib/swap/TaprootUtils';
+} from '../../../../lib/liquid/swap/TaprootUtils.ts';
+import * as Musig from '../../../../lib/musig/Musig.ts';
+import { fundingAddressTree } from '../../../../lib/swap/SwapTree.ts';
+import { createLeaf, toXOnly } from '../../../../lib/swap/TaprootUtils.ts';
+import zkp from '../../../zkp.ts';
 
 describe('TaprootUtils', () => {
   const publicKey = secp256k1.getPublicKey(

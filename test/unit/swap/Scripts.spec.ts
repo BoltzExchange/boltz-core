@@ -1,5 +1,5 @@
 import { hex } from '@scure/base';
-import { OutputType } from '../../../lib/consts/Enums';
+import { OutputType } from '../../../lib/consts/Enums.ts';
 import {
   outputFunctionForType,
   p2pkhOutput,
@@ -9,8 +9,8 @@ import {
   p2trOutput,
   p2wpkhOutput,
   p2wshOutput,
-} from '../../../lib/swap/Scripts';
-import { toXOnly } from '../../../lib/swap/TaprootUtils';
+} from '../../../lib/swap/Scripts.ts';
+import { toXOnly } from '../../../lib/swap/TaprootUtils.ts';
 
 describe('Scripts', () => {
   const key = toXOnly(

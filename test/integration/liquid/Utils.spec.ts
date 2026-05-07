@@ -1,7 +1,7 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address } from 'liquidjs-lib';
-import { getOutputValue, init } from '../../../lib/liquid';
-import { elementsClient } from '../Utils';
+import { getOutputValue, init } from '../../../lib/liquid/index.ts';
+import zkp from '../../zkp.ts';
+import { elementsClient } from '../Utils.ts';
 
 describe('Liquid Utils', () => {
   beforeAll(async () => {

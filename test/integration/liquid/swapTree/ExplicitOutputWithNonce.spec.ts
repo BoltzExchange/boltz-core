@@ -2,15 +2,18 @@ import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { signSchnorr } from '@scure/btc-signer/utils.js';
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address, confidential, networks } from 'liquidjs-lib';
 import { randomBytes } from 'node:crypto';
-import { Musig, OutputType } from '../../../../lib/Boltz';
-import { constructRefundTransaction, init } from '../../../../lib/liquid';
-import { tweakMusig } from '../../../../lib/liquid/swap/TaprootUtils';
-import { p2trOutput } from '../../../../lib/swap/Scripts';
-import swapTree from '../../../../lib/swap/SwapTree';
-import { elementsClient, generateKeys } from '../../Utils';
+import { Musig, OutputType } from '../../../../lib/Boltz.ts';
+import {
+  constructRefundTransaction,
+  init,
+} from '../../../../lib/liquid/index.ts';
+import { tweakMusig } from '../../../../lib/liquid/swap/TaprootUtils.ts';
+import { p2trOutput } from '../../../../lib/swap/Scripts.ts';
+import swapTree from '../../../../lib/swap/SwapTree.ts';
+import zkp from '../../../zkp.ts';
+import { elementsClient, generateKeys } from '../../Utils.ts';
 
 describe('ExplicitOutputWithNonce', () => {
   let secp: Secp256k1ZKP;

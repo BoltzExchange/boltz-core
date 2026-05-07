@@ -2,15 +2,15 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { concatBytes } from '@noble/hashes/utils.js';
 import { Script, SigHash, Transaction } from '@scure/btc-signer';
 import { signECDSA, signSchnorr } from '@scure/btc-signer/utils.js';
-import { OutputType } from '../Boltz';
-import { Errors } from '../consts/Errors';
+import { OutputType } from '../Boltz.ts';
+import { Errors } from '../consts/Errors.ts';
 import {
   type ClaimDetails,
   type FundingAddressTree,
   type SwapTree,
   isSwapTree,
-} from '../consts/Types';
-import { createControlBlock, taprootHashTree } from './TaprootUtils';
+} from '../consts/Types.ts';
+import { createControlBlock, taprootHashTree } from './TaprootUtils.ts';
 
 const LEGACY_SIGHASH = SigHash.ALL;
 const DUMMY_TAPROOT_SIGNATURE = new Uint8Array(64);

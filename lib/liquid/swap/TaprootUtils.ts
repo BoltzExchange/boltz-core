@@ -1,17 +1,17 @@
 import { hex } from '@scure/base';
 import type { TxOutput } from 'liquidjs-lib';
 import { Transaction } from 'liquidjs-lib';
-import type { HashTree } from 'liquidjs-lib/src/bip341';
+import type { HashTree } from 'liquidjs-lib/src/bip341.js';
 import {
   findScriptPath as liquidFindScriptPath,
   tapLeafHash as liquidTapLeafHash,
-} from 'liquidjs-lib/src/bip341';
-import { taggedHash } from 'liquidjs-lib/src/crypto';
-import type { Network } from 'liquidjs-lib/src/networks';
-import type { TapLeaf, TapTree } from '../../consts/Types';
-import type { MusigKeyAgg } from '../../musig/Musig';
-import { toXOnly } from '../../swap/TaprootUtils';
-import { secp } from '../init';
+} from 'liquidjs-lib/src/bip341.js';
+import { taggedHash } from 'liquidjs-lib/src/crypto.js';
+import type { Network } from 'liquidjs-lib/src/networks.js';
+import type { TapLeaf, TapTree } from '../../consts/Types.ts';
+import type { MusigKeyAgg } from '../../musig/Musig.ts';
+import { toXOnly } from '../../swap/TaprootUtils.ts';
+import { secp } from '../init.ts';
 
 const convertLeaf = (leaf: TapLeaf) => ({
   version: leaf.version,

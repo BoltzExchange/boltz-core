@@ -1,9 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { nonceGen } from '@scure/btc-signer/musig2.js';
-import zkpInit, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { randomBytes } from 'node:crypto';
-import * as Musig from '../../../lib/musig/Musig';
+import * as Musig from '../../../lib/musig/Musig.ts';
 import {
   MusigKeyAgg,
   MusigNoncesAggregated,
@@ -11,8 +10,9 @@ import {
   MusigSigned,
   MusigWithMessage,
   MusigWithNonce,
-} from '../../../lib/musig/Musig';
-import { toXOnly } from '../../../lib/swap/TaprootUtils';
+} from '../../../lib/musig/Musig.ts';
+import { toXOnly } from '../../../lib/swap/TaprootUtils.ts';
+import zkpInit, { type Secp256k1ZKP } from '../../zkp.ts';
 
 describe('Musig', () => {
   let secpZkp: Secp256k1ZKP;

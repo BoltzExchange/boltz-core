@@ -2,14 +2,14 @@ import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'node:crypto';
-import { getScriptIntrospectionValues } from '../../../lib/liquid/Utils';
+import { getScriptIntrospectionValues } from '../../../lib/liquid/Utils.ts';
 import {
   p2pkhOutput,
   p2shOutput,
   p2trOutput,
   p2wpkhOutput,
   p2wshOutput,
-} from '../../../lib/swap/Scripts';
+} from '../../../lib/swap/Scripts.ts';
 
 describe('Liquid Utils', () => {
   test('should get P2TR introspection values', () => {

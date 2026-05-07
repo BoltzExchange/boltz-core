@@ -8,6 +8,7 @@
     /* Modules */
     "module": "Node20",
     "resolveJsonModule": true,
+    "rewriteRelativeImportExtensions": true,
 
     /* Emit */
     "outDir": "./dist",
@@ -23,6 +24,7 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "isolatedDeclarations": true,
+    "verbatimModuleSyntax": true,
 
     /* Type Checking */
     "strict": true,

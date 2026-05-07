@@ -1,8 +1,11 @@
 import type { Transaction } from 'liquidjs-lib';
-import type { Network } from 'liquidjs-lib/src/networks';
-import Networks from '../consts/Networks';
-import type { LiquidClaimDetails, LiquidRefundDetails } from '../consts/Types';
-import { constructClaimTransaction } from './Claim';
+import type { Network } from 'liquidjs-lib/src/networks.js';
+import Networks from '../consts/Networks.ts';
+import type {
+  LiquidClaimDetails,
+  LiquidRefundDetails,
+} from '../consts/Types.ts';
+import { constructClaimTransaction } from './Claim.ts';
 
 const dummyPreimage = new Uint8Array(0);
 

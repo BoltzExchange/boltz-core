@@ -5,8 +5,8 @@ import {
   Feature,
   type FeatureOption,
   reverseSwapTree,
-} from '../../../../lib/liquid';
-import { p2trOutput } from '../../../../lib/swap/Scripts';
+} from '../../../../lib/liquid/index.ts';
+import { p2trOutput } from '../../../../lib/swap/Scripts.ts';
 
 describe('ReverseSwapTree', () => {
   test('should throw with duplicate features', () => {

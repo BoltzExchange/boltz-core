@@ -1,14 +1,14 @@
-import ops from '@boltz/bitcoin-ops';
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { hex } from '@scure/base';
 import { script } from 'liquidjs-lib';
-import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
-import type { LiquidSwapTree, TapLeaf } from '../../consts/Types';
-import bitcoinReverseSwapTree from '../../swap/ReverseSwapTree';
-import { TAP_LEAF_VERSION_LIQUID } from '../../swap/TaprootUtils';
-import { assignTreeProbabilities, sortTree } from '../../swap/TreeSort';
-import { getScriptIntrospectionValues } from '../Utils';
-import liquidOps from '../consts/Ops';
+import { reverseBuffer } from 'liquidjs-lib/src/bufferutils.js';
+import type { LiquidSwapTree, TapLeaf } from '../../consts/Types.ts';
+import ops from '../../internal/bitcoinOps.ts';
+import bitcoinReverseSwapTree from '../../swap/ReverseSwapTree.ts';
+import { TAP_LEAF_VERSION_LIQUID } from '../../swap/TaprootUtils.ts';
+import { assignTreeProbabilities, sortTree } from '../../swap/TreeSort.ts';
+import { getScriptIntrospectionValues } from '../Utils.ts';
+import liquidOps from '../consts/Ops.ts';
 
 enum Feature {
   ClaimCovenant,

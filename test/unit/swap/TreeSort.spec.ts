@@ -1,6 +1,9 @@
-import type { LiquidSwapTree, TapTree } from '../../../lib/consts/Types';
-import { createLeaf } from '../../../lib/swap/TaprootUtils';
-import { assignTreeProbabilities, sortTree } from '../../../lib/swap/TreeSort';
+import type { LiquidSwapTree, TapTree } from '../../../lib/consts/Types.ts';
+import { createLeaf } from '../../../lib/swap/TaprootUtils.ts';
+import {
+  assignTreeProbabilities,
+  sortTree,
+} from '../../../lib/swap/TreeSort.ts';
 
 describe('TreeSort', () => {
   test.each`

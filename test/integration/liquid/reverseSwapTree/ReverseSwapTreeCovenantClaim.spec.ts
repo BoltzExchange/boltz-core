@@ -1,31 +1,31 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address, networks } from 'liquidjs-lib';
 import { randomBytes } from 'node:crypto';
-import { OutputType } from '../../../../lib/consts/Enums';
-import type { LiquidClaimDetails } from '../../../../lib/liquid';
+import { OutputType } from '../../../../lib/consts/Enums.ts';
+import type { LiquidClaimDetails } from '../../../../lib/liquid/index.ts';
 import {
   constructClaimTransaction,
   constructRefundTransaction,
   init,
-} from '../../../../lib/liquid';
+} from '../../../../lib/liquid/index.ts';
 import liquidReverseSwapTree, {
   Feature,
-} from '../../../../lib/liquid/swap/ReverseSwapTree';
+} from '../../../../lib/liquid/swap/ReverseSwapTree.ts';
 import {
   hashForWitnessV1,
   tweakMusig,
-} from '../../../../lib/liquid/swap/TaprootUtils';
-import * as Musig from '../../../../lib/musig/Musig';
-import { p2trOutput, p2wshOutput } from '../../../../lib/swap/Scripts';
-import { detectSwap } from '../../../../lib/swap/SwapDetector';
+} from '../../../../lib/liquid/swap/TaprootUtils.ts';
+import * as Musig from '../../../../lib/musig/Musig.ts';
+import { p2trOutput, p2wshOutput } from '../../../../lib/swap/Scripts.ts';
+import { detectSwap } from '../../../../lib/swap/SwapDetector.ts';
+import zkp from '../../../zkp.ts';
 import {
   blindWitnessAddress,
   elementsClient,
   init as utilsInit,
-} from '../../Utils';
-import { AddressType } from '../../utils/ChainClient';
+} from '../../Utils.ts';
+import { AddressType } from '../../utils/ChainClient.ts';
 
 describe.each`
   shouldBlind

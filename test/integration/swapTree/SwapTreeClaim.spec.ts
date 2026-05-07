@@ -2,17 +2,17 @@ import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { SigHash } from '@scure/btc-signer';
 import { equalBytes } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'node:crypto';
-import { Musig, OutputType } from '../../../lib/Boltz';
-import { constructClaimTransaction } from '../../../lib/swap/Claim';
-import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
-import swapTree from '../../../lib/swap/SwapTree';
+import { Musig, OutputType } from '../../../lib/Boltz.ts';
+import { constructClaimTransaction } from '../../../lib/swap/Claim.ts';
+import reverseSwapTree from '../../../lib/swap/ReverseSwapTree.ts';
+import swapTree from '../../../lib/swap/SwapTree.ts';
 import {
   bitcoinClient,
   claimSwap,
   createSwapOutput,
   destinationOutput,
   init,
-} from '../Utils';
+} from '../Utils.ts';
 
 describe.each`
   name                 | treeFunc

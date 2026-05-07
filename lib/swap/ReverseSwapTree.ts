@@ -1,11 +1,11 @@
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { Script } from '@scure/btc-signer';
-import type { SwapTree } from '../consts/Types';
+import type { SwapTree } from '../consts/Types.ts';
 import {
   createRefundLeaf,
   extractRefundPublicKeyFromSwapTree,
-} from './SwapTree';
-import { createLeaf, swapLeafsToTree, toXOnly } from './TaprootUtils';
+} from './SwapTree.ts';
+import { createLeaf, swapLeafsToTree, toXOnly } from './TaprootUtils.ts';
 
 export const extractClaimPublicKeyFromReverseSwapTree = (
   swapTree: SwapTree,

@@ -1,14 +1,18 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
-import { Feature, Networks, reverseSwapTree } from '../../../lib/liquid';
-import { p2trOutput } from '../../../lib/swap/Scripts';
-import swapTree, { fundingAddressTree } from '../../../lib/swap/SwapTree';
+import {
+  Feature,
+  Networks,
+  reverseSwapTree,
+} from '../../../lib/liquid/index.ts';
+import { p2trOutput } from '../../../lib/swap/Scripts.ts';
+import swapTree, { fundingAddressTree } from '../../../lib/swap/SwapTree.ts';
 import {
   deserializeFundingAddressTree,
   deserializeSwapTree,
   serializeFundingAddressTree,
   serializeSwapTree,
-} from '../../../lib/swap/SwapTreeSerializer';
+} from '../../../lib/swap/SwapTreeSerializer.ts';
 
 describe('SwapTreeSerializer', () => {
   const preimageHash = Buffer.from(

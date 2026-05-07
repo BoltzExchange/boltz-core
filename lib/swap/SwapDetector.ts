@@ -1,13 +1,13 @@
 import { Transaction } from '@scure/btc-signer';
 import type { TransactionOutput } from '@scure/btc-signer/psbt.js';
 import { equalBytes } from '@scure/btc-signer/utils.js';
-import { OutputType } from '../consts/Enums';
+import { OutputType } from '../consts/Enums.ts';
 import {
   p2shOutput,
   p2shP2wshOutput,
   p2trOutput,
   p2wshOutput,
-} from './Scripts';
+} from './Scripts.ts';
 
 type LiquidTxOutput = {
   script: Buffer;

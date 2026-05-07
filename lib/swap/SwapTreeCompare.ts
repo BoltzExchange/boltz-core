@@ -1,5 +1,5 @@
 import { equalBytes } from '@scure/btc-signer/utils.js';
-import type { SwapTree, TapLeaf, TapTree } from '../consts/Types';
+import type { SwapTree, TapLeaf, TapTree } from '../consts/Types.ts';
 
 const compareLeaf = (leaf: TapLeaf, compareLeaf: TapLeaf) =>
   leaf.version === compareLeaf.version &&

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { OutputType, reverseSwapScript } from '../../../lib/Boltz';
-import { bitcoinClient, claimSwap, createSwapOutput } from '../Utils';
+import { OutputType, reverseSwapScript } from '../../../lib/Boltz.ts';
+import { bitcoinClient, claimSwap, createSwapOutput } from '../Utils.ts';
 
 describe('ReverseSwapScript claim', () => {
   beforeAll(async () => {

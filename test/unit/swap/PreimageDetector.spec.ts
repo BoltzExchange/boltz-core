@@ -3,19 +3,19 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { hex } from '@scure/base';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'node:crypto';
-import { OutputType } from '../../../lib/consts/Enums';
-import { constructClaimTransaction } from '../../../lib/swap/Claim';
-import { detectPreimage } from '../../../lib/swap/PreimageDetector';
-import reverseSwapScript from '../../../lib/swap/ReverseSwapScript';
-import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
+import { OutputType } from '../../../lib/consts/Enums.ts';
+import { constructClaimTransaction } from '../../../lib/swap/Claim.ts';
+import { detectPreimage } from '../../../lib/swap/PreimageDetector.ts';
+import reverseSwapScript from '../../../lib/swap/ReverseSwapScript.ts';
+import reverseSwapTree from '../../../lib/swap/ReverseSwapTree.ts';
 import {
   outputFunctionForType,
   p2trOutput,
   p2wpkhOutput,
-} from '../../../lib/swap/Scripts';
-import swapScript from '../../../lib/swap/SwapScript';
-import swapTree from '../../../lib/swap/SwapTree';
-import { toXOnly } from '../../../lib/swap/TaprootUtils';
+} from '../../../lib/swap/Scripts.ts';
+import swapScript from '../../../lib/swap/SwapScript.ts';
+import swapTree from '../../../lib/swap/SwapTree.ts';
+import { toXOnly } from '../../../lib/swap/TaprootUtils.ts';
 
 describe('PreimageDetector', () => {
   const claimKeys = secp256k1.utils.randomSecretKey();

@@ -1,18 +1,17 @@
 {
   "name": "boltz-core",
-  "version": "4.0.5",
+  "version": "5.0.0",
   "description": "Core library of Boltz",
+  "type": "module",
   "main": "dist/lib/Boltz.js",
   "types": "dist/lib/Boltz.d.ts",
   "exports": {
     ".": {
       "types": "./dist/lib/Boltz.d.ts",
-      "require": "./dist/lib/Boltz.js",
       "default": "./dist/lib/Boltz.js"
     },
     "./liquid": {
       "types": "./dist/lib/liquid/index.d.ts",
-      "require": "./dist/lib/liquid/index.js",
       "default": "./dist/lib/liquid/index.js"
     },
     "./out/*": "./out/*",
@@ -51,7 +50,7 @@
     "url": "git+https://github.com/BoltzExchange/boltz-core.git"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.10"
   },
   "files": [
     "LICENSE",

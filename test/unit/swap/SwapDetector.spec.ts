@@ -3,16 +3,16 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { Script, Transaction } from '@scure/btc-signer';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import { randomBytes } from 'node:crypto';
-import { OutputType } from '../../../lib/consts/Enums';
-import reverseSwapScript from '../../../lib/swap/ReverseSwapScript';
+import { OutputType } from '../../../lib/consts/Enums.ts';
+import reverseSwapScript from '../../../lib/swap/ReverseSwapScript.ts';
 import {
   outputFunctionForType,
   p2pkhOutput,
   p2trOutput,
-} from '../../../lib/swap/Scripts';
-import { detectSwap } from '../../../lib/swap/SwapDetector';
-import swapScript from '../../../lib/swap/SwapScript';
-import { toXOnly } from '../../../lib/swap/TaprootUtils';
+} from '../../../lib/swap/Scripts.ts';
+import { detectSwap } from '../../../lib/swap/SwapDetector.ts';
+import swapScript from '../../../lib/swap/SwapScript.ts';
+import { toXOnly } from '../../../lib/swap/TaprootUtils.ts';
 
 describe('SwapDetector', () => {
   test.each`

@@ -1,8 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
-import { OutputType } from '../../../lib/consts/Enums';
-import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
-import swapTree from '../../../lib/swap/SwapTree';
-import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils';
+import { OutputType } from '../../../lib/consts/Enums.ts';
+import reverseSwapTree from '../../../lib/swap/ReverseSwapTree.ts';
+import swapTree from '../../../lib/swap/SwapTree.ts';
+import { bitcoinClient, createSwapOutput, init, refundSwap } from '../Utils.ts';
 
 describe.each`
   name                 | treeFunc

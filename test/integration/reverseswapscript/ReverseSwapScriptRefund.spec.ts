@@ -1,6 +1,6 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
-import { OutputType, reverseSwapScript } from '../../../lib/Boltz';
-import { bitcoinClient, createSwapOutput, refundSwap } from '../Utils';
+import { OutputType, reverseSwapScript } from '../../../lib/Boltz.ts';
+import { bitcoinClient, createSwapOutput, refundSwap } from '../Utils.ts';
 
 describe('ReverseSwapScript refund', () => {
   let bestBlockHeight: number;

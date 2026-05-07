@@ -1,5 +1,5 @@
 import { hex } from '@scure/base';
-import swapScript from '../../../lib/swap/SwapScript';
+import swapScript from '../../../lib/swap/SwapScript.ts';
 
 describe('SwapScript', () => {
   test('should get a swap script', () => {

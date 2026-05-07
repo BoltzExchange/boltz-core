@@ -1,16 +1,16 @@
-import zkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { reverseSwapScript, swapScript } from '../../../../lib/Boltz';
-import { OutputType } from '../../../../lib/consts/Enums';
-import type { LiquidClaimDetails } from '../../../../lib/liquid';
-import { init } from '../../../../lib/liquid';
-import { slip77 } from '../../../unit/Utils';
+import { reverseSwapScript, swapScript } from '../../../../lib/Boltz.ts';
+import { OutputType } from '../../../../lib/consts/Enums.ts';
+import type { LiquidClaimDetails } from '../../../../lib/liquid/index.ts';
+import { init } from '../../../../lib/liquid/index.ts';
+import { slip77 } from '../../../unit/Utils.ts';
+import zkp, { type Secp256k1ZKP } from '../../../zkp.ts';
 import {
   claimSwap,
   createSwapOutput,
   destinationOutput,
   elementsClient,
   init as utilsInit,
-} from '../../Utils';
+} from '../../Utils.ts';
 
 describe.each`
   script               | name                   | swapName

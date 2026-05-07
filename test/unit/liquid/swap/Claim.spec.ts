@@ -1,16 +1,19 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { confidential } from 'liquidjs-lib';
-import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
+import { reverseBuffer } from 'liquidjs-lib/src/bufferutils.js';
 import { randomBytes } from 'node:crypto';
-import { OutputType } from '../../../../lib/consts/Enums';
-import { Errors } from '../../../../lib/consts/Errors';
-import type { LiquidClaimDetails } from '../../../../lib/liquid';
-import { constructClaimTransaction, init } from '../../../../lib/liquid';
-import { p2trOutput } from '../../../../lib/swap/Scripts';
-import { fundingAddressTree } from '../../../../lib/swap/SwapTree';
-import { toXOnly } from '../../../../lib/swap/TaprootUtils';
-import { lbtcRegtest, liquidClaimDetailsMap, nonce } from './ClaimDetails';
+import { OutputType } from '../../../../lib/consts/Enums.ts';
+import { Errors } from '../../../../lib/consts/Errors.ts';
+import type { LiquidClaimDetails } from '../../../../lib/liquid/index.ts';
+import {
+  constructClaimTransaction,
+  init,
+} from '../../../../lib/liquid/index.ts';
+import { p2trOutput } from '../../../../lib/swap/Scripts.ts';
+import { fundingAddressTree } from '../../../../lib/swap/SwapTree.ts';
+import { toXOnly } from '../../../../lib/swap/TaprootUtils.ts';
+import zkp from '../../../zkp.ts';
+import { lbtcRegtest, liquidClaimDetailsMap, nonce } from './ClaimDetails.ts';
 
 describe('Liquid Claim', () => {
   const testClaim = (utxos: LiquidClaimDetails[], fee: bigint) => {

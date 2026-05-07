@@ -1,7 +1,7 @@
-import ops from '@boltz/bitcoin-ops';
 import { confidential, crypto, script } from 'liquidjs-lib';
 import type { TxOutput } from 'liquidjs-lib';
-import { confidentialLiquid } from './init';
+import ops from '../internal/bitcoinOps.ts';
+import { confidentialLiquid } from './init.ts';
 
 export const getOutputValue = (
   output: TxOutput & {

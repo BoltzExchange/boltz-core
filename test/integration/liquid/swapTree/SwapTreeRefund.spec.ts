@@ -1,18 +1,18 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
-import zkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { OutputType } from '../../../../lib/consts/Enums';
-import type { LiquidClaimDetails } from '../../../../lib/liquid';
-import { init } from '../../../../lib/liquid';
-import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
-import swapTree from '../../../../lib/swap/SwapTree';
-import { slip77 } from '../../../unit/Utils';
+import { OutputType } from '../../../../lib/consts/Enums.ts';
+import type { LiquidClaimDetails } from '../../../../lib/liquid/index.ts';
+import { init } from '../../../../lib/liquid/index.ts';
+import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree.ts';
+import swapTree from '../../../../lib/swap/SwapTree.ts';
+import { slip77 } from '../../../unit/Utils.ts';
+import zkp, { type Secp256k1ZKP } from '../../../zkp.ts';
 import {
   createSwapOutput,
   destinationOutput,
   elementsClient,
   refundSwap,
   init as utilsInit,
-} from '../../Utils';
+} from '../../Utils.ts';
 
 let secpZkp: Secp256k1ZKP;
 

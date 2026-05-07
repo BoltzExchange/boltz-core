@@ -16,8 +16,8 @@ import {
   equalBytes,
   taprootTweakPubkey,
 } from '@scure/btc-signer/utils.js';
-import type { TapLeaf, TapTree } from '../consts/Types';
-import type { MusigKeyAgg } from '../musig/Musig';
+import type { TapLeaf, TapTree } from '../consts/Types.ts';
+import type { MusigKeyAgg } from '../musig/Musig.ts';
 
 export const TAP_LEAF_VERSION_LIQUID = 196;
 

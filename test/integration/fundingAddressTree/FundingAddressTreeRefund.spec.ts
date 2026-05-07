@@ -2,16 +2,20 @@ import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { Transaction } from '@scure/btc-signer';
 import { taprootTweakPubkey } from '@scure/btc-signer/utils.js';
-import { OutputType, detectSwap, fundingAddressTree } from '../../../lib/Boltz';
-import type { RefundDetails } from '../../../lib/consts/Types';
-import { p2trOutput } from '../../../lib/swap/Scripts';
-import { taprootHashTree, toXOnly } from '../../../lib/swap/TaprootUtils';
+import {
+  OutputType,
+  detectSwap,
+  fundingAddressTree,
+} from '../../../lib/Boltz.ts';
+import type { RefundDetails } from '../../../lib/consts/Types.ts';
+import { p2trOutput } from '../../../lib/swap/Scripts.ts';
+import { taprootHashTree, toXOnly } from '../../../lib/swap/TaprootUtils.ts';
 import {
   bitcoinClient,
   encodeAddress,
   generateKeys,
   refundSwap,
-} from '../Utils';
+} from '../Utils.ts';
 
 const createFundingAddressOutput = async (
   timeoutBlockHeight: number,
