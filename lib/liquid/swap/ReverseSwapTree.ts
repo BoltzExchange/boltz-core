@@ -1,14 +1,12 @@
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { hex } from '@scure/base';
-import { script } from 'liquidjs-lib';
+import { opcodes, script } from 'liquidjs-lib';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils.js';
 import type { LiquidSwapTree, TapLeaf } from '../../consts/Types.ts';
-import ops from '../../internal/bitcoinOps.ts';
 import bitcoinReverseSwapTree from '../../swap/ReverseSwapTree.ts';
 import { TAP_LEAF_VERSION_LIQUID } from '../../swap/TaprootUtils.ts';
 import { assignTreeProbabilities, sortTree } from '../../swap/TreeSort.ts';
 import { getScriptIntrospectionValues } from '../Utils.ts';
-import liquidOps from '../consts/Ops.ts';
 
 enum Feature {
   ClaimCovenant,
@@ -38,32 +36,32 @@ const createClaimCovenantLeaf = (
   return {
     version: TAP_LEAF_VERSION_LIQUID,
     output: script.compile([
-      ops.OP_SIZE,
+      opcodes.OP_SIZE,
       script.number.encode(32),
-      ops.OP_EQUALVERIFY,
-      ops.OP_HASH160,
+      opcodes.OP_EQUALVERIFY,
+      opcodes.OP_HASH160,
       Buffer.from(ripemd160(preimageHash)),
-      ops.OP_EQUALVERIFY,
+      opcodes.OP_EQUALVERIFY,
 
       claimCovenantOutputIndex,
-      liquidOps.OP_INSPECTOUTPUTSCRIPTPUBKEY,
+      opcodes.OP_INSPECTOUTPUTSCRIPTPUBKEY,
       script.number.encode(userOutput.version),
-      ops.OP_EQUALVERIFY,
+      opcodes.OP_EQUALVERIFY,
       userOutput.script,
-      ops.OP_EQUALVERIFY,
+      opcodes.OP_EQUALVERIFY,
 
       claimCovenantOutputIndex,
-      liquidOps.OP_INSPECTOUTPUTASSET,
-      ops.OP_1,
-      ops.OP_EQUALVERIFY,
+      opcodes.OP_INSPECTOUTPUTASSET,
+      opcodes.OP_1,
+      opcodes.OP_EQUALVERIFY,
       reverseBuffer(Buffer.from(hex.decode(assetHash))),
-      ops.OP_EQUALVERIFY,
+      opcodes.OP_EQUALVERIFY,
 
       claimCovenantOutputIndex,
-      liquidOps.OP_INSPECTOUTPUTVALUE,
-      ops.OP_DROP,
+      opcodes.OP_INSPECTOUTPUTVALUE,
+      opcodes.OP_DROP,
       amountBuffer,
-      ops.OP_EQUAL,
+      opcodes.OP_EQUAL,
     ]),
   };
 };

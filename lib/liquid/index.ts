@@ -1,7 +1,6 @@
 import { getOutputValue } from './Utils.ts';
 import * as Utils from './Utils.ts';
 import Networks from './consts/Networks.ts';
-import ops from './consts/Ops.ts';
 import type {
   LiquidClaimDetails,
   LiquidRefundDetails,
@@ -18,7 +17,6 @@ import * as TaprootUtils from './swap/TaprootUtils.ts';
 export type { FeatureOption, LiquidClaimDetails, LiquidRefundDetails };
 
 export {
-  ops,
   Utils,
   Feature,
   Networks,

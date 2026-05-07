@@ -1,9 +1,9 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
+import { opcodes } from 'liquidjs-lib';
 import { findScriptPath as liquidFindScriptPath } from 'liquidjs-lib/src/bip341.js';
 import { randomBytes } from 'node:crypto';
 import type { TapLeaf, TapTree } from '../../../../lib/consts/Types.ts';
-import ops from '../../../../lib/internal/bitcoinOps.ts';
 import { init } from '../../../../lib/liquid/index.ts';
 import { secp } from '../../../../lib/liquid/init.ts';
 import {
@@ -149,9 +149,9 @@ describe('TaprootUtils', () => {
       createControlBlock(
         toHashTree(taptree),
         createLeaf(true, [
-          ops.OP_RIPEMD160,
+          opcodes.OP_RIPEMD160,
           randomBytes(20),
-          ops.OP_EQUALVERIFY,
+          opcodes.OP_EQUALVERIFY,
         ]),
         Buffer.from(
           toXOnly(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),

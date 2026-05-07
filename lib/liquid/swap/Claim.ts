@@ -16,12 +16,12 @@ import {
   Updater,
   ZKPGenerator,
   ZKPValidator,
+  opcodes,
   witnessStackToScriptWitness,
 } from 'liquidjs-lib';
 import type { Network } from 'liquidjs-lib/src/networks.js';
 import { OutputType } from '../../consts/Enums.ts';
 import type { LiquidSwapTree } from '../../consts/Types.ts';
-import ops from '../../internal/bitcoinOps.ts';
 import {
   getClaimLeaf,
   getTapLeaf,
@@ -178,7 +178,7 @@ export const constructClaimTransaction = (
           network.assetHash,
           // TODO: figure out flakiness with blinding 0 amount outputs
           1,
-          Buffer.of(ops.OP_RETURN),
+          Buffer.of(opcodes.OP_RETURN),
           Buffer.from(
             secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
           ),
