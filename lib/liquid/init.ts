@@ -4,7 +4,7 @@ import { type Secp256k1Interface, confidential } from 'liquidjs-lib';
 export let secp: Secp256k1ZKP;
 export let confidentialLiquid: confidential.Confidential;
 
-export const init = (zkp: Secp256k1ZKP) => {
+export const init = (zkp: Secp256k1ZKP): void => {
   secp = zkp;
   confidentialLiquid = new confidential.Confidential(
     secp as unknown as Secp256k1Interface,

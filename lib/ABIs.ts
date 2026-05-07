@@ -3,9 +3,14 @@ import ERC20SwapABI from '../out/ERC20Swap.sol/ERC20Swap.json';
 import EtherSwapABI from '../out/EtherSwap.sol/EtherSwap.json';
 import RouterABI from '../out/Router.sol/Router.json';
 
-export const ContractABIs = {
+export const ContractABIs: {
+  ERC20: unknown[];
+  ERC20Swap: unknown[];
+  EtherSwap: unknown[];
+  Router: unknown[];
+} = {
   ERC20: ERC20ABI.abi,
   ERC20Swap: ERC20SwapABI.abi,
   EtherSwap: EtherSwapABI.abi,
   Router: RouterABI.abi,
-} as const;
+};

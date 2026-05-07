@@ -17,14 +17,14 @@ const DUMMY_TAPROOT_SIGNATURE = new Uint8Array(64);
 
 export const isRelevantTaprootOutput = (
   utxo: Pick<ClaimDetails, 'type' | 'cooperative'>,
-) => utxo.type === OutputType.Taproot && utxo.cooperative !== true;
+): boolean => utxo.type === OutputType.Taproot && utxo.cooperative !== true;
 
 export const validateInputs = (
   utxos: Pick<
     ClaimDetails,
     'type' | 'redeemScript' | 'swapTree' | 'internalKey'
   >[],
-) => {
+): void => {
   if (
     utxos
       .filter((utxo) => utxo.type !== OutputType.Taproot)
@@ -67,7 +67,7 @@ export const constructClaimTransaction = (
   isRbf = true,
   timeoutBlockHeight?: number,
   isRefund = false,
-) => {
+): Transaction => {
   validateInputs(utxos);
 
   const tx = new Transaction({
@@ -186,7 +186,10 @@ export const constructClaimTransaction = (
   return tx;
 };
 
-export const signLegacy = (hash: Uint8Array, privateKey: Uint8Array) => {
+export const signLegacy = (
+  hash: Uint8Array,
+  privateKey: Uint8Array,
+): Uint8Array => {
   return concatBytes(
     signECDSA(hash, privateKey, true),
     new Uint8Array([LEGACY_SIGHASH]),

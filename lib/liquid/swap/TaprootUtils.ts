@@ -39,13 +39,13 @@ export const hashForWitnessV1 = (
   );
 };
 
-export const tapLeafHash = (leaf: TapLeaf) =>
+export const tapLeafHash = (leaf: TapLeaf): Buffer =>
   liquidTapLeafHash(convertLeaf(leaf));
 
-export const tapBranchHash = (a: Buffer, b: Buffer) =>
+export const tapBranchHash = (a: Buffer, b: Buffer): Buffer =>
   taggedHash('TapBranch/elements', Buffer.concat([a, b]));
 
-export const tapTweakHash = (publicKey: Buffer, tweak: Buffer) =>
+export const tapTweakHash = (publicKey: Buffer, tweak: Buffer): Buffer =>
   taggedHash('TapTweak/elements', Buffer.concat([toXOnly(publicKey), tweak]));
 
 export function toHashTree(scriptTree: TapTree): HashTree {
