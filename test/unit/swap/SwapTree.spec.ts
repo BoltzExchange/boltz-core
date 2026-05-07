@@ -7,8 +7,8 @@ import {
   extractRefundPublicKeyFromSwapTree,
   fundingAddressTree,
   swapTree,
-} from '../../../lib/Boltz';
-import { toXOnly, tweakMusig } from '../../../lib/swap/TaprootUtils';
+} from '../../../lib/Boltz.ts';
+import { toXOnly, tweakMusig } from '../../../lib/swap/TaprootUtils.ts';
 
 describe('SwapTree', () => {
   test('should extract claim public key from swap tree', () => {

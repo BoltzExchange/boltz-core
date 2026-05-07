@@ -1,4 +1,3 @@
-import ops from '@boltz/bitcoin-ops';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { Script } from '@scure/btc-signer';
@@ -17,24 +16,25 @@ import {
   Updater,
   ZKPGenerator,
   ZKPValidator,
+  opcodes,
   witnessStackToScriptWitness,
 } from 'liquidjs-lib';
-import type { Network } from 'liquidjs-lib/src/networks';
-import { OutputType } from '../../consts/Enums';
-import type { LiquidSwapTree } from '../../consts/Types';
+import type { Network } from 'liquidjs-lib/src/networks.js';
+import { OutputType } from '../../consts/Enums.ts';
+import type { LiquidSwapTree } from '../../consts/Types.ts';
 import {
   getClaimLeaf,
   getTapLeaf,
   isRelevantTaprootOutput,
   signLegacy,
   validateInputs,
-} from '../../swap/Claim';
-import { toXOnly } from '../../swap/TaprootUtils';
-import { getOutputValue } from '../Utils';
-import Networks from '../consts/Networks';
-import type { LiquidClaimDetails } from '../consts/Types';
-import { secp } from '../init';
-import { createControlBlock, tapLeafHash, toHashTree } from './TaprootUtils';
+} from '../../swap/Claim.ts';
+import { toXOnly } from '../../swap/TaprootUtils.ts';
+import { getOutputValue } from '../Utils.ts';
+import Networks from '../consts/Networks.ts';
+import type { LiquidClaimDetails } from '../consts/Types.ts';
+import { secp } from '../init.ts';
+import { createControlBlock, tapLeafHash, toHashTree } from './TaprootUtils.ts';
 
 const dummyTaprootSignature = Buffer.alloc(64);
 
@@ -178,7 +178,7 @@ export const constructClaimTransaction = (
           network.assetHash,
           // TODO: figure out flakiness with blinding 0 amount outputs
           1,
-          Buffer.of(ops.OP_RETURN),
+          Buffer.of(opcodes.OP_RETURN),
           Buffer.from(
             secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
           ),

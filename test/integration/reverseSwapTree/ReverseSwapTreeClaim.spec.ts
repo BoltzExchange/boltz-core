@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { OutputType } from '../../../lib/consts/Enums';
-import reverseSwapTree from '../../../lib/swap/ReverseSwapTree';
-import { bitcoinClient, claimSwap, createSwapOutput, init } from '../Utils';
+import { OutputType } from '../../../lib/consts/Enums.ts';
+import reverseSwapTree from '../../../lib/swap/ReverseSwapTree.ts';
+import { bitcoinClient, claimSwap, createSwapOutput, init } from '../Utils.ts';
 
 describe('ReverseSwapTree claim', () => {
   beforeAll(async () => {

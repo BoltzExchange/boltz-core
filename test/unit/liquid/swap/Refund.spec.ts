@@ -1,10 +1,13 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { confidential } from 'liquidjs-lib';
-import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
-import { OutputType } from '../../../../lib/consts/Enums';
-import type { LiquidRefundDetails } from '../../../../lib/liquid';
-import { constructRefundTransaction, init } from '../../../../lib/liquid';
-import { lbtcRegtest, nonce } from './ClaimDetails';
+import { reverseBuffer } from 'liquidjs-lib/src/bufferutils.js';
+import { OutputType } from '../../../../lib/consts/Enums.ts';
+import type { LiquidRefundDetails } from '../../../../lib/liquid/index.ts';
+import {
+  constructRefundTransaction,
+  init,
+} from '../../../../lib/liquid/index.ts';
+import zkp from '../../../zkp.ts';
+import { lbtcRegtest, nonce } from './ClaimDetails.ts';
 
 describe('Liquid Refund', () => {
   const utxo: LiquidRefundDetails = {

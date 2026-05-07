@@ -4,8 +4,8 @@ import type {
   LiquidSwapTree,
   SwapTree,
   TapLeaf,
-} from '../consts/Types';
-import { assignTreeProbabilities, sortTree } from './TreeSort';
+} from '../consts/Types.ts';
+import { assignTreeProbabilities, sortTree } from './TreeSort.ts';
 
 type SerializedLeaf = {
   version: number;

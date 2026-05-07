@@ -1,28 +1,28 @@
-import { targetFee } from './TargetFee';
-import { OutputType } from './consts/Enums';
-import Networks from './consts/Networks';
-import * as Types from './consts/Types';
-import type { ClaimDetails, RefundDetails } from './consts/Types';
-import * as Musig from './musig/Musig';
-import { constructClaimTransaction } from './swap/Claim';
-import { detectPreimage } from './swap/PreimageDetector';
-import { constructRefundTransaction } from './swap/Refund';
-import reverseSwapScript from './swap/ReverseSwapScript';
+import { targetFee } from './TargetFee.ts';
+import { OutputType } from './consts/Enums.ts';
+import Networks from './consts/Networks.ts';
+import * as Types from './consts/Types.ts';
+import type { ClaimDetails, RefundDetails } from './consts/Types.ts';
+import * as Musig from './musig/Musig.ts';
+import { constructClaimTransaction } from './swap/Claim.ts';
+import { detectPreimage } from './swap/PreimageDetector.ts';
+import { constructRefundTransaction } from './swap/Refund.ts';
+import reverseSwapScript from './swap/ReverseSwapScript.ts';
 import reverseSwapTree, {
   extractClaimPublicKeyFromReverseSwapTree,
   extractRefundPublicKeyFromReverseSwapTree,
-} from './swap/ReverseSwapTree';
-import * as Scripts from './swap/Scripts';
-import { detectSwap } from './swap/SwapDetector';
-import swapScript from './swap/SwapScript';
+} from './swap/ReverseSwapTree.ts';
+import * as Scripts from './swap/Scripts.ts';
+import { detectSwap } from './swap/SwapDetector.ts';
+import swapScript from './swap/SwapScript.ts';
 import swapTree, {
   extractClaimPublicKeyFromSwapTree,
   extractRefundPublicKeyFromSwapTree,
   fundingAddressTree,
-} from './swap/SwapTree';
-import { compareTrees } from './swap/SwapTreeCompare';
-import * as SwapTreeSerializer from './swap/SwapTreeSerializer';
-import * as TaprootUtils from './swap/TaprootUtils';
+} from './swap/SwapTree.ts';
+import { compareTrees } from './swap/SwapTreeCompare.ts';
+import * as SwapTreeSerializer from './swap/SwapTreeSerializer.ts';
+import * as TaprootUtils from './swap/TaprootUtils.ts';
 
 export type { ClaimDetails, RefundDetails };
 

@@ -1,6 +1,6 @@
 import type { Transaction } from '@scure/btc-signer';
-import type { ClaimDetails, RefundDetails } from '../consts/Types';
-import { constructClaimTransaction } from './Claim';
+import type { ClaimDetails, RefundDetails } from '../consts/Types.ts';
+import { constructClaimTransaction } from './Claim.ts';
 
 const dummyPreimage = new Uint8Array(0);
 

@@ -1,5 +1,5 @@
-import type { AddressType } from '../../utils/ChainClient';
-import ChainClient from '../../utils/ChainClient';
+import type { AddressType } from '../../utils/ChainClient.ts';
+import ChainClient from '../../utils/ChainClient.ts';
 
 enum LiquidAddressType {
   Blech32 = 'blech32',

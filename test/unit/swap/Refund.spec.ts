@@ -1,7 +1,7 @@
 import { hex } from '@scure/base';
-import { OutputType } from '../../../lib/consts/Enums';
-import type { RefundDetails } from '../../../lib/consts/Types';
-import { constructRefundTransaction } from '../../../lib/swap/Refund';
+import { OutputType } from '../../../lib/consts/Enums.ts';
+import type { RefundDetails } from '../../../lib/consts/Types.ts';
+import { constructRefundTransaction } from '../../../lib/swap/Refund.ts';
 
 describe('Refund', () => {
   const utxo = {

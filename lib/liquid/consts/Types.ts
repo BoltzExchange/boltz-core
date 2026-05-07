@@ -1,10 +1,10 @@
 import type { Transaction, TxOutput } from 'liquidjs-lib';
-import type { OutputType } from '../../consts/Enums';
+import type { OutputType } from '../../consts/Enums.ts';
 import type {
   FundingAddressTree,
   LiquidSwapTree,
   RefundDetails,
-} from '../../consts/Types';
+} from '../../consts/Types.ts';
 
 export type LiquidBaseRefundDetails = Omit<
   RefundDetails,

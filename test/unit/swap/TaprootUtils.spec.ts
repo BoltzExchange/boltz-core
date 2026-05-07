@@ -2,11 +2,10 @@ import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { Script, type ScriptType } from '@scure/btc-signer';
 import { TAP_LEAF_VERSION } from '@scure/btc-signer/payment.js';
-import zkp from '@vulpemventures/secp256k1-zkp';
-import { tapTweakHash } from 'bitcoinjs-lib/src/payments/bip341';
+import { tapTweakHash } from 'bitcoinjs-lib/src/payments/bip341.js';
 import { randomBytes } from 'node:crypto';
-import type { TapLeaf, TapTree } from '../../../lib/consts/Types';
-import * as Musig from '../../../lib/musig/Musig';
+import type { TapLeaf, TapTree } from '../../../lib/consts/Types.ts';
+import * as Musig from '../../../lib/musig/Musig.ts';
 import {
   TAP_LEAF_VERSION_LIQUID,
   createControlBlock,
@@ -15,7 +14,8 @@ import {
   taprootHashTree,
   toXOnly,
   tweakMusig,
-} from '../../../lib/swap/TaprootUtils';
+} from '../../../lib/swap/TaprootUtils.ts';
+import zkp from '../../zkp.ts';
 
 describe('TaprootUtils', () => {
   const taptree: TapTree = [

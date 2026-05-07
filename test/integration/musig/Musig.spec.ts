@@ -2,10 +2,10 @@ import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
 import { Address, OutScript, SigHash, Transaction } from '@scure/btc-signer';
 import { equalBytes } from '@scure/btc-signer/utils.js';
-import Networks from '../../../lib/consts/Networks';
-import * as Musig from '../../../lib/musig/Musig';
-import { p2trOutput } from '../../../lib/swap/Scripts';
-import { bitcoinClient, encodeAddress } from '../Utils';
+import Networks from '../../../lib/consts/Networks.ts';
+import * as Musig from '../../../lib/musig/Musig.ts';
+import { p2trOutput } from '../../../lib/swap/Scripts.ts';
+import { bitcoinClient, encodeAddress } from '../Utils.ts';
 
 describe('Musig', () => {
   beforeAll(async () => {

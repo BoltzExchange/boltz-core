@@ -1,5 +1,5 @@
-import { OutputType } from '../../../lib/consts/Enums';
-import type { ClaimDetails } from '../../../lib/consts/Types';
+import { OutputType } from '../../../lib/consts/Enums.ts';
+import type { ClaimDetails } from '../../../lib/consts/Types.ts';
 
 const utxo = {
   transactionId:

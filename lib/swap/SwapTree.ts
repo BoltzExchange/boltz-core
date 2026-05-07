@@ -1,13 +1,13 @@
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { Script } from '@scure/btc-signer';
-import type { FundingAddressTree, SwapTree } from '../consts/Types';
-import { createLeaf, swapLeafsToTree, toXOnly } from './TaprootUtils';
+import type { FundingAddressTree, SwapTree, TapLeaf } from '../consts/Types.ts';
+import { createLeaf, swapLeafsToTree, toXOnly } from './TaprootUtils.ts';
 
 export const createRefundLeaf = (
   isLiquid: boolean,
   refundPublicKey: Uint8Array,
   timeoutBlockHeight: number,
-) =>
+): TapLeaf =>
   createLeaf(isLiquid, [
     toXOnly(refundPublicKey),
     'CHECKSIGVERIFY',

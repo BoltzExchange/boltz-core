@@ -1,14 +1,14 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
-import { reverseBuffer } from 'liquidjs-lib/src/bufferutils';
+import { reverseBuffer } from 'liquidjs-lib/src/bufferutils.js';
 import { randomBytes } from 'node:crypto';
-import { OutputType } from '../../../lib/consts/Enums';
-import { Errors } from '../../../lib/consts/Errors';
-import type { ClaimDetails } from '../../../lib/consts/Types';
-import { constructClaimTransaction } from '../../../lib/swap/Claim';
-import { p2trOutput } from '../../../lib/swap/Scripts';
-import { fundingAddressTree } from '../../../lib/swap/SwapTree';
-import { toXOnly } from '../../../lib/swap/TaprootUtils';
-import { claimDetails, claimDetailsMap } from './ClaimDetails';
+import { OutputType } from '../../../lib/consts/Enums.ts';
+import { Errors } from '../../../lib/consts/Errors.ts';
+import type { ClaimDetails } from '../../../lib/consts/Types.ts';
+import { constructClaimTransaction } from '../../../lib/swap/Claim.ts';
+import { p2trOutput } from '../../../lib/swap/Scripts.ts';
+import { fundingAddressTree } from '../../../lib/swap/SwapTree.ts';
+import { toXOnly } from '../../../lib/swap/TaprootUtils.ts';
+import { claimDetails, claimDetailsMap } from './ClaimDetails.ts';
 
 describe('Claim', () => {
   const testClaim = (utxos: ClaimDetails[], fee: number) => {

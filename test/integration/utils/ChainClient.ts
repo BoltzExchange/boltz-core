@@ -1,4 +1,4 @@
-import RpcClient from './RpcClient';
+import RpcClient from './RpcClient.ts';
 
 enum AddressType {
   Legacy = 'legacy',

@@ -1,8 +1,8 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { Script } from '@scure/btc-signer';
 import { hash160 } from '@scure/btc-signer/utils.js';
-import { OutputType } from '../consts/Enums';
-import { toXOnly } from './TaprootUtils';
+import { OutputType } from '../consts/Enums.ts';
+import { toXOnly } from './TaprootUtils.ts';
 
 export const p2trOutput = (publicKey: Uint8Array): Uint8Array => {
   return Script.encode(['OP_1', toXOnly(publicKey)]);

@@ -1,7 +1,6 @@
-import ops from '@boltz/bitcoin-ops';
-import { confidential, crypto, script } from 'liquidjs-lib';
+import { confidential, crypto, opcodes, script } from 'liquidjs-lib';
 import type { TxOutput } from 'liquidjs-lib';
-import { confidentialLiquid } from './init';
+import { confidentialLiquid } from './init.ts';
 
 export const getOutputValue = (
   output: TxOutput & {
@@ -32,13 +31,13 @@ export const getScriptIntrospectionValues = (
   }
 
   switch (dec[0]) {
-    case ops.OP_1:
+    case opcodes.OP_1:
       return {
         version: 1,
         script: getScriptIntrospectionWitnessScript(outputScript),
       };
 
-    case ops.OP_0:
+    case opcodes.OP_0:
       return {
         version: 0,
         script: getScriptIntrospectionWitnessScript(outputScript),

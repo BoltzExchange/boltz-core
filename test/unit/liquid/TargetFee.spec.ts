@@ -1,8 +1,8 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { Transaction, confidential } from 'liquidjs-lib';
-import { targetFee } from '../../../lib/TargetFee';
-import { constructClaimTransaction, init } from '../../../lib/liquid';
-import { liquidClaimDetails } from './swap/ClaimDetails';
+import { targetFee } from '../../../lib/TargetFee.ts';
+import { constructClaimTransaction, init } from '../../../lib/liquid/index.ts';
+import zkp from '../../zkp.ts';
+import { liquidClaimDetails } from './swap/ClaimDetails.ts';
 
 describe.each([false, true])(
   'Liquid TargetFee (Discount CT = %p)',

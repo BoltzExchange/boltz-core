@@ -3,15 +3,15 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import { script as bitcoinScript } from 'bitcoinjs-lib';
 import { Transaction, confidential } from 'liquidjs-lib';
-import { OutputType } from '../../../../lib/consts/Enums';
-import reverseSwapScript from '../../../../lib/swap/ReverseSwapScript';
+import { OutputType } from '../../../../lib/consts/Enums.ts';
+import reverseSwapScript from '../../../../lib/swap/ReverseSwapScript.ts';
 import {
   outputFunctionForType,
   p2pkhOutput,
-} from '../../../../lib/swap/Scripts';
-import { detectSwap } from '../../../../lib/swap/SwapDetector';
-import swapScript from '../../../../lib/swap/SwapScript';
-import { lbtcRegtest, nonce } from './ClaimDetails';
+} from '../../../../lib/swap/Scripts.ts';
+import { detectSwap } from '../../../../lib/swap/SwapDetector.ts';
+import swapScript from '../../../../lib/swap/SwapScript.ts';
+import { lbtcRegtest, nonce } from './ClaimDetails.ts';
 
 describe('Liquid SwapDetector', () => {
   test.each`

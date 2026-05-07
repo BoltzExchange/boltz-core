@@ -1,7 +1,7 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { randomBytes } from 'node:crypto';
-import swapTree from '../../../lib/swap/SwapTree';
-import { compareTrees } from '../../../lib/swap/SwapTreeCompare';
+import swapTree from '../../../lib/swap/SwapTree.ts';
+import { compareTrees } from '../../../lib/swap/SwapTreeCompare.ts';
 
 describe('SwapTreeCompare', () => {
   const claimKey = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());

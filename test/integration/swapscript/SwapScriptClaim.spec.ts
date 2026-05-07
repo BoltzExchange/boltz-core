@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { OutputType, swapScript } from '../../../lib/Boltz';
-import swapTree from '../../../lib/swap/SwapTree';
-import { bitcoinClient, claimSwap, createSwapOutput, init } from '../Utils';
+import { OutputType, swapScript } from '../../../lib/Boltz.ts';
+import swapTree from '../../../lib/swap/SwapTree.ts';
+import { bitcoinClient, claimSwap, createSwapOutput, init } from '../Utils.ts';
 
 describe('SwapScript claim', () => {
   beforeAll(async () => {

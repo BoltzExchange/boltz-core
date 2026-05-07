@@ -1,4 +1,4 @@
-import type { OutputType } from './Enums';
+import type { OutputType } from './Enums.ts';
 
 export type Error = {
   message: string;

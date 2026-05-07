@@ -1,25 +1,25 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import type { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import zkp from '@vulpemventures/secp256k1-zkp';
 import { randomBytes } from 'node:crypto';
-import { Musig, OutputType } from '../../../../lib/Boltz';
-import type { LiquidClaimDetails } from '../../../../lib/liquid';
+import { Musig, OutputType } from '../../../../lib/Boltz.ts';
+import type { LiquidClaimDetails } from '../../../../lib/liquid/index.ts';
 import {
   Networks,
   constructClaimTransaction,
   init,
-} from '../../../../lib/liquid';
-import { hashForWitnessV1 } from '../../../../lib/liquid/swap/TaprootUtils';
-import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree';
-import swapTree from '../../../../lib/swap/SwapTree';
-import { slip77 } from '../../../unit/Utils';
+} from '../../../../lib/liquid/index.ts';
+import { hashForWitnessV1 } from '../../../../lib/liquid/swap/TaprootUtils.ts';
+import reverseSwapTree from '../../../../lib/swap/ReverseSwapTree.ts';
+import swapTree from '../../../../lib/swap/SwapTree.ts';
+import { slip77 } from '../../../unit/Utils.ts';
+import zkp from '../../../zkp.ts';
 import {
   claimSwap,
   createSwapOutput,
   destinationOutput,
   elementsClient,
   init as utilsInit,
-} from '../../Utils';
+} from '../../Utils.ts';
 
 let secpZkp: Secp256k1ZKP;
 

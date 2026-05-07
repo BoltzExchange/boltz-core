@@ -4,8 +4,8 @@ import {
   extractClaimPublicKeyFromReverseSwapTree,
   extractRefundPublicKeyFromReverseSwapTree,
   reverseSwapTree,
-} from '../../../lib/Boltz';
-import { toXOnly } from '../../../lib/swap/TaprootUtils';
+} from '../../../lib/Boltz.ts';
+import { toXOnly } from '../../../lib/swap/TaprootUtils.ts';
 
 describe('ReverseSwapTree', () => {
   test('should extract claim public key from swap tree', () => {

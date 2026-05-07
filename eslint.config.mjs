@@ -67,4 +67,11 @@ export default [
       'no-restricted-imports': 'off',
     },
   },
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { ...globals.node, ...globals.commonjs },
+    },
+  },
 ];

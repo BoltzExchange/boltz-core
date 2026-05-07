@@ -1,4 +1,4 @@
-import type { LiquidSwapTree } from '../consts/Types';
+import type { LiquidSwapTree } from '../consts/Types.ts';
 
 type ProbabilityNode<T> = { probability: number; value: T };
 

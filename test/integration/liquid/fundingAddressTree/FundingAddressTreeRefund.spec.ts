@@ -1,22 +1,22 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
-import zkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { Transaction, address } from 'liquidjs-lib';
-import { detectSwap, fundingAddressTree } from '../../../../lib/Boltz';
-import { OutputType } from '../../../../lib/consts/Enums';
-import type { FundingAddressTree } from '../../../../lib/consts/Types';
+import { detectSwap, fundingAddressTree } from '../../../../lib/Boltz.ts';
+import { OutputType } from '../../../../lib/consts/Enums.ts';
+import type { FundingAddressTree } from '../../../../lib/consts/Types.ts';
 import {
   Networks as LiquidNetworks,
   type LiquidRefundDetails,
   init,
-} from '../../../../lib/liquid';
-import { secp } from '../../../../lib/liquid/init';
+} from '../../../../lib/liquid/index.ts';
+import { secp } from '../../../../lib/liquid/init.ts';
 import {
   tapTweakHash,
   toHashTree,
-} from '../../../../lib/liquid/swap/TaprootUtils';
-import { p2trOutput } from '../../../../lib/swap/Scripts';
-import { toXOnly } from '../../../../lib/swap/TaprootUtils';
-import { slip77 } from '../../../unit/Utils';
+} from '../../../../lib/liquid/swap/TaprootUtils.ts';
+import { p2trOutput } from '../../../../lib/swap/Scripts.ts';
+import { toXOnly } from '../../../../lib/swap/TaprootUtils.ts';
+import { slip77 } from '../../../unit/Utils.ts';
+import zkp, { type Secp256k1ZKP } from '../../../zkp.ts';
 import {
   blindWitnessAddress,
   destinationOutput,
@@ -24,7 +24,7 @@ import {
   generateKeys,
   refundSwap,
   init as utilsInit,
-} from '../../Utils';
+} from '../../Utils.ts';
 
 let secpZkp: Secp256k1ZKP;
 

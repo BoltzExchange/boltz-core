@@ -4,7 +4,6 @@ import { hex } from '@scure/base';
 import { Address, OutScript, Transaction } from '@scure/btc-signer';
 import type { TransactionOutput } from '@scure/btc-signer/psbt.js';
 import { hash160 } from '@scure/btc-signer/utils.js';
-import initZkp, { type Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import type { TxOutput as LiquidTxOutput } from 'liquidjs-lib';
 import {
   Transaction as LiquidTransaction,
@@ -19,32 +18,36 @@ import {
   constructRefundTransaction,
   detectSwap,
   targetFee,
-} from '../../lib/Boltz';
+} from '../../lib/Boltz.ts';
 import type {
   ClaimDetails,
   RefundDetails,
   SwapTree,
-} from '../../lib/consts/Types';
-import type { LiquidClaimDetails, LiquidRefundDetails } from '../../lib/liquid';
+} from '../../lib/consts/Types.ts';
+import type {
+  LiquidClaimDetails,
+  LiquidRefundDetails,
+} from '../../lib/liquid/index.ts';
 import {
   Networks as LiquidNetworks,
   constructClaimTransaction as liquidConstructClaimTransaction,
   constructRefundTransaction as liquidConstructRefundTransaction,
-} from '../../lib/liquid';
-import { tweakMusig as liquidTweakMusig } from '../../lib/liquid/swap/TaprootUtils';
-import * as Musig from '../../lib/musig/Musig';
-import type { MusigKeyAgg } from '../../lib/musig/Musig';
+} from '../../lib/liquid/index.ts';
+import { tweakMusig as liquidTweakMusig } from '../../lib/liquid/swap/TaprootUtils.ts';
+import * as Musig from '../../lib/musig/Musig.ts';
+import type { MusigKeyAgg } from '../../lib/musig/Musig.ts';
 import {
   outputFunctionForType,
   p2trOutput,
   p2wpkhOutput,
-} from '../../lib/swap/Scripts';
-import type swapScript from '../../lib/swap/SwapScript';
-import type swapTree from '../../lib/swap/SwapTree';
-import { tweakMusig } from '../../lib/swap/TaprootUtils';
-import { slip77 } from '../unit/Utils';
-import ElementsClient from './liquid/utils/ElementsClient';
-import ChainClient from './utils/ChainClient';
+} from '../../lib/swap/Scripts.ts';
+import type swapScript from '../../lib/swap/SwapScript.ts';
+import type swapTree from '../../lib/swap/SwapTree.ts';
+import { tweakMusig } from '../../lib/swap/TaprootUtils.ts';
+import { slip77 } from '../unit/Utils.ts';
+import initZkp, { type Secp256k1ZKP } from '../zkp.ts';
+import ElementsClient from './liquid/utils/ElementsClient.ts';
+import ChainClient from './utils/ChainClient.ts';
 
 export const bitcoinClient = new ChainClient({
   host: '127.0.0.1',

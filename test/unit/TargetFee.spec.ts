@@ -1,5 +1,5 @@
-import { constructClaimTransaction, targetFee } from '../../lib/Boltz';
-import { claimDetails } from './swap/ClaimDetails';
+import { constructClaimTransaction, targetFee } from '../../lib/Boltz.ts';
+import { claimDetails } from './swap/ClaimDetails.ts';
 
 describe('TargetFee', () => {
   test.each([1, 3, 12, 42, 32, 123])(
