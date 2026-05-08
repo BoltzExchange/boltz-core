@@ -10,10 +10,13 @@ import {Router} from "../Router.sol";
 
 contract Deploy is Script {
     function run() external {
+        address swapOwner = vm.envAddress("SWAP_OWNER");
+        console.log("Using swap owner: ", swapOwner);
+
         vm.startBroadcast();
-        address etherSwapAddress = address(new EtherSwap());
+        address etherSwapAddress = address(new EtherSwap(swapOwner));
         console.log("Deployed EtherSwap: ", etherSwapAddress);
-        address erc20SwapAddress = address(new ERC20Swap());
+        address erc20SwapAddress = address(new ERC20Swap(swapOwner));
         console.log("Deployed ERC20Swap: ", erc20SwapAddress);
         address permit2Address = vm.envAddress("PERMIT2_ADDRESS");
         console.log("Using Permit2: ", permit2Address);

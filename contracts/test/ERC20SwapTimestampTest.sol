@@ -20,7 +20,7 @@ contract ERC20SwapTimestampTest is Test {
 
     event Refund(bytes32 indexed preimageHash);
 
-    ERC20SwapTimestamp internal swap = new ERC20SwapTimestamp();
+    ERC20SwapTimestamp internal swap = new ERC20SwapTimestamp(address(this));
 
     bytes32 internal preimage = sha256("");
     bytes32 internal preimageHash = sha256(abi.encodePacked(preimage));
