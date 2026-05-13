@@ -38,6 +38,20 @@ describe('Claim', () => {
     expect(testClaim(claimDetails, 490).hex).toMatchSnapshot();
   });
 
+  test('should sort inputs by BIP69 regardless of caller-provided order', () => {
+    const base = claimDetailsMap.get(OutputType.Bech32)!;
+    const txids = [
+      '28e0fdd185542f2c6ea19030b0796051e7772b6026dd5ddccd7a2f93b73e6fc2',
+      '26aa6e6d8b9e49bb0630aac301db6757c02e3619feb4ee0eea81eb1672947024',
+      '0e53ec5dfb2cb8a71fec32dc9a634a35b7e24799295ddd5278217822e0b31f57',
+    ];
+    const shuffled = txids.map((transactionId) => ({ ...base, transactionId }));
+    const preSorted = [...shuffled].reverse();
+
+    expect(testClaim(shuffled, 490).hex).toEqual(testClaim(preSorted, 490).hex);
+    expect(testClaim(shuffled, 490).hex).toMatchSnapshot();
+  });
+
   test.each`
     details
     ${[

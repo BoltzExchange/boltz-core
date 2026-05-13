@@ -22,6 +22,7 @@ import {
 import type { Network } from 'liquidjs-lib/src/networks.js';
 import { OutputType } from '../../consts/Enums.ts';
 import type { LiquidSwapTree } from '../../consts/Types.ts';
+import { compareInputs } from '../../swap/Bip69.ts';
 import {
   getClaimLeaf,
   getTapLeaf,
@@ -110,12 +111,15 @@ export const constructClaimTransaction = (
     throw new Error('only Taproot or native SegWit inputs supported');
   }
 
+  // BIP69 lexicographical input ordering
+  const sortedUtxos = [...utxos].sort(compareInputs);
+
   const pset = Creator.newPset();
   const updater = new Updater(pset);
 
   let utxoValueSum = BigInt(0);
 
-  for (const [i, utxo] of utxos.entries()) {
+  for (const [i, utxo] of sortedUtxos.entries()) {
     utxoValueSum += BigInt(getOutputValue(utxo));
 
     pset.addInput(
@@ -150,6 +154,12 @@ export const constructClaimTransaction = (
     }
   }
 
+  // Output order is intentionally not BIP69-sorted on Liquid. The reverse-swap
+  // covenant tapleaf (see lib/liquid/swap/ReverseSwapTree.ts) inspects output
+  // index 0 (OP_INSPECTOUTPUTSCRIPTPUBKEY / OUTPUTVALUE / OUTPUTASSET) and
+  // requires the destination to live at index 0. Privacy benefit of output
+  // sort is also reduced on Liquid since amounts are hidden in Pedersen
+  // commitments.
   updater.addOutputs([
     {
       script: destinationScript,
@@ -169,7 +179,7 @@ export const constructClaimTransaction = (
     ]);
   };
 
-  if (utxos[0].blindingPrivateKey !== undefined) {
+  if (sortedUtxos[0].blindingPrivateKey !== undefined) {
     // We have to have at least one blinded output if we are spending blinded coins,
     // so we add a small OP_RETURN
     if (blindingKey === undefined) {
@@ -192,15 +202,18 @@ export const constructClaimTransaction = (
     addFeeOutput();
   }
 
-  if (utxos[0].blindingPrivateKey !== undefined || blindingKey !== undefined) {
-    blindPset(pset, utxos);
+  if (
+    sortedUtxos[0].blindingPrivateKey !== undefined ||
+    blindingKey !== undefined
+  ) {
+    blindPset(pset, sortedUtxos);
   }
 
   const signer = new Signer(pset);
 
   const signatures: Buffer[] = [];
 
-  for (const [i, utxo] of utxos.entries()) {
+  for (const [i, utxo] of sortedUtxos.entries()) {
     if (utxo.type === OutputType.Taproot) {
       if (utxo.cooperative || utxo.privateKey === undefined) {
         signatures.push(dummyTaprootSignature);
@@ -262,7 +275,7 @@ export const constructClaimTransaction = (
 
   const finalizer = new Finalizer(pset);
 
-  for (const [i, utxo] of utxos.entries()) {
+  for (const [i, utxo] of sortedUtxos.entries()) {
     finalizer.finalizeInput(i, () => {
       const finals: {
         finalScriptSig?: Buffer;

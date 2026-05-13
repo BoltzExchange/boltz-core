@@ -10,6 +10,7 @@ import {
   type SwapTree,
   isSwapTree,
 } from '../consts/Types.ts';
+import { compareInputs } from './Bip69.ts';
 import { createControlBlock, taprootHashTree } from './TaprootUtils.ts';
 
 const LEGACY_SIGHASH = SigHash.ALL;
@@ -70,19 +71,25 @@ export const constructClaimTransaction = (
 ): Transaction => {
   validateInputs(utxos);
 
+  // BIP69 lexicographical input ordering
+  const sortedUtxos = [...utxos].sort(compareInputs);
+
   const tx = new Transaction({
     version: 2,
     lockTime: timeoutBlockHeight,
   });
 
-  const inputSum = utxos.reduce((acc, utxo) => acc + utxo.amount, BigInt(0));
+  const inputSum = sortedUtxos.reduce(
+    (acc, utxo) => acc + utxo.amount,
+    BigInt(0),
+  );
 
   tx.addOutput({
     amount: inputSum - fee,
     script: destinationScript,
   });
 
-  for (const utxo of utxos) {
+  for (const utxo of sortedUtxos) {
     tx.addInput({
       txid: utxo.transactionId,
       index: utxo.vout,
@@ -90,7 +97,7 @@ export const constructClaimTransaction = (
     });
   }
 
-  for (const [index, utxo] of utxos.entries()) {
+  for (const [index, utxo] of sortedUtxos.entries()) {
     switch (utxo.type) {
       case OutputType.Legacy: {
         // biome-ignore lint/complexity/useLiteralKeys: only way to get the hash to sign for the legacy input
@@ -137,9 +144,9 @@ export const constructClaimTransaction = (
 
       const sigHash = tx.preimageWitnessV1(
         index,
-        utxos.map((out) => out.script),
+        sortedUtxos.map((out) => out.script),
         SigHash.DEFAULT,
-        utxos.map((out) => out.amount),
+        sortedUtxos.map((out) => out.amount),
         undefined,
         tapLeaf.output,
         tapLeaf.version,
