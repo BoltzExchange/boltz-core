@@ -2,6 +2,9 @@ import * as Boltz from '../../lib/Boltz.ts';
 
 describe('Boltz main entry', () => {
   test('should export the public API surface', () => {
+    expect(Boltz.Bip69).toBeDefined();
+    expect(typeof Boltz.Bip69.compareInputs).toBe('function');
+    expect(typeof Boltz.Bip69.compareOutputs).toBe('function');
     expect(Boltz.Musig).toBeDefined();
     expect(Boltz.Networks).toBeDefined();
     expect(Boltz.OutputType).toBeDefined();

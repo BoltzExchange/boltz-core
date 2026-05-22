@@ -13,4 +13,4 @@ export const ContractABIs: {
   ERC20Swap: ERC20SwapABI.abi,
   EtherSwap: EtherSwapABI.abi,
   Router: RouterABI.abi,
-};
+} as const;
