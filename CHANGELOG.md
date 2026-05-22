@@ -3,11 +3,34 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [5.0.0](https://github.com/BoltzExchange/boltz-core/compare/v4.0.5..v5.0.0) - 2026-05-22
+
+### Features
+
+- BIP-69 order inputs and ouputs - ([d561c8f](https://github.com/BoltzExchange/boltz-core/commit/d561c8f79bc6138867d997c3aab6a70195fca21b))
+
+### Miscellaneous Chores
+
+- remove TypeChain (#186) - ([6154b8a](https://github.com/BoltzExchange/boltz-core/commit/6154b8ac042fd64945af5ca8d16b380c8c35bcdd))
+- enable isolatedDeclarations - ([c7c57bc](https://github.com/BoltzExchange/boltz-core/commit/c7c57bc079dc6d7ab27a3322ae3f2ed5f3a57a1a))
+- run CI against Node v26 - ([9f40e91](https://github.com/BoltzExchange/boltz-core/commit/9f40e91096bc4d59ed2db4e6bace0e6bf30a5a02))
+- remove unused ws dependencies - ([86e382e](https://github.com/BoltzExchange/boltz-core/commit/86e382e35f337a6b147247a31d5a7fe4adc59968))
+- bump dependencies - ([5300ca8](https://github.com/BoltzExchange/boltz-core/commit/5300ca83245ba963b97370b5394660c95dd474dd))
+- make liquid peer dependencies optional (#190) - ([0f2bfa4](https://github.com/BoltzExchange/boltz-core/commit/0f2bfa4fb002833ca1ca9cbf1c52393af0feef10))
+- cleanup before tag - ([0101f3b](https://github.com/BoltzExchange/boltz-core/commit/0101f3b2960d100ba58625ed8d247d221c7908b3))
+
+### Refactoring
+
+- convert package to ESM - ([a3950cf](https://github.com/BoltzExchange/boltz-core/commit/a3950cf82618db59829c4c5d9d43e254de9c31df))
+- get rid of OP code library - ([d4e09eb](https://github.com/BoltzExchange/boltz-core/commit/d4e09eb68ebd967069aaf6fe9411e3695ad68e2a))
+
+---
 ## [4.0.5](https://github.com/BoltzExchange/boltz-core/compare/v4.0.4..v4.0.5) - 2026-05-01
 
 ### Miscellaneous Chores
 
 - bump dependencies - ([d02261c](https://github.com/BoltzExchange/boltz-core/commit/d02261cea03f88de5eb33b8c7f887b2ee2289021))
+- bump version to v4.0.5 - ([1f84ae0](https://github.com/BoltzExchange/boltz-core/commit/1f84ae06cbf2890359483920cf0cf9e73d488678))
 
 ---
 ## [4.0.4](https://github.com/BoltzExchange/boltz-core/compare/v4.0.3..v4.0.4) - 2026-04-24

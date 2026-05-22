@@ -4,6 +4,7 @@ import Networks from './consts/Networks.ts';
 import * as Types from './consts/Types.ts';
 import type { ClaimDetails, RefundDetails } from './consts/Types.ts';
 import * as Musig from './musig/Musig.ts';
+import * as Bip69 from './swap/Bip69.ts';
 import { constructClaimTransaction } from './swap/Claim.ts';
 import { detectPreimage } from './swap/PreimageDetector.ts';
 import { constructRefundTransaction } from './swap/Refund.ts';
@@ -27,6 +28,7 @@ import * as TaprootUtils from './swap/TaprootUtils.ts';
 export type { ClaimDetails, RefundDetails };
 
 export {
+  Bip69,
   Musig,
   Types,
   Networks,
