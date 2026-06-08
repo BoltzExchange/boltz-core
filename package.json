@@ -44,7 +44,7 @@
     "version": "npm run changelog",
     "prepublishOnly": "FOUNDRY_PROFILE=release npm run compile"
   },
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BoltzExchange/boltz-core.git"
