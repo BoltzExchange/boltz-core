@@ -75,26 +75,26 @@
     "@scure/btc-signer": "^2.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.5.0",
     "@eslint/js": "^9.39.4",
-    "@swc/core": "^1.15.33",
+    "@swc/core": "^1.15.41",
     "@swc/jest": "^0.2.39",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/jest": "^30.0.0",
-    "@types/node": "^25.7.0",
+    "@types/node": "^25.9.3",
     "@vulpemventures/secp256k1-zkp": "^3.2.1",
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jest": "^29.15.2",
-    "eslint-plugin-n": "^18.0.1",
+    "eslint-plugin-n": "^18.1.0",
     "git-cliff": "^2.13.1",
     "globals": "^17.6.0",
     "jest": "^30.4.2",
-    "liquidjs-lib": "^6.0.2-liquid.37",
-    "prettier": "^3.8.3",
+    "liquidjs-lib": "^6.0.2-liquid.38",
+    "prettier": "^3.8.4",
     "slip77": "^0.2.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.3"
+    "typescript-eslint": "^8.61.1"
   },
   "peerDependencies": {
     "@vulpemventures/secp256k1-zkp": "^3.2.1",
