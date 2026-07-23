@@ -55,29 +55,29 @@ describe('Claim', () => {
   test.each`
     details
     ${[
-  {
-    type: OutputType.Legacy,
-  },
-]}
+      {
+        type: OutputType.Legacy,
+      },
+    ]}
     ${[
-  {
-    type: OutputType.Compatibility,
-  },
-]}
+      {
+        type: OutputType.Compatibility,
+      },
+    ]}
     ${[
-  {
-    type: OutputType.Bech32,
-  },
-]}
+      {
+        type: OutputType.Bech32,
+      },
+    ]}
     ${[
-  {
-    type: OutputType.Legacy,
-    redeemScript: randomBytes(32),
-  },
-  {
-    type: OutputType.Bech32,
-  },
-]}
+      {
+        type: OutputType.Legacy,
+        redeemScript: randomBytes(32),
+      },
+      {
+        type: OutputType.Bech32,
+      },
+    ]}
   `(
     'should not claim when non Taproot inputs do not have a redeem script',
     ({ details }) => {

@@ -25,8 +25,7 @@ export type LiquidSegwitV0RefundDetails = LiquidBaseRefundDetails & {
 };
 
 export type LiquidLegacyRefundDetails = (
-  | LiquidScriptRefundDetails
-  | LiquidSegwitV0RefundDetails
+  LiquidScriptRefundDetails | LiquidSegwitV0RefundDetails
 ) & {
   redeemScript: Uint8Array;
   privateKey: Uint8Array;
@@ -49,8 +48,7 @@ export type LiquidTaprootRefundDetails = LiquidBaseRefundDetails & {
 };
 
 export type LiquidRefundDetails =
-  | LiquidLegacyRefundDetails
-  | LiquidTaprootRefundDetails;
+  LiquidLegacyRefundDetails | LiquidTaprootRefundDetails;
 
 export type LiquidClaimDetails = LiquidRefundDetails & {
   preimage: Uint8Array;
