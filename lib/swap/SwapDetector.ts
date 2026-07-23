@@ -25,19 +25,44 @@ type DetectedSwap<T> = {
   vout: number;
 } & (T extends Transaction ? TransactionOutput : LiquidTxOutput);
 
+const scriptForType: Record<OutputType, (input: Uint8Array) => Uint8Array> = {
+  [OutputType.Legacy]: p2shOutput,
+  [OutputType.Compatibility]: p2shP2wshOutput,
+  [OutputType.Bech32]: p2wshOutput,
+  [OutputType.Taproot]: p2trOutput,
+};
+
 /**
  * Detects a swap output with the matching redeem script or tweaked key in a transaction
+ *
+ * @param redeemScriptOrTweakedKey redeem script or tweaked key of the swap
+ * @param transaction transaction to scan for the swap output
+ * @param expectedOutput the advertised output wrapper to detect; either an
+ *   {@link OutputType} or the exact expected output script. Detection is bound to
+ *   this wrapper so a lockup can never be matched against a different one.
  */
 export const detectSwap = <T extends Transaction | LiquidTransaction>(
   redeemScriptOrTweakedKey: Uint8Array,
   transaction: T,
+  expectedOutput: OutputType | Uint8Array,
 ): DetectedSwap<T> | undefined => {
-  const scripts: [OutputType, Uint8Array][] = [
-    [OutputType.Legacy, p2shOutput(redeemScriptOrTweakedKey)],
-    [OutputType.Compatibility, p2shP2wshOutput(redeemScriptOrTweakedKey)],
-    [OutputType.Bech32, p2wshOutput(redeemScriptOrTweakedKey)],
-    [OutputType.Taproot, p2trOutput(redeemScriptOrTweakedKey)],
-  ];
+  const scripts = (
+    [
+      OutputType.Legacy,
+      OutputType.Compatibility,
+      OutputType.Bech32,
+      OutputType.Taproot,
+    ] as OutputType[]
+  )
+    .map((type): [OutputType, Uint8Array] => [
+      type,
+      scriptForType[type](redeemScriptOrTweakedKey),
+    ])
+    .filter(([type, script]) =>
+      typeof expectedOutput === 'number'
+        ? type === expectedOutput
+        : equalBytes(script, expectedOutput),
+    );
 
   const findMatch = (
     vout: number,

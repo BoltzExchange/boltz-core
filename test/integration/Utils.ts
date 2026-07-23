@@ -116,7 +116,7 @@ const sendFundsToOutput = async <
     : LiquidTransaction.fromHex(txHex);
 
   return {
-    ...detectSwap(redeemScriptOrTweakedKey, transaction)!,
+    ...detectSwap(redeemScriptOrTweakedKey, transaction, outputType)!,
     blindingPrivateKey,
     type: outputType,
     transactionId,

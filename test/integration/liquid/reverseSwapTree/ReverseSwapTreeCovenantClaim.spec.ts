@@ -105,7 +105,11 @@ describe.each`
         ),
       );
 
-      const output = detectSwap(Buffer.from(tweakedMusig.aggPubkey), tx)!;
+      const output = detectSwap(
+        Buffer.from(tweakedMusig.aggPubkey),
+        tx,
+        OutputType.Taproot,
+      )!;
 
       return {
         tree,

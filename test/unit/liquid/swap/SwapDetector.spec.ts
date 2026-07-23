@@ -53,7 +53,7 @@ describe('Liquid SwapDetector', () => {
       nonce,
     );
 
-    const output = detectSwap(redeemScript, transaction)!;
+    const output = detectSwap(redeemScript, transaction, type)!;
 
     expect(output).not.toBeUndefined();
     expect(output.vout).toEqual(1);

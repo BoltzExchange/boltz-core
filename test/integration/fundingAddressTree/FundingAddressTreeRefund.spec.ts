@@ -39,7 +39,7 @@ const createFundingAddressOutput = async (
   const txHex = await bitcoinClient.getRawTransaction(transactionId);
   const transaction = Transaction.fromRaw(hex.decode(txHex));
 
-  const detected = detectSwap(tweakedPubKey, transaction)!;
+  const detected = detectSwap(tweakedPubKey, transaction, OutputType.Taproot)!;
 
   const utxo = {
     ...detected,

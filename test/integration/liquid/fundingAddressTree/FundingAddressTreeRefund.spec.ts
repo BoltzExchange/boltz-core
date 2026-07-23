@@ -81,7 +81,7 @@ const createFundingAddressOutput = async (
   const txHex = await elementsClient.getRawTransaction(transactionId);
   const transaction = Transaction.fromHex(txHex);
 
-  const detected = detectSwap(tweakedPubKey, transaction)!;
+  const detected = detectSwap(tweakedPubKey, transaction, OutputType.Taproot)!;
 
   const utxo = {
     ...detected,
