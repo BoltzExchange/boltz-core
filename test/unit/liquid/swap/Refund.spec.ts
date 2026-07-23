@@ -1,11 +1,16 @@
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { confidential } from 'liquidjs-lib';
 import { reverseBuffer } from 'liquidjs-lib/src/bufferutils.js';
+import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../../lib/consts/Enums.ts';
 import type { LiquidRefundDetails } from '../../../../lib/liquid/index.ts';
 import {
   constructRefundTransaction,
   init,
 } from '../../../../lib/liquid/index.ts';
+import { p2trOutput } from '../../../../lib/swap/Scripts.ts';
+import swapTree from '../../../../lib/swap/SwapTree.ts';
+import { toXOnly } from '../../../../lib/swap/TaprootUtils.ts';
 import zkp from '../../../zkp.ts';
 import { lbtcRegtest, nonce } from './ClaimDetails.ts';
 
@@ -71,5 +76,53 @@ describe('Liquid Refund', () => {
         38,
       ).virtualSize(),
     ).toMatchSnapshot();
+  });
+
+  test('should refund a Taproot swap via the script path', () => {
+    const claimKeys = secp256k1.utils.randomSecretKey();
+    const refundKeys = secp256k1.utils.randomSecretKey();
+    const refundPublicKey = secp256k1.getPublicKey(refundKeys);
+
+    const timeout = 11;
+    const tree = swapTree(
+      true,
+      randomBytes(32),
+      secp256k1.getPublicKey(claimKeys),
+      refundPublicKey,
+      timeout,
+    );
+
+    const refund = constructRefundTransaction(
+      [
+        {
+          type: OutputType.Taproot,
+          cooperative: false,
+          swapTree: tree,
+          internalKey: Buffer.from(toXOnly(refundPublicKey)),
+          privateKey: refundKeys,
+          script: Buffer.from(p2trOutput(toXOnly(refundPublicKey))),
+          nonce,
+          asset: lbtcRegtest,
+          value: confidential.satoshiToConfidentialValue(2000),
+          vout: 0,
+          transactionId:
+            '285d227e2823c679c224b4d562a9b5b5b7b927badd483df9f4225c6fc761d754',
+        },
+      ],
+      Buffer.from('00140000000000000000000000000000000000000000', 'hex'),
+      timeout,
+      1n,
+    );
+
+    expect(refund.ins).toHaveLength(1);
+    expect(refund.locktime).toEqual(timeout);
+
+    // A script path refund reveals the refund leaf in the witness:
+    // [signature, leaf script, control block]
+    const witness = refund.ins[0].witness;
+    expect(witness).toHaveLength(3);
+    expect(Buffer.from(witness[1])).toEqual(
+      Buffer.from(tree.refundLeaf.output),
+    );
   });
 });

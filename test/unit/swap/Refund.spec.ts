@@ -1,7 +1,12 @@
+import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hex } from '@scure/base';
+import { randomBytes } from 'node:crypto';
 import { OutputType } from '../../../lib/consts/Enums.ts';
 import type { RefundDetails } from '../../../lib/consts/Types.ts';
 import { constructRefundTransaction } from '../../../lib/swap/Refund.ts';
+import { p2trOutput } from '../../../lib/swap/Scripts.ts';
+import swapTree from '../../../lib/swap/SwapTree.ts';
+import { toXOnly } from '../../../lib/swap/TaprootUtils.ts';
 
 describe('Refund', () => {
   const utxo = {
@@ -72,6 +77,52 @@ describe('Refund', () => {
 
   test('should refund multiple swaps in one transaction', () => {
     expect(testRefund(refundDetails, 466).hex).toMatchSnapshot();
+  });
+
+  test('should refund a Taproot swap via the script path', () => {
+    const claimKeys = secp256k1.utils.randomSecretKey();
+    const refundKeys = secp256k1.utils.randomSecretKey();
+    const refundPublicKey = secp256k1.getPublicKey(refundKeys);
+
+    const timeout = 11;
+    const tree = swapTree(
+      false,
+      randomBytes(32),
+      secp256k1.getPublicKey(claimKeys),
+      refundPublicKey,
+      timeout,
+    );
+
+    const refund = constructRefundTransaction(
+      [
+        {
+          type: OutputType.Taproot,
+          cooperative: false,
+          swapTree: tree,
+          internalKey: toXOnly(refundPublicKey),
+          privateKey: refundKeys,
+          script: p2trOutput(toXOnly(refundPublicKey)),
+          amount: utxo.amount,
+          vout: utxo.vout,
+          transactionId: utxo.transactionId,
+        },
+      ],
+      Buffer.from('00140000000000000000000000000000000000000000', 'hex'),
+      timeout,
+      1n,
+    );
+
+    expect(refund.inputsLength).toEqual(1);
+    expect(refund.outputsLength).toEqual(1);
+    expect(refund.lockTime).toEqual(timeout);
+
+    // A script path refund reveals the refund leaf in the witness:
+    // [signature, leaf script, control block]
+    const witness = refund.getInput(0).finalScriptWitness!;
+    expect(witness).toHaveLength(3);
+    expect(Buffer.from(witness[1])).toEqual(
+      Buffer.from(tree.refundLeaf.output),
+    );
   });
 
   test('should sort inputs by BIP69 regardless of caller-provided order', () => {
