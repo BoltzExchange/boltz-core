@@ -59,7 +59,9 @@ describe('PreimageDetector', () => {
       false,
     );
 
-    expect(detectPreimage(0, claimTransaction)).toEqual(preimage);
+    expect(detectPreimage(0, claimTransaction, sha256(preimage))).toEqual(
+      preimage,
+    );
   });
 
   test.each`
@@ -93,6 +95,32 @@ describe('PreimageDetector', () => {
       false,
     );
 
-    expect(detectPreimage(0, claimTransaction)).toEqual(preimage);
+    expect(detectPreimage(0, claimTransaction, sha256(preimage))).toEqual(
+      preimage,
+    );
+  });
+
+  test('should ignore witness elements that do not hash to the preimage hash', () => {
+    // A 32 byte decoy (e.g. an x-only public key) that is not the preimage
+    const decoy = secp256k1.getPublicKey(refundKeys).slice(1);
+    expect(decoy).toHaveLength(32);
+
+    const preimageAtSecondPosition = detectPreimage(
+      0,
+      { ins: [{ witness: [decoy, preimage] }] },
+      sha256(preimage),
+    );
+    expect(preimageAtSecondPosition).toEqual(preimage);
+  });
+
+  test('should return undefined when no element reveals the preimage', () => {
+    // A cooperative claim or refund does not reveal the preimage
+    expect(
+      detectPreimage(
+        0,
+        { ins: [{ witness: [Buffer.alloc(64), Buffer.alloc(33)] }] },
+        sha256(preimage),
+      ),
+    ).toBeUndefined();
   });
 });

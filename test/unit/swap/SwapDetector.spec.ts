@@ -48,7 +48,7 @@ describe('SwapDetector', () => {
       script: Script.encode(['RETURN']),
     });
 
-    const output = detectSwap(redeemScript, transaction)!;
+    const output = detectSwap(redeemScript, transaction, type)!;
 
     expect(output).not.toBeUndefined();
     expect(output.vout).toEqual(1);
@@ -77,13 +77,82 @@ describe('SwapDetector', () => {
       amount: 312n,
     });
 
-    const output = detectSwap(tweakedKeys, transaction)!;
+    const output = detectSwap(tweakedKeys, transaction, OutputType.Taproot)!;
 
     expect(output).not.toBeUndefined();
     expect(output.vout).toEqual(1);
     expect(output.amount).toEqual(21n);
     expect(output.type).toEqual(OutputType.Taproot);
     expect(output.script).toEqual(p2trOutput(tweakedKeys));
+  });
+
+  test('should restrict detection to an expected OutputType', () => {
+    const publicKey = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
+    const redeemScript = swapScript(sha256(publicKey), publicKey, publicKey, 1);
+
+    // A decoy output paying to the same redeem script under a different wrapper
+    const decoy = outputFunctionForType(OutputType.Bech32)!(redeemScript);
+    const advertised = outputFunctionForType(OutputType.Compatibility)!(
+      redeemScript,
+    );
+
+    const transaction = new Transaction({ allowUnknownOutputs: true });
+    transaction.addOutput({ amount: 42n, script: decoy });
+    transaction.addOutput({ amount: 21n, script: advertised });
+
+    // The decoy wrapper at vout 0 is ignored; only the advertised one is detected
+    const output = detectSwap(
+      redeemScript,
+      transaction,
+      OutputType.Compatibility,
+    )!;
+
+    expect(output.vout).toEqual(1);
+    expect(output.amount).toEqual(21n);
+    expect(output.type).toEqual(OutputType.Compatibility);
+    expect(output.script).toEqual(advertised);
+  });
+
+  test('should restrict detection to an expected output script', () => {
+    const publicKey = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
+    const redeemScript = swapScript(sha256(publicKey), publicKey, publicKey, 1);
+
+    const decoy = outputFunctionForType(OutputType.Bech32)!(redeemScript);
+    const advertised = outputFunctionForType(OutputType.Compatibility)!(
+      redeemScript,
+    );
+
+    const transaction = new Transaction({ allowUnknownOutputs: true });
+    transaction.addOutput({ amount: 42n, script: decoy });
+    transaction.addOutput({ amount: 21n, script: advertised });
+
+    const output = detectSwap(redeemScript, transaction, advertised)!;
+
+    expect(output.vout).toEqual(1);
+    expect(output.amount).toEqual(21n);
+    expect(output.type).toEqual(OutputType.Compatibility);
+    expect(output.script).toEqual(advertised);
+  });
+
+  test('should return undefined when no output matches the expectation', () => {
+    const publicKey = secp256k1.getPublicKey(secp256k1.utils.randomSecretKey());
+    const redeemScript = swapScript(sha256(publicKey), publicKey, publicKey, 1);
+
+    const transaction = new Transaction({ allowUnknownOutputs: true });
+    transaction.addOutput({
+      amount: 42n,
+      script: outputFunctionForType(OutputType.Bech32)!(redeemScript),
+    });
+
+    // The advertised wrapper is not present in the transaction
+    expect(
+      detectSwap(redeemScript, transaction, OutputType.Taproot),
+    ).toBeUndefined();
+
+    // An expected script that is not a valid wrapper of the key is rejected
+    expect(
+      detectSwap(redeemScript, transaction, randomBytes(34)),
+    ).toBeUndefined();
   });
 
   test('should return undefined no swap can be found', () => {
@@ -100,7 +169,7 @@ describe('SwapDetector', () => {
       amount: 312n,
     });
 
-    const output = detectSwap(randomBytes(32), transaction);
+    const output = detectSwap(randomBytes(32), transaction, OutputType.Bech32);
 
     expect(output).toBeUndefined();
   });

@@ -8,9 +8,11 @@ import reverseSwapScript from '../../../../lib/swap/ReverseSwapScript.ts';
 import {
   outputFunctionForType,
   p2pkhOutput,
+  p2trOutput,
 } from '../../../../lib/swap/Scripts.ts';
 import { detectSwap } from '../../../../lib/swap/SwapDetector.ts';
 import swapScript from '../../../../lib/swap/SwapScript.ts';
+import { toXOnly } from '../../../../lib/swap/TaprootUtils.ts';
 import { lbtcRegtest, nonce } from './ClaimDetails.ts';
 
 describe('Liquid SwapDetector', () => {
@@ -53,7 +55,7 @@ describe('Liquid SwapDetector', () => {
       nonce,
     );
 
-    const output = detectSwap(redeemScript, transaction)!;
+    const output = detectSwap(redeemScript, transaction, type)!;
 
     expect(output).not.toBeUndefined();
     expect(output.vout).toEqual(1);
@@ -63,6 +65,44 @@ describe('Liquid SwapDetector', () => {
     expect(output.asset).toEqual(lbtcRegtest);
     expect(output.rangeProof).toHaveLength(0);
     expect(output.surjectionProof).toHaveLength(0);
+    expect(confidential.confidentialValueToSatoshi(output!.value)).toEqual(
+      expectedAmount,
+    );
+  });
+
+  test('should detect tweaked Taproot keys', () => {
+    const tweakedKey = toXOnly(
+      secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
+    );
+
+    const expectedAmount = 21;
+    const script = p2trOutput(tweakedKey);
+
+    const transaction = new Transaction();
+    transaction.addOutput(
+      Buffer.from(
+        p2pkhOutput(
+          hash160(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey())),
+        ),
+      ),
+      confidential.satoshiToConfidentialValue(12),
+      lbtcRegtest,
+      nonce,
+    );
+    transaction.addOutput(
+      Buffer.from(script),
+      confidential.satoshiToConfidentialValue(expectedAmount),
+      lbtcRegtest,
+      nonce,
+    );
+
+    const output = detectSwap(tweakedKey, transaction, OutputType.Taproot)!;
+
+    expect(output).not.toBeUndefined();
+    expect(output.vout).toEqual(1);
+    expect(output.type).toEqual(OutputType.Taproot);
+    expect(output.script).toEqual(script);
+    expect(output.asset).toEqual(lbtcRegtest);
     expect(confidential.confidentialValueToSatoshi(output!.value)).toEqual(
       expectedAmount,
     );

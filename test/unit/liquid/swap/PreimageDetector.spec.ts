@@ -1,4 +1,5 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { hex } from '@scure/base';
 import { hash160 } from '@scure/btc-signer/utils.js';
 import { confidential } from 'liquidjs-lib';
@@ -61,7 +62,7 @@ describe('Liquid PreimageDetector', () => {
       false,
     );
 
-    const foundPreimage = detectPreimage(0, claimTransaction);
+    const foundPreimage = detectPreimage(0, claimTransaction, sha256(preimage));
     expect(foundPreimage).toEqual(preimage);
   });
 
@@ -73,14 +74,18 @@ describe('Liquid PreimageDetector', () => {
     ].map((w) => Buffer.from(w, 'hex'));
 
     expect(
-      detectPreimage(0, {
-        ins: [
-          {
-            witness,
-            script: Buffer.alloc(0),
-          },
-        ],
-      }),
+      detectPreimage(
+        0,
+        {
+          ins: [
+            {
+              witness,
+              script: Buffer.alloc(0),
+            },
+          ],
+        },
+        sha256(witness[0]),
+      ),
     ).toEqual(witness[0]);
   });
 });
