@@ -2,10 +2,16 @@
 
 pragma solidity ^0.8.33;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TransferHelper} from "./TransferHelper.sol";
 
 // @title Hash timelock contract for Ether
-contract EtherSwap {
+/// @notice The owner cannot touch ether backing active swaps. The only owner-only functions are
+///         "sweepEther" (recovers ether balance above the "lockedEther" accounting) and
+///         "sweepToken" (recovers any ERC20 token balance held by the contract).
+contract EtherSwap is Ownable2Step {
     // Structs
 
     struct BatchClaimEntry {
@@ -21,7 +27,7 @@ contract EtherSwap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant VERSION = 6;
+    uint8 public constant VERSION = 7;
 
     bytes32 public constant TYPEHASH_CLAIM =
         keccak256("Claim(bytes32 preimage,uint256 amount,address refundAddress,uint256 timelock,address destination)");
@@ -35,7 +41,7 @@ contract EtherSwap {
         abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
             keccak256("EtherSwap"),
-            keccak256("6"),
+            keccak256("7"),
             block.chainid,
             address(this)
         )
@@ -45,6 +51,9 @@ contract EtherSwap {
 
     /// @dev Mapping between value hashes of swaps and whether they have Ether locked in the contract
     mapping(bytes32 => bool) public swaps;
+
+    /// @dev Total amount of Ether that should be locked in the contract to cover outstanding swaps
+    uint256 public lockedEther;
 
     // Errors
 
@@ -62,6 +71,8 @@ contract EtherSwap {
     error SwapAlreadyExists();
     /// @dev Thrown when no swap is found for the given hash
     error SwapNotFound();
+    /// @dev Thrown when there is nothing to sweep
+    error NoExcess();
 
     // Events
 
@@ -75,6 +86,10 @@ contract EtherSwap {
 
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
     event Refund(bytes32 indexed preimageHash);
+    event SweptEther(address indexed to, uint256 amount);
+    event SweptToken(address indexed token, address indexed to, uint256 amount);
+
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
     // External functions
 
@@ -324,6 +339,38 @@ contract EtherSwap {
         refundInternal(preimageHash, amount, claimAddress, refundAddress, timelock);
     }
 
+    /// Sweeps excess Ether held by the contract above the amount accounted for outstanding swaps
+    /// @dev Ether can end up in the contract outside the normal lock flow via "selfdestruct" or a
+    ///      force-send to the address before deployment. The owner can recover that surplus.
+    ///      Ether backing active swaps remains protected by the accounting.
+    /// @param to Recipient of the swept Ether
+    function sweepEther(address payable to) external onlyOwner {
+        uint256 balance = address(this).balance;
+        uint256 locked = lockedEther;
+        require(balance > locked, NoExcess());
+
+        uint256 excess;
+        unchecked {
+            excess = balance - locked;
+        }
+
+        emit SweptEther(to, excess);
+        TransferHelper.transferEther(to, excess);
+    }
+
+    /// Sweeps ERC20 tokens accidentally sent to the contract
+    /// @dev EtherSwap never takes custody of ERC20 tokens as part of its normal operation, so any
+    ///      ERC20 balance held by the contract is excess and can be recovered in full by the owner.
+    /// @param token Address of the token to sweep
+    /// @param to Recipient of the swept tokens
+    function sweepToken(address token, address to) external onlyOwner {
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        require(balance > 0, NoExcess());
+
+        emit SweptToken(token, to, balance);
+        TransferHelper.safeTransferToken(token, to, balance);
+    }
+
     // Public functions
 
     /// Claims Ether locked in the contract for a specified claim address
@@ -485,6 +532,9 @@ contract EtherSwap {
         // This *HAS* to be done before actually sending the Ether to avoid reentrancy
         delete swaps[hash];
 
+        // Decrement the accounted locked Ether
+        lockedEther -= amount;
+
         // Emit the claim event
         emit Claim(preimageHash, preimage);
     }
@@ -519,6 +569,9 @@ contract EtherSwap {
         // This *HAS* to be done before actually sending the Ether to avoid reentrancy
         delete swaps[hash];
 
+        // Decrement the accounted locked Ether
+        lockedEther -= amount;
+
         // Emit the claim event
         emit Claim(preimageHash, preimage);
     }
@@ -548,6 +601,9 @@ contract EtherSwap {
         // Save to the state that funds were locked for this swap
         swaps[hash] = true;
 
+        // Track the total amount of Ether that should be locked in the contract
+        lockedEther += amount;
+
         // Emit the "Lockup" event
         emit Lockup(preimageHash, amount, claimAddress, refundAddress, timelock);
     }
@@ -563,6 +619,9 @@ contract EtherSwap {
 
         checkSwapIsLocked(hash);
         delete swaps[hash];
+
+        // Decrement the accounted locked Ether
+        lockedEther -= amount;
 
         emit Refund(preimageHash);
 

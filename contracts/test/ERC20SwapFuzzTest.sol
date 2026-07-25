@@ -8,7 +8,7 @@ import {TestERC20} from "../TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERC20SwapFuzzTest is Test {
-    ERC20Swap internal swap = new ERC20Swap();
+    ERC20Swap internal swap = new ERC20Swap(address(this));
     IERC20 internal token = new TestERC20("TestERC20", "TRC", 18, 10 ** 21);
 
     function testLock(uint256 amount, bytes32 preimageHash, address claimAddress, uint256 timelock) external {
@@ -179,6 +179,29 @@ contract ERC20SwapFuzzTest is Test {
         assertTrue(
             swap.swaps(swap.hashValues(preimageHash, amount, address(token), claimAddress, address(this), timelock))
         );
+    }
+
+    function testLockedAmountsTracksLifecycle(uint256 amount, bytes32 preimage, address claimAddress, uint256 timelock)
+        external
+    {
+        vm.assume(amount < token.balanceOf(address(this)));
+        vm.assume(amount > 0);
+        vm.assume(claimAddress != address(0));
+        vm.assume(claimAddress != address(swap));
+
+        bytes32 preimageHash = sha256(abi.encodePacked(preimage));
+
+        token.approve(address(swap), amount);
+        swap.lock(preimageHash, amount, address(token), claimAddress, timelock);
+
+        assertEq(swap.lockedAmounts(address(token)), amount);
+        assertLe(swap.lockedAmounts(address(token)), token.balanceOf(address(swap)));
+
+        vm.prank(claimAddress);
+        swap.claim(preimage, amount, address(token), address(this), timelock);
+
+        assertEq(swap.lockedAmounts(address(token)), 0);
+        assertLe(swap.lockedAmounts(address(token)), token.balanceOf(address(swap)));
     }
 
     function testHashValuesMatchesKeccak256(

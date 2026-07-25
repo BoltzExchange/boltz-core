@@ -8,7 +8,7 @@ import {EtherSwap} from "../EtherSwap.sol";
 contract EtherSwapFuzzTest is Test {
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
 
-    EtherSwap internal swap = new EtherSwap();
+    EtherSwap internal swap = new EtherSwap(address(this));
 
     receive() external payable {}
 

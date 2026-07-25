@@ -2,10 +2,16 @@
 
 pragma solidity ^0.8.33;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TransferHelper} from "./TransferHelper.sol";
 
 // @title Hash timelock contract for ERC20 tokens
-contract ERC20Swap {
+/// @notice The owner cannot touch funds backing active swaps. The only owner-only functions are
+///         "sweepToken" (recovers ERC20 balance above the per-token accounting) and "sweepEther"
+///         (recovers any ether held by the contract).
+contract ERC20Swap is Ownable2Step {
     // Structs
 
     struct BatchClaimEntry {
@@ -21,7 +27,7 @@ contract ERC20Swap {
     // Constants
 
     /// @dev Version of the contract used for compatibility checks
-    uint8 public constant VERSION = 6;
+    uint8 public constant VERSION = 7;
 
     bytes32 public constant TYPEHASH_CLAIM = keccak256(
         "Claim(bytes32 preimage,uint256 amount,address tokenAddress,address refundAddress,uint256 timelock,address destination)"
@@ -37,7 +43,7 @@ contract ERC20Swap {
         abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
             keccak256("ERC20Swap"),
-            keccak256("6"),
+            keccak256("7"),
             block.chainid,
             address(this)
         )
@@ -47,6 +53,9 @@ contract ERC20Swap {
 
     /// @dev Mapping between value hashes of swaps and whether they have tokens locked in the contract
     mapping(bytes32 => bool) public swaps;
+
+    /// @dev Total amount per ERC20 token that should be locked in the contract to cover outstanding swaps
+    mapping(address => uint256) public lockedAmounts;
 
     // Errors
 
@@ -62,6 +71,8 @@ contract ERC20Swap {
     error CommitmentCannotBeClaimedAsSwap();
     /// @dev Thrown when no swap is found for the given hash
     error SwapNotFound();
+    /// @dev Thrown when there are no excess tokens to sweep
+    error NoExcess();
 
     // Events
 
@@ -76,6 +87,10 @@ contract ERC20Swap {
 
     event Claim(bytes32 indexed preimageHash, bytes32 preimage);
     event Refund(bytes32 indexed preimageHash);
+    event SweptToken(address indexed token, address indexed to, uint256 amount);
+    event SweptEther(address indexed to, uint256 amount);
+
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
     // External functions
 
@@ -335,6 +350,39 @@ contract ERC20Swap {
         refundInternal(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
     }
 
+    /// Sweeps excess tokens held by the contract above the amount accounted for outstanding swaps
+    /// @dev ERC20 transfers cannot be refused at the contract level, so the balance may exceed the
+    ///      sum of amounts locked by calls to "lock". The owner can recover that surplus. Tokens
+    ///      backing active swaps remain protected by the accounting.
+    /// @param token Address of the token to sweep
+    /// @param to Recipient of the swept tokens
+    function sweepToken(address token, address to) external onlyOwner {
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        uint256 locked = lockedAmounts[token];
+        require(balance > locked, NoExcess());
+
+        uint256 excess;
+        unchecked {
+            excess = balance - locked;
+        }
+
+        emit SweptToken(token, to, excess);
+        TransferHelper.safeTransferToken(token, to, excess);
+    }
+
+    /// Sweeps ether accidentally sent to the contract
+    /// @dev This contract never retains ether between transactions ("lockPrepayMinerfee" forwards
+    ///      "msg.value" in the same call), so any ether balance is from a force-send
+    ///      (selfdestruct / coinbase / pre-deployment transfer) and can be recovered in full.
+    /// @param to Recipient of the swept ether
+    function sweepEther(address payable to) external onlyOwner {
+        uint256 balance = address(this).balance;
+        require(balance > 0, NoExcess());
+
+        emit SweptEther(to, balance);
+        TransferHelper.transferEther(to, balance);
+    }
+
     // Public functions
 
     /// Locks tokens in the contract
@@ -366,6 +414,9 @@ contract ERC20Swap {
 
         // Save to the state that funds were locked for this swap
         swaps[hash] = true;
+
+        // Track the total amount that should be locked in the contract per token
+        lockedAmounts[tokenAddress] += amount;
 
         // Emit the "Lockup" event
         emit Lockup(preimageHash, amount, tokenAddress, claimAddress, refundAddress, timelock);
@@ -560,6 +611,9 @@ contract ERC20Swap {
         // This *HAS* to be done before actually sending the tokens to avoid reentrancy
         delete swaps[hash];
 
+        // Decrement the accounted locked amount for this token
+        lockedAmounts[tokenAddress] -= amount;
+
         // Emit the claim event
         emit Claim(preimageHash, preimage);
     }
@@ -596,6 +650,9 @@ contract ERC20Swap {
         // Reentrancy is a bigger problem when sending Ether but there is no real downside to deleting from the mapping first
         delete swaps[hash];
 
+        // Decrement the accounted locked amount for this token
+        lockedAmounts[tokenAddress] -= amount;
+
         // Emit the "Claim" event
         emit Claim(preimageHash, preimage);
     }
@@ -612,6 +669,9 @@ contract ERC20Swap {
 
         checkSwapIsLocked(hash);
         delete swaps[hash];
+
+        // Decrement the accounted locked amount for this token
+        lockedAmounts[tokenAddress] -= amount;
 
         emit Refund(preimageHash);
 

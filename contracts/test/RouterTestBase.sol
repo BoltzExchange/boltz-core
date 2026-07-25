@@ -249,8 +249,8 @@ abstract contract RouterTestBase is Test {
     constructor() {
         claimAddress = vm.addr(claimAddressKey);
         refundAddress = vm.addr(refundAddressKey);
-        SWAP = new EtherSwap();
-        ERC20_SWAP = new ERC20Swap();
+        SWAP = new EtherSwap(address(this));
+        ERC20_SWAP = new ERC20Swap(address(this));
         PERMIT2 = ISignatureTransfer(new DeployPermit2().deployPermit2());
         ROUTER = new Router(address(SWAP), address(ERC20_SWAP), address(PERMIT2));
         SIG_UTILS = new SigUtils(SWAP.DOMAIN_SEPARATOR());
